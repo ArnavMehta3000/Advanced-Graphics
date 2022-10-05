@@ -25,4 +25,6 @@
 #pragma comment(lib, "D3DCompiler.lib")
 
 using namespace DirectX;
-using Microsoft::WRL::ComPtr;
+
+template <typename T>
+using ComPtr = Microsoft::WRL::ComPtr<T>;
