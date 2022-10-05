@@ -2,6 +2,8 @@
 #include "Window.h"
 #include <Resource.h>
 
+static const LPCWSTR s_className = L"Framework";
+
 Window::Window(HINSTANCE hInst, UINT width, UINT height)
 	:
 	m_hInstance(hInst),
@@ -11,34 +13,33 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 	m_clientHeight(height)
 {
 
-	const LPCWSTR c_className = L"Framework";
 
 	// Register class
 	WNDCLASSEX wcex;
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = MessageRouter;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = hInst;
-	wcex.hIcon = LoadIcon(hInst, (LPCTSTR)IDI_TUTORIAL1);
-	wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+	wcex.cbSize        = sizeof(WNDCLASSEX);
+	wcex.style         = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc   = MessageRouter;
+	wcex.cbClsExtra    = 0;
+	wcex.cbWndExtra    = 0;
+	wcex.hInstance     = hInst;
+	wcex.hIcon         = LoadIcon(hInst, (LPCTSTR)IDI_TUTORIAL1);
+	wcex.hCursor       = LoadCursor(nullptr, IDC_ARROW);
 	wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wcex.lpszMenuName = nullptr;
-	wcex.lpszClassName = c_className;
-	wcex.hIconSm = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_TUTORIAL1);
+	wcex.lpszMenuName  = nullptr;
+	wcex.lpszClassName = s_className;
+	wcex.hIconSm       = LoadIcon(wcex.hInstance, (LPCTSTR)IDI_TUTORIAL1);
 
 	RegisterClassEx(&wcex);
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	RECT rc{ 0, 0, m_clientWidth, m_clientHeight };
+	RECT rc{ 0, 0, (UINT)m_clientWidth, (UINT)m_clientHeight };
 	AdjustWindowRect(&rc, style, FALSE);
 	
-	m_windowWidth = rc.right - rc.left;
+	m_windowWidth  = rc.right - rc.left;
 	m_windowHeight = rc.bottom - rc.top;
 
 	m_hWnd = CreateWindow(
-		c_className,
+		s_className,
 		L"Advanced Graphics Demo",
 		style,
 		CW_USEDEFAULT, CW_USEDEFAULT,  // Position (x,y)
@@ -62,6 +63,25 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 
 Window::~Window()
 {
+	UnregisterClass(s_className, m_hInstance);
+}
+
+bool Window::ProcessMessages()
+{
+	MSG msg = { 0 };
+	while (WM_QUIT != msg.message)
+	{
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		else
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 LRESULT Window::MessageRouter(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -89,8 +109,8 @@ LRESULT Window::MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_GETMINMAXINFO:
-		((MINMAXINFO*)lParam)->ptMinTrackSize.x = m_windowWidth / 2;
-		((MINMAXINFO*)lParam)->ptMinTrackSize.y = m_windowHeight / 2;
+		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 800;
+		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 600;
 		break;
 
 	case WM_PAINT:
@@ -99,7 +119,7 @@ LRESULT Window::MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		PostQuitMessage(0);  // NOTE: similar to  exit(0), maybe change this?
 		break;
 
 	default:
@@ -109,22 +129,14 @@ LRESULT Window::MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-const UINT Window::GetWindowWidth() const noexcept
-{
-	return m_windowWidth;
-}
 
-const UINT Window::GetWindowHeight() const noexcept
-{
-	return m_windowHeight;
-}
 
-const UINT Window::GetClientWidth() const noexcept
-{
-	return m_clientWidth;
-}
+HWND Window::GetHandle()                            { return m_hWnd; }
 
-const UINT Window::GetClientHeight() const noexcept
-{
-	return m_clientHeight;
-}
+const UINT Window::GetWindowWidth() const noexcept  { return m_windowWidth; }
+
+const UINT Window::GetWindowHeight() const noexcept { return m_windowHeight; }
+
+const UINT Window::GetClientWidth() const noexcept  { return m_clientWidth; }
+
+const UINT Window::GetClientHeight() const noexcept { return m_clientHeight; }

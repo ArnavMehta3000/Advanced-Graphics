@@ -12,7 +12,11 @@ public:
 	void Run();
 	void Shutdown();
 
-private:
-	Window* m_window;
+protected:
+	virtual void OnUpdate(const double dt);
+	virtual void OnRender(const double dt);
+
+protected:
+	UniquePtr<Window> m_window;
 };
 

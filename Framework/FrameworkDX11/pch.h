@@ -26,5 +26,31 @@
 
 using namespace DirectX;
 
+
+
 template <typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
+
+template <typename T>
+using UniquePtr = std::unique_ptr<T>;
+
+template <typename T>
+using SharedPtr = std::shared_ptr<T>;
+
+
+
+template <class T>
+void SafeRelease(T** ppT)
+{
+    if (*ppT)
+    {
+        (*ppT)->Release();
+        *ppT = NULL;
+    }
+}
+
+#define COM_RELEASE(x) SafeRelease(x.GetAddressOf())
+
+#define HR(x) if (FAILED(x)) __debugbreak()
+
+#define CREATE_ZERO(type, varName) type varName; ZeroMemory(&varName, sizeof(type))

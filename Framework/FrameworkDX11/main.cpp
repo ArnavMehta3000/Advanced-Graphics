@@ -79,6 +79,12 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     UNREFERENCED_PARAMETER( hPrevInstance );
     UNREFERENCED_PARAMETER( lpCmdLine );
 
+    std::unique_ptr<App> app = std::make_unique<App>(hInstance);
+    if (app->Init())
+        app->Run();
+
+
+
     if( FAILED( InitWindow( hInstance, nCmdShow ) ) )
         return 0;
 
@@ -104,6 +110,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     }
 
     CleanupDevice();
+    app->Shutdown();
 
     return ( int )msg.wParam;
 }

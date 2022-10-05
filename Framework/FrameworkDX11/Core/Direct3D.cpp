@@ -1,0 +1,189 @@
+#include "pch.h"
+#include "Direct3D.h"
+
+Direct3D* Direct3D::s_instance = nullptr;
+
+Direct3D::Direct3D()
+	:
+	m_driverType(D3D_DRIVER_TYPE_NULL),
+	m_featureLevel(D3D_FEATURE_LEVEL_11_0),
+	m_d3dDesc()
+{
+
+}
+
+Direct3D* Direct3D::GetInstance()
+{
+	if (s_instance == nullptr)
+		s_instance = new Direct3D();
+
+	return s_instance;
+}
+
+bool Direct3D::Init(HWND hwnd, bool vsync)
+{
+	m_hWnd = hwnd;
+	m_vsync = vsync;
+
+	m_d3dDesc.WindowHandle = hwnd;
+	m_d3dDesc.IsVsync = vsync;
+
+
+
+	// Get window client rect
+	RECT rc;
+	GetClientRect(m_hWnd, &rc);
+	UINT width  = rc.right - rc.left;
+	UINT height = rc.bottom - rc.top;
+
+
+	// Core initialize
+	{
+		ComPtr<IDXGIFactory> factory;
+		ComPtr<IDXGIAdapter> adapter;
+		ComPtr<IDXGIOutput> adapterOutput;
+
+		DXGI_MODE_DESC* displayModeList;
+		DXGI_ADAPTER_DESC adapterDesc;
+		UINT numModes = 0, numerator = 0, denominator = 1;
+
+		// Create factory and get display modes
+		HR(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory));
+		HR(factory->EnumAdapters(0, &adapter));
+		HR(adapter->EnumOutputs(0, &adapterOutput));
+		HR(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL));
+
+		// Get display modes
+		displayModeList = new DXGI_MODE_DESC[numModes];
+		HR(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, displayModeList));
+
+		// Get right display mode from display mode list
+		for (unsigned int i = 0; i < numModes; i++)
+		{
+			if (displayModeList[i].Width == (unsigned int)width)
+			{
+				if (displayModeList[i].Height == (unsigned int)height)
+				{
+					numerator = displayModeList[i].RefreshRate.Numerator;
+					denominator = displayModeList[i].RefreshRate.Denominator;
+				}
+			}
+		}
+		HR(adapter->GetDesc(&adapterDesc));
+
+		// Store memory info (in mb)
+		m_d3dDesc.VRAM = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
+		m_d3dDesc.RAM = (int)(adapterDesc.SharedSystemMemory / 1024 / 1024);
+		// Store the gpu name
+		size_t strLength;
+		wcstombs_s(&strLength, m_d3dDesc.GPU, 128, adapterDesc.Description, 128);
+
+		// Cleanup 1
+		delete[] displayModeList;
+		displayModeList = 0;
+		COM_RELEASE(adapter);
+		COM_RELEASE(adapterOutput);
+
+
+		// Create swapchain description
+		CREATE_ZERO(DXGI_SWAP_CHAIN_DESC, swapChainDesc);
+		swapChainDesc.BufferCount = 1;
+		swapChainDesc.BufferDesc.Width = width;
+		swapChainDesc.BufferDesc.Height = height;
+		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		if (vsync)
+		{
+			swapChainDesc.BufferDesc.RefreshRate.Numerator = numerator;
+			swapChainDesc.BufferDesc.RefreshRate.Denominator = denominator;
+		}
+		else
+		{
+			swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;  // Lock swapchain refresh rate to 60hz
+			swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
+		}
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+		swapChainDesc.OutputWindow = hwnd;
+		swapChainDesc.SampleDesc.Count = 1;  // Anti aliasing here
+		swapChainDesc.SampleDesc.Quality = 0;
+		swapChainDesc.Windowed = TRUE;
+		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+		swapChainDesc.Flags = 0;
+
+		m_d3dDesc.DriverType = D3D_DRIVER_TYPE_HARDWARE;
+		m_d3dDesc.FeatureLevel = D3D_FEATURE_LEVEL_11_0;
+
+		// Create device / swapchain / immediate context
+		HR(D3D11CreateDeviceAndSwapChain(
+			nullptr,
+			m_d3dDesc.DriverType,
+			NULL,
+			0,
+			&m_d3dDesc.FeatureLevel, 1,
+			D3D11_SDK_VERSION,
+			&swapChainDesc,
+			m_swapChain.ReleaseAndGetAddressOf(),
+			m_device.ReleaseAndGetAddressOf(),
+			NULL,
+			m_context.ReleaseAndGetAddressOf())
+		);
+
+		// Prevent Alt+Enter fullscreen
+		factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+		COM_RELEASE(factory);
+	}
+
+	// Create render target view
+	ComPtr<ID3D11Texture2D> backBufferPtr;
+	HR(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBufferPtr.ReleaseAndGetAddressOf())));
+	HR(m_device->CreateRenderTargetView(backBufferPtr.Get(), nullptr, m_renderTargetView.ReleaseAndGetAddressOf()));
+	COM_RELEASE(backBufferPtr);
+
+
+	// Create depth stencil texture
+	CREATE_ZERO(D3D11_TEXTURE2D_DESC, dstDesc);
+	dstDesc.Width              = width;
+	dstDesc.Height             = height;
+	dstDesc.MipLevels          = 1;
+	dstDesc.ArraySize          = 1;
+	dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	dstDesc.SampleDesc.Count   = 1;
+	dstDesc.SampleDesc.Quality = 0;
+	dstDesc.Usage              = D3D11_USAGE_DEFAULT;
+	dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
+	dstDesc.CPUAccessFlags     = 0;
+	dstDesc.MiscFlags          = 0;
+	HR(m_device->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
+
+	CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
+	dsvDesc.Format = dstDesc.Format;
+	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	dsvDesc.Texture2D.MipSlice = 0;
+	//HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
+
+	m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+	
+	// Craete vieport
+	CREATE_ZERO(D3D11_VIEWPORT, vp);
+	vp.Width = (FLOAT)width;
+	vp.Height = (FLOAT)height;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	vp.TopLeftX = 0;
+	vp.TopLeftY = 0;
+	m_context->RSSetViewports(1, &vp);
+
+	return true;
+}
+
+void Direct3D::Shutdown()
+{
+	COM_RELEASE(m_depthStencilTexture);
+	COM_RELEASE(m_depthStencilView);
+	COM_RELEASE(m_renderTargetView);
+	COM_RELEASE(m_context);
+	COM_RELEASE(m_swapChain);
+	COM_RELEASE(m_device);
+}
+

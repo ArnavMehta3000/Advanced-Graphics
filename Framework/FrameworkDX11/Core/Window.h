@@ -5,8 +5,12 @@ public:
 	Window(HINSTANCE hInst, UINT width, UINT height);
 	~Window();
 
+	bool ProcessMessages();
+
 	static LRESULT CALLBACK MessageRouter(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	HWND GetHandle();
 
 	const UINT GetWindowWidth() const noexcept;
 	const UINT GetWindowHeight() const noexcept;
