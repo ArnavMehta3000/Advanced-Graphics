@@ -12,9 +12,12 @@
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
-#define _XM_NO_INTRINSICS_
 
-#include "main.h"
+
+#include "pch.h"
+#include "DrawableGameObject.h"
+#include "structures.h"
+typedef std::vector<DrawableGameObject*> vecDrawables;
 
 DirectX::XMFLOAT4 g_EyePosition(0.0f, 0, -3, 1.0f);
 
@@ -536,11 +539,14 @@ void CleanupDevice()
     if (g_pd3dDevice1) g_pd3dDevice1->Release();
     if (g_pd3dDevice) g_pd3dDevice->Release();
 
-    // handy for finding dx memory leaks
-    debugDevice->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 
     if (debugDevice)
+    {
+        // handy for finding dx memory leaks
+        // Print all love objects then release
+        debugDevice->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
         debugDevice->Release();
+    }
 }
 
 
@@ -556,8 +562,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
     {
 	case WM_LBUTTONDOWN:
 	{
-		int xPos = GET_X_LPARAM(lParam);
-		int yPos = GET_Y_LPARAM(lParam);
+        // TODO: This is unused, use this for mouser later
+		// int xPos = LOWORD(lParam);
+		// int yPos = HIWORD(lParam);
 		break;
 	}
     case WM_PAINT:

@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "DrawableGameObject.h"
 
 using namespace std;
