@@ -13,12 +13,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 //--------------------------------------------------------------------------------------
 
-
 #include "pch.h"
 #include "Core/App.h"
 #include "DrawableGameObject.h"
 #include "structures.h"
-typedef std::vector<DrawableGameObject*> vecDrawables;
 
 DirectX::XMFLOAT4 g_EyePosition(0.0f, 0, -3, 1.0f);
 
@@ -76,12 +74,18 @@ DrawableGameObject		g_GameObject;
 //--------------------------------------------------------------------------------------
 int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
+#ifdef _DEBUG
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif // _DEBUG
+
+    //_CrtSetBreakAlloc(143);
+
     UNREFERENCED_PARAMETER( hPrevInstance );
     UNREFERENCED_PARAMETER( lpCmdLine );
 
     std::unique_ptr<App> app = std::make_unique<App>(hInstance);
-    if (app->Init())
-        app->Run();
+    app->Init();
+    app->Run();
 
 
 
@@ -110,9 +114,10 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     }
 
     CleanupDevice();
+
     app->Shutdown();
 
-    return ( int )msg.wParam;
+    return (int)0;//msg.wParam;
 }
 
 
@@ -692,6 +697,3 @@ void Render()
     // Present our back buffer to our front buffer
     g_pSwapChain->Present( 0, 0 );
 }
-
-
-

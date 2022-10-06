@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Core/Shaders.h"
 
 struct Direct3DDesc
 {
@@ -19,10 +19,21 @@ class Direct3D
 public:
 	~Direct3D() {}
 
+	static void Kill();
 	static Direct3D* GetInstance();
 
 	bool Init(HWND hwnd, bool vsync);
 	void Shutdown();
+
+	void BeginFrame(const std::array<float, 4> clearColor);
+	void EndFrame();
+
+	ID3D11Device* GetDevice() { return m_device.Get(); }
+	ID3D11DeviceContext* GetContext() { return m_context.Get(); }
+
+
+	void CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile = "vs_4_0", LPCSTR entryPoint = "VS");
+	void CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profile = "ps_4_0", LPCSTR entryPoint = "PS");
 
 private:
 	Direct3D();

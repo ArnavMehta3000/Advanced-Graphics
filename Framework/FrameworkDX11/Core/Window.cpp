@@ -32,7 +32,7 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 	RegisterClassEx(&wcex);
 
 	DWORD style = WS_OVERLAPPEDWINDOW;
-	RECT rc{ 0, 0, (UINT)m_clientWidth, (UINT)m_clientHeight };
+	RECT rc{ 0, 0, static_cast<LONG>(m_clientWidth), static_cast<LONG>(m_clientHeight) };
 	AdjustWindowRect(&rc, style, FALSE);
 	
 	m_windowWidth  = rc.right - rc.left;
@@ -52,10 +52,7 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 
 	// TODO: Add error logging here
 	if (!m_hWnd)
-	{
-		auto e = GetLastError();
-		__debugbreak();
-	}
+			__debugbreak();
 
 
 	ShowWindow(m_hWnd, SW_SHOW);

@@ -9,7 +9,12 @@ Direct3D::Direct3D()
 	m_featureLevel(D3D_FEATURE_LEVEL_11_0),
 	m_d3dDesc()
 {
+}
 
+void Direct3D::Kill()
+{
+	delete s_instance;
+	s_instance = nullptr;
 }
 
 Direct3D* Direct3D::GetInstance()
@@ -160,7 +165,7 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 	dsvDesc.Format = dstDesc.Format;
 	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	dsvDesc.Texture2D.MipSlice = 0;
-	//HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
+	HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
 	m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 	
@@ -187,3 +192,194 @@ void Direct3D::Shutdown()
 	COM_RELEASE(m_device);
 }
 
+
+void Direct3D::BeginFrame(const std::array<float, 4> clearColor)
+{
+	m_context->ClearRenderTargetView(m_renderTargetView.Get(), clearColor.data());
+}
+
+void Direct3D::EndFrame()
+{
+	if (m_d3dDesc.IsVsync)
+		m_swapChain->Present(1, 0);  // Lock present to refresh rate
+	else
+		m_swapChain->Present(0, 0);  // Present as fast as possible
+}
+
+
+
+void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
+{
+	if (!vs) return;
+
+	vs->Name = srcFile;
+
+	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#ifdef _DEBUG
+	shaderFlags |= D3DCOMPILE_DEBUG;
+	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif // _DEBUG
+	
+	ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		srcFile, 
+		nullptr, 
+		nullptr, 
+		entryPoint, 
+		profile, 
+		shaderFlags, 
+		0, 
+		vs->Blob.ReleaseAndGetAddressOf(), 
+		errorBlob.ReleaseAndGetAddressOf()
+	);
+
+	if (FAILED(hr))  // Failed to compile
+	{
+		if (errorBlob)
+		{
+			// TODO: Log error message (handle hot reloading here)
+			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			COM_RELEASE(errorBlob);
+		}
+		HR(hr);
+	}
+	else  // Compiled warnings
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			COM_RELEASE(errorBlob);
+		}
+	}
+	COM_RELEASE(errorBlob);
+
+	// Create vertex shader
+	HR(m_device->CreateVertexShader(vs->Blob->GetBufferPointer(), vs->Blob->GetBufferSize(), nullptr, vs->Shader.ReleaseAndGetAddressOf()));
+
+	
+	// Create input layout from vertex shader
+	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11shader/nn-d3d11shader-id3d11shaderreflection
+	{
+		ComPtr<ID3D11ShaderReflection> vsReflection = nullptr;
+		HR(D3DReflect(vs->Blob->GetBufferPointer(),
+			vs->Blob->GetBufferSize(),
+			IID_PPV_ARGS(vsReflection.ReleaseAndGetAddressOf()))  // Macro usage from https://learn.microsoft.com/en-us/windows/win32/api/combaseapi/nf-combaseapi-iid_ppv_args
+		);
+
+		CREATE_ZERO(D3D11_SHADER_DESC, desc);
+		HR(vsReflection->GetDesc(&desc));
+
+		std::vector<D3D11_INPUT_ELEMENT_DESC> inputLayout;
+		for (size_t i = 0; i < desc.InputParameters; i++)
+		{
+			// Get input parameter at index
+			CREATE_ZERO(D3D11_SIGNATURE_PARAMETER_DESC, paramDesc);
+			vsReflection->GetInputParameterDesc(i, &paramDesc);
+
+			// Create input element descripton
+			D3D11_INPUT_ELEMENT_DESC elementDesc;
+			elementDesc.SemanticName = paramDesc.SemanticName;
+			elementDesc.SemanticIndex = paramDesc.SemanticIndex;
+			elementDesc.InputSlot = 0;
+			elementDesc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+			elementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+			elementDesc.InstanceDataStepRate = 0;
+
+			// Determine DXGI format
+			if (paramDesc.Mask == 1)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)
+					elementDesc.Format = DXGI_FORMAT_R32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)
+					elementDesc.Format = DXGI_FORMAT_R32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)
+					elementDesc.Format = DXGI_FORMAT_R32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 3)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 7)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32B32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32B32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32B32_FLOAT;
+			}
+			else if (paramDesc.Mask <= 15)
+			{
+				if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32B32A32_UINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
+				else if (paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)
+					elementDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+			}
+
+			inputLayout.push_back(elementDesc);
+		}
+
+		HR(m_device->CreateInputLayout(
+			&inputLayout[0],
+			inputLayout.size(),
+			vs->Blob->GetBufferPointer(),
+			vs->Blob->GetBufferSize(),
+			vs->InputLayout.ReleaseAndGetAddressOf()
+		));
+
+		COM_RELEASE(vsReflection);
+	}
+}
+
+void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
+{
+	ps->Name = srcFile;
+
+	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#ifdef _DEBUG
+		shaderFlags |= D3DCOMPILE_DEBUG;
+	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif // _DEBUG
+
+		ComPtr<ID3DBlob> errorBlob = nullptr;
+	HRESULT hr = D3DCompileFromFile(
+		srcFile,
+		nullptr,
+		nullptr,
+		entryPoint,
+		profile,
+		shaderFlags,
+		0,
+		ps->Blob.ReleaseAndGetAddressOf(),
+		errorBlob.ReleaseAndGetAddressOf()
+	);
+
+	if (FAILED(hr))  // Failed to compile
+	{
+		if (errorBlob)
+		{
+			// TODO: Log error message (handle hot reloading here)
+			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			COM_RELEASE(errorBlob);
+		}
+		HR(hr);
+	}
+	else  // Compiled warnings
+	{
+		if (errorBlob)
+		{
+			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			COM_RELEASE(errorBlob);
+		}
+	}
+	COM_RELEASE(errorBlob);
+
+	HR(m_device->CreatePixelShader(ps->Blob->GetBufferPointer(), ps->Blob->GetBufferSize(), nullptr, ps->Shader.ReleaseAndGetAddressOf()));
+}

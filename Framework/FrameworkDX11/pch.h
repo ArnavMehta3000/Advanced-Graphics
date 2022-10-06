@@ -1,8 +1,18 @@
 #pragma once
 #define _XM_NO_INTRINSICS_
-#define WIN32_LEAN_AND_MEAN
 
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+
+// For checking memory leaks
+#ifdef _DEBUG
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+#include <malloc.h>  
+#endif // _DEBUG
+
+
 #include <iostream>
 #include <tchar.h>
 #include <memory>
@@ -10,6 +20,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <array>
 #include <map>
 #include <unordered_map>
 
@@ -26,17 +37,14 @@
 
 using namespace DirectX;
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_win32.h"
+#include "imgui/imgui_impl_dx11.h"
+
 
 
 template <typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;
-
-template <typename T>
-using UniquePtr = std::unique_ptr<T>;
-
-template <typename T>
-using SharedPtr = std::shared_ptr<T>;
-
 
 
 template <class T>

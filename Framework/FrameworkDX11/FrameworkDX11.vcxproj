@@ -90,7 +90,7 @@
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <LargeAddressAware>true</LargeAddressAware>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <DataExecutionPrevention>true</DataExecutionPrevention>
@@ -199,6 +199,7 @@
   <ItemGroup>
     <ClInclude Include="Core\App.h" />
     <ClInclude Include="Core\Direct3D.h" />
+    <ClInclude Include="Core\Shaders.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DrawableGameObject.h" />
     <ClInclude Include="pch.h" />
@@ -210,6 +211,7 @@
   <ItemGroup>
     <ClCompile Include="Core\App.cpp" />
     <ClCompile Include="Core\Direct3D.cpp" />
+    <ClCompile Include="Core\Shaders.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DrawableGameObject.cpp" />
     <ClCompile Include="main.cpp" />
@@ -224,14 +226,12 @@
     <ClCompile Include="Core\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Resources\stone.dds" />
-  </ItemGroup>
-  <ItemGroup>
     <FxCompile Include="shader.fx">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Profile|x64'">true</ExcludedFromBuild>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
