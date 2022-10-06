@@ -1,5 +1,7 @@
 #pragma once
 
+#include "structures.h"
+
 class Window;
 struct VertexShader;
 struct PixelShader;
@@ -27,5 +29,7 @@ private:
 	PixelShader* m_pixelShader;
 
 	ComPtr<ID3D11Buffer> m_constantBuffer;
+	ComPtr<ID3D11Buffer> m_lightCBuffer;
+
 };
 

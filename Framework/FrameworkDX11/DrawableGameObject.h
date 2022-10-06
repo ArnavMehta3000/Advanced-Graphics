@@ -12,12 +12,7 @@
 
 using namespace DirectX;
 
-struct SimpleVertex
-{
-	XMFLOAT3 Pos;
-	XMFLOAT3 Normal;
-	XMFLOAT2 TexCoord;
-};
+
 
 class DrawableGameObject
 {
