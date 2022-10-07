@@ -2,6 +2,8 @@
 #include "IDrawable.h"
 #include "Core/Buffers.h"
 
+class Texture2D;
+
 struct Transform
 {
 	sm::Vector3 Position;
@@ -53,4 +55,5 @@ public:
 private:
 	VertexBuffer* m_vertexBuffer;
 	IndexBuffer* m_indexBuffer;
+	Texture2D* m_texture;
 };

@@ -34,7 +34,7 @@ public:
 
 	ID3D11Device* GetDevice() { return m_device.Get(); }
 	ID3D11DeviceContext* GetContext() { return m_context.Get(); }
-	ID3D11SamplerState* GetSamplerState()  { return m_samplerAnisotropicWrap.Get(); }
+	ComPtr<ID3D11SamplerState> GetSamplerState()  { return m_samplerAnisotropicWrap; }
 
 
 	void CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile = "vs_4_0", LPCSTR entryPoint = "VS");

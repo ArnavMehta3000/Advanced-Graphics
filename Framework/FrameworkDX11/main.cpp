@@ -373,7 +373,7 @@ HRESULT InitDevice()
     g_pImmediateContext->OMSetRenderTargets( 1, &g_pRenderTargetView, g_pDepthStencilView );
 
     // Setup the viewport
-    D3D11_VIEWPORT vp;
+    CREATE_ZERO(D3D11_VIEWPORT, vp);
     vp.Width = (FLOAT)width;
     vp.Height = (FLOAT)height;
     vp.MinDepth = 0.0f;
@@ -675,7 +675,7 @@ void Render()
 	XMMATRIX mGO = XMLoadFloat4x4(g_GameObject.getTransform());
 
     // store this and the view / projection in a constant buffer for the vertex shader to use
-    ConstantBuffer cb1;
+    CREATE_ZERO(ConstantBuffer, cb1);
 	cb1.mWorld = XMMatrixTranspose( mGO);
 	cb1.mView = XMMatrixTranspose( g_View );
 	cb1.mProjection = XMMatrixTranspose( g_Projection );

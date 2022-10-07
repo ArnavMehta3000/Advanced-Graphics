@@ -22,9 +22,9 @@ public:
 
 protected:
 	virtual void OnUpdate(const double dt);
-	virtual void OnRender(const double dt);
+	virtual void OnRender();
 #ifdef ENABLE_IMGUI
-	virtual void OnGui(const double dt);
+	virtual void OnGui();
 #endif // ENABLE_IMGUI
 
 

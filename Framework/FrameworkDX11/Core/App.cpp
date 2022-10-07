@@ -78,10 +78,10 @@ bool App::Init()
 #endif // ENABLE_IMGUI
 
 	m_gameObject = new GameObject(
-		sizeof(SimpleVertex) * ARRAYSIZE(Primitives::CubeVertices), 
-		Primitives::CubeVertices,
-		sizeof(WORD) * ARRAYSIZE(Primitives::CubeIndices),
-		Primitives::CubeIndices);
+		sizeof(SimpleVertex) * ARRAYSIZE(Primitives::Cube::CubeVertices), 
+		Primitives::Cube::CubeVertices,
+		sizeof(WORD) * ARRAYSIZE(Primitives::Cube::CubeIndices),
+		Primitives::Cube::CubeIndices);
 
 	
 	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
@@ -92,6 +92,7 @@ bool App::Init()
 	
 	m_gameObject->Set();
 
+	D3D_CONTEXT->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
 
 	return true;
@@ -116,21 +117,15 @@ void App::Run()
 	//auto a = D3D->CreateVertexShader(L"#$");
 	while (m_window->ProcessMessages())
 	{
-		// Set scene background color
-		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
-
-
+		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });  // Set scene background color
 
 		OnUpdate(0.0);
-		OnRender(0.0);
-#ifdef ENABLE_IMGUI
-		OnGui(0.0);
-#endif // ENABLE_IMGUI
+		OnRender();
+#ifdef ENABLE_IMGUI	
+		OnGui(); 
+#endif
 
-
-
-		// Present to screen
-		D3D->EndFrame();
+		D3D->EndFrame();  // Present to screen
 	}
 }
 
@@ -141,16 +136,14 @@ void App::OnUpdate(double dt)
 	m_gameObject->Update(dt);
 }
 
-void App::OnRender(double dt)
+void App::OnRender()
 {
 	m_gameObject->Draw();
 }
 
 #ifdef ENABLE_IMGUI
-void App::OnGui(const double dt)
+void App::OnGui()
 {
-	UNREFERENCED_PARAMETER(dt);
-
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();

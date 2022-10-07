@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "Direct3D.h"
+#include "DDSTextureLoader.h"
+#include "Core/Texture2D.h"
 
 Direct3D* Direct3D::s_instance = nullptr;
 
@@ -293,7 +295,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 			vsReflection->GetInputParameterDesc(i, &paramDesc);
 
 			// Create input element descripton
-			D3D11_INPUT_ELEMENT_DESC elementDesc;
+			CREATE_ZERO(D3D11_INPUT_ELEMENT_DESC, elementDesc);
 			elementDesc.SemanticName         = paramDesc.SemanticName;
 			elementDesc.SemanticIndex        = paramDesc.SemanticIndex;
 			elementDesc.InputSlot            = 0;
@@ -433,4 +435,12 @@ void Direct3D::CreateIndexBuffer(IndexBuffer*& ib, UINT byteWidth, const void* d
 	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, initData);
 	initData.pSysMem = data;
 	HR(m_device->CreateBuffer(&bd, &initData, ib->Buffer.ReleaseAndGetAddressOf()));
+}
+
+void Direct3D::CreateTexture(Texture2D*& tex, const wchar_t* fileName)
+{
+	if (!tex)
+		tex = new Texture2D();
+
+	HR(CreateDDSTextureFromFile(m_device.Get(), fileName, nullptr, tex->ResourceView.ReleaseAndGetAddressOf()));
 }
