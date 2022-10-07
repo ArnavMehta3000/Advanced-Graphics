@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "DrawableGameObject.h"
-#include "Meshes/Primitives.h"
+#include "Utils/Primitives.h"
 
 using namespace std;
 using namespace DirectX;

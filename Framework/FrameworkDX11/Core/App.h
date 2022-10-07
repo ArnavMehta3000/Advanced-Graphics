@@ -2,6 +2,8 @@
 
 #include "structures.h"
 
+#define ENABLE_IMGUI
+
 class Window;
 struct VertexShader;
 struct PixelShader;
@@ -19,12 +21,15 @@ public:
 protected:
 	virtual void OnUpdate(const double dt);
 	virtual void OnRender(const double dt);
+#ifdef ENABLE_IMGUI
 	virtual void OnGui(const double dt);
+#endif // ENABLE_IMGUI
+
 
 protected:
-	Window* m_window;
 
 private:
+	Window* m_window;
 	VertexShader* m_vertexShader;
 	PixelShader* m_pixelShader;
 

@@ -270,7 +270,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 		HR(vsReflection->GetDesc(&desc));
 
 		std::vector<D3D11_INPUT_ELEMENT_DESC> inputLayout;
-		for (size_t i = 0; i < desc.InputParameters; i++)
+		for (UINT i = 0; i < desc.InputParameters; i++)
 		{
 			// Get input parameter at index
 			CREATE_ZERO(D3D11_SIGNATURE_PARAMETER_DESC, paramDesc);
@@ -278,11 +278,11 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 
 			// Create input element descripton
 			D3D11_INPUT_ELEMENT_DESC elementDesc;
-			elementDesc.SemanticName = paramDesc.SemanticName;
-			elementDesc.SemanticIndex = paramDesc.SemanticIndex;
-			elementDesc.InputSlot = 0;
-			elementDesc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-			elementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+			elementDesc.SemanticName         = paramDesc.SemanticName;
+			elementDesc.SemanticIndex        = paramDesc.SemanticIndex;
+			elementDesc.InputSlot            = 0;
+			elementDesc.AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
+			elementDesc.InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
 			elementDesc.InstanceDataStepRate = 0;
 
 			// Determine DXGI format
@@ -328,7 +328,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 
 		HR(m_device->CreateInputLayout(
 			&inputLayout[0],
-			inputLayout.size(),
+			(UINT)inputLayout.size(),
 			vs->Blob->GetBufferPointer(),
 			vs->Blob->GetBufferSize(),
 			vs->InputLayout.ReleaseAndGetAddressOf()

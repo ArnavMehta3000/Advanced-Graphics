@@ -199,9 +199,11 @@
   <ItemGroup>
     <ClInclude Include="Core\App.h" />
     <ClInclude Include="Core\Direct3D.h" />
+    <ClInclude Include="Core\IDrawable.h" />
     <ClInclude Include="Core\Shaders.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DrawableGameObject.h" />
+    <ClInclude Include="Core\GameObject.h" />
     <ClInclude Include="Imgui\imconfig.h" />
     <ClInclude Include="Imgui\imgui.h" />
     <ClInclude Include="Imgui\imgui_impl_dx11.h" />
@@ -210,7 +212,7 @@
     <ClInclude Include="Imgui\imstb_rectpack.h" />
     <ClInclude Include="Imgui\imstb_textedit.h" />
     <ClInclude Include="Imgui\imstb_truetype.h" />
-    <ClInclude Include="Meshes\Primitives.h" />
+    <ClInclude Include="Utils\Primitives.h" />
     <ClInclude Include="pch.h" />
     <CLInclude Include="resource.h" />
     <ClInclude Include="structures.h" />
@@ -220,6 +222,7 @@
   <ItemGroup>
     <ClCompile Include="Core\App.cpp" />
     <ClCompile Include="Core\Direct3D.cpp" />
+    <ClCompile Include="Core\GameObject.cpp" />
     <ClCompile Include="Core\Shaders.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DrawableGameObject.cpp" />

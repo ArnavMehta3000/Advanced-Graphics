@@ -7,6 +7,7 @@
 // For checking memory leaks
 #ifdef _DEBUG
 #define _CRTDBG_MAP_ALLOC
+#define _CRTDBG_MAP_ALLOC_NEW
 #include <stdlib.h>
 #include <crtdbg.h>
 #include <malloc.h>  
@@ -31,11 +32,14 @@
 #include <d3d11_1.h>
 #include <wrl.h>
 
+#include <SimpleMath.h>
+
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "D3DCompiler.lib")
 
 using namespace DirectX;
+namespace sm = DirectX::SimpleMath;
 
 template <typename T>
 using ComPtr = Microsoft::WRL::ComPtr<T>;

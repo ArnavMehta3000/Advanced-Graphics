@@ -128,7 +128,7 @@ HRESULT InitWindow( HINSTANCE hInstance, int nCmdShow )
 {
 
     // Register class
-    WNDCLASSEX wcex;
+    CREATE_ZERO(WNDCLASSEX, wcex);
     wcex.cbSize = sizeof( WNDCLASSEX );
     wcex.style = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = WndProc;

@@ -98,8 +98,13 @@ LRESULT Window::MessageRouter(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return window->MyWndProc(hWnd, msg, wParam, lParam);
 }
 
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT Window::MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		return true;
+
 	PAINTSTRUCT ps;
 	HDC hdc;
 

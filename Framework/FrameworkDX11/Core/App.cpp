@@ -3,18 +3,20 @@
 #include "Core/Window.h"
 #include "Core/Direct3D.h"
 #include "Core/Shaders.h"
+
+#ifdef ENABLE_IMGUI
 #include <Imgui/imgui_impl_dx11.h>
 #include <Imgui/imgui_impl_win32.h>
+#include "Imgui/imgui.h"  
+#endif // ENABLE_IMGUI
 
-#include "Imgui/imgui.h"
+
 
 App::App(HINSTANCE hInst)
 	:
 	m_window(nullptr)
 {
-	//m_window = std::make_unique<Window>(hInst, 1280, 720);
 	m_window = new Window(hInst, 1280, 720);
-	auto s = sizeof(m_window);
 }
 
 App::~App()
@@ -56,14 +58,17 @@ bool App::Init()
 	bd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
 	HR(D3D->GetDevice()->CreateBuffer(&bd, nullptr, m_lightCBuffer.ReleaseAndGetAddressOf()));
-
+	
+#ifdef ENABLE_IMGUI
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
-	ImGuiIO& io = ImGui::GetIO();
+	ImGui::GetIO();
 	ImGui_ImplWin32_Init(m_window->GetHandle());
 	ImGui_ImplDX11_Init(D3D->GetDevice(), D3D->GetContext());
 	ImGui::StyleColorsDark();
+#endif // ENABLE_IMGUI
+
 	
 	D3D->GetContext()->IASetInputLayout(m_vertexShader->InputLayout.Get());
 	return true;
@@ -91,15 +96,14 @@ void App::Run()
 		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
 
 
-		// TODO: Make vertex and pixel shaders, mayber use classs instead of structs
-		// Make shaders hot reloadable 
-		// Maybe generate input layout at runtime
-
-
 
 		OnUpdate(0.0);
 		OnRender(0.0);
+#ifdef ENABLE_IMGUI
 		OnGui(0.0);
+#endif // ENABLE_IMGUI
+
+
 
 		// Present to screen
 		D3D->EndFrame();
@@ -118,6 +122,7 @@ void App::OnRender(double dt)
 	dt;
 }
 
+#ifdef ENABLE_IMGUI
 void App::OnGui(const double dt)
 {
 	ImGui_ImplDX11_NewFrame();
@@ -126,9 +131,12 @@ void App::OnGui(const double dt)
 
 	// UI render here
 	{
-		ImGui::ShowDemoWindow();
+		ImGui::Begin("Test");
+		ImGui::Text("Hello");
+		ImGui::End();
 	}
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
+#endif // ENABLE_IMGUI
