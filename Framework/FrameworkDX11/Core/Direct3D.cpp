@@ -147,27 +147,29 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 
 
 	// Create depth stencil texture
-	CREATE_ZERO(D3D11_TEXTURE2D_DESC, dstDesc);
-	dstDesc.Width              = width;
-	dstDesc.Height             = height;
-	dstDesc.MipLevels          = 1;
-	dstDesc.ArraySize          = 1;
-	dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	dstDesc.SampleDesc.Count   = 1;
-	dstDesc.SampleDesc.Quality = 0;
-	dstDesc.Usage              = D3D11_USAGE_DEFAULT;
-	dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
-	dstDesc.CPUAccessFlags     = 0;
-	dstDesc.MiscFlags          = 0;
-	HR(m_device->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
+	{
+		CREATE_ZERO(D3D11_TEXTURE2D_DESC, dstDesc);
+		dstDesc.Width = width;
+		dstDesc.Height = height;
+		dstDesc.MipLevels = 1;
+		dstDesc.ArraySize = 1;
+		dstDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dstDesc.SampleDesc.Count = 1;
+		dstDesc.SampleDesc.Quality = 0;
+		dstDesc.Usage = D3D11_USAGE_DEFAULT;
+		dstDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		dstDesc.CPUAccessFlags = 0;
+		dstDesc.MiscFlags = 0;
+		HR(m_device->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
 
-	CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
-	dsvDesc.Format = dstDesc.Format;
-	dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	dsvDesc.Texture2D.MipSlice = 0;
-	HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
+		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
+		dsvDesc.Format = dstDesc.Format;
+		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Texture2D.MipSlice = 0;
+		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
-	m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+		m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+	}
 	
 	// Craete vieport
 	CREATE_ZERO(D3D11_VIEWPORT, vp);
@@ -179,11 +181,23 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 	vp.TopLeftY = 0;
 	m_context->RSSetViewports(1, &vp);
 
+	// Create sampler
+	CREATE_ZERO(D3D11_SAMPLER_DESC, sampDesc);
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	HR(m_device->CreateSamplerState(&sampDesc, m_samplerAnisotropicWrap.ReleaseAndGetAddressOf()));
+
 	return true;
 }
 
 void Direct3D::Shutdown()
 {
+	COM_RELEASE(m_samplerAnisotropicWrap);
 	COM_RELEASE(m_depthStencilTexture);
 	COM_RELEASE(m_depthStencilView);
 	COM_RELEASE(m_renderTargetView);
@@ -386,8 +400,14 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 	HR(m_device->CreatePixelShader(ps->Blob->GetBufferPointer(), ps->Blob->GetBufferSize(), nullptr, ps->Shader.ReleaseAndGetAddressOf()));
 }
 
-void Direct3D::CreateVertexBuffer(ComPtr<ID3D11Buffer>& vb, UINT byteWidth, const void* data, D3D11_USAGE usage, UINT cpuAccessFlags)
+
+void Direct3D::CreateVertexBuffer(VertexBuffer*& vb, UINT typeSize, UINT byteWidth, const void* data, D3D11_USAGE usage, UINT cpuAccessFlags)
 {
+	if (!vb)
+		vb = new VertexBuffer();
+
+	vb->Stride = typeSize;
+
 	CREATE_ZERO(D3D11_BUFFER_DESC, bd);
 	bd.Usage = usage;
 	bd.ByteWidth = byteWidth;
@@ -396,5 +416,21 @@ void Direct3D::CreateVertexBuffer(ComPtr<ID3D11Buffer>& vb, UINT byteWidth, cons
 
 	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, initData);
 	initData.pSysMem = data;
-	m_device->CreateBuffer(&bd, &initData, vb.ReleaseAndGetAddressOf());
+	HR(m_device->CreateBuffer(&bd, &initData, vb->Buffer.ReleaseAndGetAddressOf()));
+}
+
+void Direct3D::CreateIndexBuffer(IndexBuffer*& ib, UINT byteWidth, const void* data, D3D11_USAGE usage, UINT cpuAccessFlags)
+{
+	if (!ib)
+		ib = new IndexBuffer();
+
+	CREATE_ZERO(D3D11_BUFFER_DESC, bd);
+	bd.Usage = usage;
+	bd.ByteWidth = byteWidth;
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = cpuAccessFlags;
+
+	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, initData);
+	initData.pSysMem = data;
+	HR(m_device->CreateBuffer(&bd, &initData, ib->Buffer.ReleaseAndGetAddressOf()));
 }

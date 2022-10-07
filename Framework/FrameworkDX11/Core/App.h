@@ -6,6 +6,7 @@
 #define ENABLE_IMGUI
 
 class Window;
+class GameObject;
 struct VertexShader;
 struct PixelShader;
 
@@ -27,9 +28,8 @@ protected:
 #endif // ENABLE_IMGUI
 
 
-protected:
-
 private:
+	GameObject* m_gameObject;
 	Window* m_window;
 	VertexShader* m_vertexShader;
 	PixelShader* m_pixelShader;

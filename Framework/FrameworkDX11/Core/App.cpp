@@ -1,9 +1,12 @@
 #include "pch.h"
 #include "App.h"
+
 #include "Core/Window.h"
 #include "Core/Direct3D.h"
 #include "Core/Shaders.h"
-#include "GameObject.h"
+#include "Core/GameObject.h"
+#include "Utils/Primitives.h"
+
 
 #ifdef ENABLE_IMGUI
 #include <Imgui/imgui_impl_dx11.h>
@@ -15,7 +18,10 @@
 
 App::App(HINSTANCE hInst)
 	:
-	m_window(nullptr)
+	m_window(nullptr),
+	m_vertexShader(nullptr),
+	m_pixelShader(nullptr),
+	m_gameObject(nullptr)
 {
 	m_window = new Window(hInst, 1280, 720);
 }
@@ -52,14 +58,14 @@ bool App::Init()
 	bd.ByteWidth         = sizeof(ConstantBuffer);
 	bd.BindFlags         = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags    = 0;
-	HR(D3D->GetDevice()->CreateBuffer(&bd, nullptr, m_constantBuffer.ReleaseAndGetAddressOf()));
+	HR(D3D_DEVICE->CreateBuffer(&bd, nullptr, m_constantBuffer.ReleaseAndGetAddressOf()));
 
 	// Create the light constant buffer
 	bd.Usage          = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth      = sizeof(LightPropertiesConstantBuffer);
 	bd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
-	HR(D3D->GetDevice()->CreateBuffer(&bd, nullptr, m_lightCBuffer.ReleaseAndGetAddressOf()));
+	HR(D3D_DEVICE->CreateBuffer(&bd, nullptr, m_lightCBuffer.ReleaseAndGetAddressOf()));
 	
 #ifdef ENABLE_IMGUI
 	IMGUI_CHECKVERSION();
@@ -67,14 +73,27 @@ bool App::Init()
 
 	ImGui::GetIO();
 	ImGui_ImplWin32_Init(m_window->GetHandle());
-	ImGui_ImplDX11_Init(D3D->GetDevice(), D3D->GetContext());
+	ImGui_ImplDX11_Init(D3D_DEVICE, D3D_CONTEXT);
 	ImGui::StyleColorsDark();
 #endif // ENABLE_IMGUI
 
-	GameObject* go = new GameObject();
+	m_gameObject = new GameObject(
+		sizeof(SimpleVertex) * ARRAYSIZE(Primitives::CubeVertices), 
+		Primitives::CubeVertices,
+		sizeof(WORD) * ARRAYSIZE(Primitives::CubeIndices),
+		Primitives::CubeIndices);
 
+	
+	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
+	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
 
-	D3D->GetContext()->IASetInputLayout(m_vertexShader->InputLayout.Get());
+	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
+	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
+	
+	m_gameObject->Set();
+
+	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
+
 	return true;
 }
 
@@ -84,6 +103,7 @@ void App::Shutdown()
 	COM_RELEASE(m_constantBuffer);
 	COM_RELEASE(m_lightCBuffer);
 
+	delete m_gameObject;
 	delete m_vertexShader;
 	delete m_pixelShader;
 
@@ -118,12 +138,12 @@ void App::Run()
 
 void App::OnUpdate(double dt)
 {
-	dt;
+	m_gameObject->Update(dt);
 }
 
 void App::OnRender(double dt)
 {
-	dt;
+	m_gameObject->Draw();
 }
 
 #ifdef ENABLE_IMGUI
@@ -137,7 +157,7 @@ void App::OnGui(const double dt)
 
 	// UI render here
 	{
-		ImGui::Begin("Test");
+		ImGui::Begin("Imgui Test");
 		ImGui::Text("Hello");
 		ImGui::End();
 	}

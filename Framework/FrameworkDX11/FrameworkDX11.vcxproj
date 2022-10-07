@@ -198,9 +198,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Core\App.h" />
+    <ClInclude Include="Core\Buffers.h" />
     <ClInclude Include="Core\Direct3D.h" />
     <ClInclude Include="Core\IDrawable.h" />
     <ClInclude Include="Core\Shaders.h" />
+    <ClInclude Include="Core\Texture2D.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="DrawableGameObject.h" />
@@ -222,10 +224,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\App.cpp" />
+    <ClCompile Include="Core\Buffers.cpp" />
     <ClCompile Include="Core\Direct3D.cpp" />
     <ClCompile Include="Core\GameObject.cpp" />
     <ClCompile Include="Core\Shaders.cpp" />
-    <ClCompile Include="DDSTextureLoader.cpp" />
+    <ClCompile Include="Core\Texture2D.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="DrawableGameObject.cpp" />
     <ClCompile Include="Imgui\imgui.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
