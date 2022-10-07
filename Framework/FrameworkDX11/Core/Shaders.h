@@ -1,6 +1,5 @@
 #pragma once
 
-
 struct VertexShader
 {
 	VertexShader() {}

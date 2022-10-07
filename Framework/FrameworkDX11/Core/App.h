@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Defines.h"
 #include "structures.h"
 
 #define ENABLE_IMGUI

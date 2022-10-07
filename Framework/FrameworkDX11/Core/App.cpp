@@ -3,6 +3,7 @@
 #include "Core/Window.h"
 #include "Core/Direct3D.h"
 #include "Core/Shaders.h"
+#include "GameObject.h"
 
 #ifdef ENABLE_IMGUI
 #include <Imgui/imgui_impl_dx11.h>
@@ -22,6 +23,7 @@ App::App(HINSTANCE hInst)
 App::~App()
 {
 	delete m_window;
+	_CrtDumpMemoryLeaks();
 }
 
 bool App::Init()
@@ -69,7 +71,9 @@ bool App::Init()
 	ImGui::StyleColorsDark();
 #endif // ENABLE_IMGUI
 
-	
+	GameObject* go = new GameObject();
+
+
 	D3D->GetContext()->IASetInputLayout(m_vertexShader->InputLayout.Get());
 	return true;
 }
@@ -125,6 +129,8 @@ void App::OnRender(double dt)
 #ifdef ENABLE_IMGUI
 void App::OnGui(const double dt)
 {
+	UNREFERENCED_PARAMETER(dt);
+
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();

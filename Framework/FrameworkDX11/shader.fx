@@ -1,14 +1,4 @@
-//--------------------------------------------------------------------------------------
-// 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-//--------------------------------------------------------------------------------------
-
-// the lighting equations in this code have been taken from https://www.3dgep.com/texturing-lighting-directx-11/
-// with some modifications by David White
-
-//--------------------------------------------------------------------------------------
-// Constant Buffer Variables
-//--------------------------------------------------------------------------------------
+// Constant Buffers
 cbuffer ConstantBuffer : register( b0 )
 {
 	matrix World;
@@ -29,18 +19,13 @@ SamplerState samLinear : register(s0);
 struct _Material
 {
 	float4  Emissive;       // 16 bytes
-							//----------------------------------- (16 byte boundary)
 	float4  Ambient;        // 16 bytes
-							//------------------------------------(16 byte boundary)
 	float4  Diffuse;        // 16 bytes
-							//----------------------------------- (16 byte boundary)
-	float4  Specular;       // 16 bytes
-							//----------------------------------- (16 byte boundary)
+	float4  Specular;		// 16 bytes
 	float   SpecularPower;  // 4 bytes
 	bool    UseTexture;     // 4 bytes
-	float2  Padding;        // 8 bytes
-							//----------------------------------- (16 byte boundary)
-};  // Total:               // 80 bytes ( 5 * 16 )
+	float2  Padding;        // 16 bytes
+};         
 
 cbuffer MaterialProperties : register(b1)
 {
@@ -49,33 +34,25 @@ cbuffer MaterialProperties : register(b1)
 
 struct Light
 {
-	float4      Position;               // 16 bytes
-										//----------------------------------- (16 byte boundary)
-	float4      Direction;              // 16 bytes
-										//----------------------------------- (16 byte boundary)
-	float4      Color;                  // 16 bytes
-										//----------------------------------- (16 byte boundary)
-	float       SpotAngle;              // 4 bytes
-	float       ConstantAttenuation;    // 4 bytes
-	float       LinearAttenuation;      // 4 bytes
-	float       QuadraticAttenuation;   // 4 bytes
-										//----------------------------------- (16 byte boundary)
-	int         LightType;              // 4 bytes
-	bool        Enabled;                // 4 bytes
-	int2        Padding;                // 8 bytes
-										//----------------------------------- (16 byte boundary)
-};  // Total:                           // 80 bytes (5 * 16)
+	float4      Position;              // 16 bytes
+	float4      Direction;             // 16 bytes
+	float4      Color;                 // 16 bytes
+	float       SpotAngle;             // 4 bytes
+	float       ConstantAttenuation;   // 4 bytes
+	float       LinearAttenuation;     // 4 bytes
+	float       QuadraticAttenuation;  // 4 bytes
+	int         LightType;             // 4 bytes
+	bool        Enabled;               // 4 bytes
+	int2        Padding;               // 8 bytes
+};
 
 cbuffer LightProperties : register(b2)
 {
-	float4 EyePosition;                 // 16 bytes
-										//----------------------------------- (16 byte boundary)
-	float4 GlobalAmbient;               // 16 bytes
-										//----------------------------------- (16 byte boundary)
-	Light Lights[MAX_LIGHTS];           // 80 * 8 = 640 bytes
+	float4 EyePosition;        // 16 bytes
+	float4 GlobalAmbient;      // 16 bytes
+	Light Lights[MAX_LIGHTS];  // 80 * 8 = 640 bytes
 }; 
 
-//--------------------------------------------------------------------------------------
 struct VS_INPUT
 {
     float4 Pos : POSITION;
@@ -173,16 +150,18 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N)
 	return totalResult;
 }
 
+
+
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
 PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output = (PS_INPUT)0;
-    output.Pos = mul( input.Pos, World );
+    output.Pos      = mul( input.Pos, World );
 	output.worldPos = output.Pos;
-    output.Pos = mul( output.Pos, View );
-    output.Pos = mul( output.Pos, Projection );
+    output.Pos      = mul( output.Pos, View );
+    output.Pos      = mul( output.Pos, Projection );
 
 	// multiply the normal by the world transform (to go from model space to world space)
 	output.Norm = mul(float4(input.Norm, 0), World).xyz;
@@ -196,7 +175,6 @@ PS_INPUT VS( VS_INPUT input )
 //--------------------------------------------------------------------------------------
 // Pixel Shader
 //--------------------------------------------------------------------------------------
-
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
 	LightingResult lit = ComputeLighting(IN.worldPos, normalize(IN.Norm));

@@ -196,6 +196,8 @@ void Direct3D::Shutdown()
 void Direct3D::BeginFrame(const std::array<float, 4> clearColor)
 {
 	m_context->ClearRenderTargetView(m_renderTargetView.Get(), clearColor.data());
+	// NOTE: Stencil not being cleared
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0, 0);
 }
 
 void Direct3D::EndFrame()
@@ -382,4 +384,17 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 	COM_RELEASE(errorBlob);
 
 	HR(m_device->CreatePixelShader(ps->Blob->GetBufferPointer(), ps->Blob->GetBufferSize(), nullptr, ps->Shader.ReleaseAndGetAddressOf()));
+}
+
+void Direct3D::CreateVertexBuffer(ComPtr<ID3D11Buffer>& vb, UINT byteWidth, const void* data, D3D11_USAGE usage, UINT cpuAccessFlags)
+{
+	CREATE_ZERO(D3D11_BUFFER_DESC, bd);
+	bd.Usage = usage;
+	bd.ByteWidth = byteWidth;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = cpuAccessFlags;
+
+	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, initData);
+	initData.pSysMem = data;
+	m_device->CreateBuffer(&bd, &initData, vb.ReleaseAndGetAddressOf());
 }

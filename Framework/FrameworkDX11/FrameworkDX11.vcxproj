@@ -202,6 +202,7 @@
     <ClInclude Include="Core\IDrawable.h" />
     <ClInclude Include="Core\Shaders.h" />
     <ClInclude Include="DDSTextureLoader.h" />
+    <ClInclude Include="Defines.h" />
     <ClInclude Include="DrawableGameObject.h" />
     <ClInclude Include="Core\GameObject.h" />
     <ClInclude Include="Imgui\imconfig.h" />

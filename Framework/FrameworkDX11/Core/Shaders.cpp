@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Shaders.h"
+#include "Defines.h"
 
 void VertexShader::Release()
 {

@@ -75,15 +75,14 @@ DrawableGameObject		g_GameObject;
 int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow )
 {
 #ifdef _DEBUG
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    // Enable these flags to see memory dump at the end of the wWinMain
+    //_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #endif // _DEBUG
-
-    //_CrtSetBreakAlloc(143);
 
     UNREFERENCED_PARAMETER( hPrevInstance );
     UNREFERENCED_PARAMETER( lpCmdLine );
 
-    std::unique_ptr<App> app = std::make_unique<App>(hInstance);
+    App* app = new App(hInstance);
     app->Init();
     app->Run();
 
@@ -116,6 +115,7 @@ int WINAPI wWinMain( _In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
     CleanupDevice();
 
     app->Shutdown();
+    delete app;
 
     return (int)0;//msg.wParam;
 }
@@ -659,6 +659,8 @@ void Render()
     float t = calculateDeltaTime(); // capped at 60 fps
     if (t == 0.0f)
         return;
+
+    
 
     // Clear the back buffer
     g_pImmediateContext->ClearRenderTargetView( g_pRenderTargetView, Colors::MidnightBlue );

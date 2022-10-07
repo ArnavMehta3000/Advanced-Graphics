@@ -1,4 +1,5 @@
 #pragma once
+#include "Defines.h"
 #include "Core/Shaders.h"
 
 struct Direct3DDesc
@@ -34,6 +35,8 @@ public:
 
 	void CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile = "vs_4_0", LPCSTR entryPoint = "VS");
 	void CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profile = "ps_4_0", LPCSTR entryPoint = "PS");
+
+	void CreateVertexBuffer(ComPtr<ID3D11Buffer>& vb, UINT byteWidth, const void* data, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccessFlags = 0);
 
 private:
 	Direct3D();
