@@ -20,6 +20,10 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_pixelShader(nullptr),
 	m_gamObject(nullptr)
 {
+#ifdef _DEBUG
+	CREATE_AND_ATTACH_CONSOLE();
+#endif // _DEBUG
+
 	m_window = new Window(hInst, width, height);
 }
 
@@ -38,11 +42,6 @@ Application::~Application()
 
 bool Application::Init()
 {
-#ifdef _DEBUG
-	CREATE_AND_ATTACH_CONSOLE();
-#endif // _DEBUG
-
-
 	if (!D3D->Init(m_window->GetHandle(), true))
 	{
 		LOG("Failed to initialize Direct3D");
@@ -81,6 +80,8 @@ bool Application::Init()
 		
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	D3D->SetWireframe(true);
 
 	return true;
 }

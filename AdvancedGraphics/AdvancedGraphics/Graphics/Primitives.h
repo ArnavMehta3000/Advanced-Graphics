@@ -19,12 +19,12 @@ namespace Primitives
 		};
 
 		const static inline UINT VerticesTypeSize = sizeof(TriangleVertex);
-		const static inline UINT VerticesCount = 3;
-		const static inline UINT VerticesByteWidth = sizeof(TriangleVertex) * 3;
+		const static inline UINT VerticesCount = ARRAYSIZE(Vertices);
+		const static inline UINT VerticesByteWidth = sizeof(TriangleVertex) * ARRAYSIZE(Vertices);
 
 		const static inline UINT IndicesTypeSize = sizeof(WORD);
-		const static inline UINT IndicesCount = 3;
-		const static inline UINT IndicesByteWidth = sizeof(WORD) * 3;
+		const static inline UINT IndicesCount = ARRAYSIZE(Indices);
+		const static inline UINT IndicesByteWidth = sizeof(WORD) * ARRAYSIZE(Indices);
 	};
 
 	class Cube
@@ -32,63 +32,51 @@ namespace Primitives
 	public:
 		const static inline SimpleVertex Vertices[] =
 		{
-			{ XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f,  1.0f,  0.0f), XMFLOAT2(1.0f, 1.0f) },
-
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT2(1.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f, -1.0f,  0.0f), XMFLOAT2(0.0f, 1.0f) },
-
-			{ XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT2(1.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(-1.0f,  0.0f,  0.0f), XMFLOAT2(0.0f, 0.0f) },
-
-			{ XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT2(1.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(1.0f,  0.0f,  0.0f), XMFLOAT2(1.0f, 0.0f) },
-
-			{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 1.0f) },
-			{ XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f,  0.0f, -1.0f), XMFLOAT2(0.0f, 0.0f) },
-
-			{ XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT2(1.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f,  0.0f,  1.0f), XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3(1.0f,1.0f,-1.0f), XMFLOAT3(-0.5773f, 0.5773f, 0.5773f),   XMFLOAT2(1.0f, 0.0f) } ,
+			{ XMFLOAT3(-1.0f,1.0f, -1.0f), XMFLOAT3(-0.5773f, 0.5773f, -0.5773f),  XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, 1.0f,1.0f), XMFLOAT3(-0.5773f, -0.5773f, 0.5773f),  XMFLOAT2(1.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(-0.5773f, -0.5773f, -0.5773f), XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(1.0f,-1.0f,-1.0f),  XMFLOAT3(0.5773f, -0.5773f, -0.5773f),  XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f,-1.0f, -1.0f),  XMFLOAT3(0.5773f, 0.5773f, 0.5773f),    XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3(-1.0f, -1.0f,1.0f),  XMFLOAT3(0.5773f, 0.5773f, -0.5773f),   XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(1.0f, -1.0f, 1.0f),  XMFLOAT3(0.5773f, -0.5773f, 0.5773f),   XMFLOAT2(1.0f, 1.0f) }
 		};
+
+
 
 		const static inline WORD Indices[] =
 		{
-			3,1,0,
-			2,1,3,
+			// Face 1
+			0,1,2, // -x
+			0,2,3,
 
-			6,4,5,
-			7,4,6,
+			// Face 2
+			0,4,5, // +x
+			0,5,1,
 
-			11,9,8,
-			10,9,11,
+			// Face 3
+			1,5,6, // -y
+			1,6,2,
 
-			14,12,13,
-			15,12,14,
+			// Face 4
+			2,6,7, // +y
+			2,7,3,
 
-			19,17,16,
-			18,17,19,
+			// Face 5
+			3,7,4,// -z
+			3,4,0,
 
-			22,20,21,
-			23,20,22
+			// Face 6
+			4,7,6, // +z
+			4,6,7,
 		};
 
 		const static inline UINT VerticesTypeSize = sizeof(SimpleVertex);
-		const static inline UINT VerticesCount = 24;
-		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * 24;  // 24 vertices
+		const static inline UINT VerticesCount = ARRAYSIZE(Vertices);
+		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Vertices);
+
 		const static inline UINT IndicesTypeSize = sizeof(WORD);
-		const static inline UINT IndicesCount = 36;
-		const static inline UINT IndicesByteWidth = sizeof(WORD) * 36;  // 36 indices
+		const static inline UINT IndicesCount = ARRAYSIZE(Indices);
+		const static inline UINT IndicesByteWidth = sizeof(WORD) * ARRAYSIZE(Indices);
 	};
 }

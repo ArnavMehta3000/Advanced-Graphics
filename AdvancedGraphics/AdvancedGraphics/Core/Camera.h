@@ -18,11 +18,12 @@ public:
 	const sm::Matrix& GetViewProjection() const { return m_view * m_projection; }
 
 private:
-	void Move(double dt);
-	void Rotate(double dt);
+	void Move(double dt, const DirectX::Keyboard::State& kb);
+	void Rotate(double dt, const DirectX::Mouse::State& mouse);
 
 private:
 	sm::Vector3 m_position;
+	sm::Vector3 m_rotation;
 	sm::Vector3 m_target;
 	sm::Vector3 m_up;
 
@@ -31,6 +32,9 @@ private:
 	float m_height;
 	float m_nearPlane;
 	float m_farPlane;
+
+	float m_speed;
+	float m_sensitivity;
 
 	sm::Matrix m_view;
 	sm::Matrix m_projection;

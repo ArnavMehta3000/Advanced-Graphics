@@ -10,7 +10,9 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 
 	Application* app = new Application(hInstance, 1280, 720);
 	
-	if (!app->Init()) LOG("Failed to create application");
+	if (!app->Init()) 
+		LOG("Failed to create application");
+	
 	app->Run();
 	app->Shutdown();
 	

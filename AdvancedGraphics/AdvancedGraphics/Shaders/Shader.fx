@@ -1,9 +1,16 @@
 // ------------
 //  STRUCTURES
 // ------------
+//struct VS_IN  // For triangle
+//{
+//    float3 Position : POSITION;
+//};
+
 struct VS_IN
 {
     float3 Position : POSITION;
+    float3 Norm : NORMAL;
+    float2 Tex : TEXCOORD0;
 };
 
 struct VS_OUT

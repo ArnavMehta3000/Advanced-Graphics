@@ -44,4 +44,4 @@ void SafeRelease(T** ppT)
         LOG(error.str())\
         __debugbreak(); \
     }\
-}
+} 

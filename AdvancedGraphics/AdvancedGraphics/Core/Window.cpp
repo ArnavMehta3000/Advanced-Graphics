@@ -43,7 +43,7 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 		s_className,
 		L"Advanced Graphics Demo",
 		style,
-		CW_USEDEFAULT, CW_USEDEFAULT,  // Position (x,y)
+		300, 300,  // Position (x,y)
 		m_windowWidth, m_windowHeight,
 		nullptr,
 		nullptr,
@@ -57,6 +57,7 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 
 
 	ShowWindow(m_hWnd, SW_SHOW);
+	SetFocus(m_hWnd);
 
 
 	m_keyboard = std::make_unique<Keyboard>();
@@ -84,6 +85,8 @@ bool Window::ProcessMessages()
 			// Process input here
 			m_kbState = m_keyboard->GetState();
 			m_mouseState = m_mouse->GetState();
+
+			m_mouse->SetMode(m_mouseState.rightButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
 			return true;
 		}
 	}

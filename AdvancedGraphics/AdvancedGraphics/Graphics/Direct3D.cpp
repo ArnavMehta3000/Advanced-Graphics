@@ -184,8 +184,10 @@ bool Direct3D::Init(HWND hwnd, bool isVsync)
 	// Create rasterizer states
 	{
 		CREATE_ZERO(D3D11_RASTERIZER_DESC, rasterDesc);
-		rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
-		rasterDesc.CullMode = D3D11_CULL_NONE;
+		rasterDesc.MultisampleEnable     = TRUE;
+		rasterDesc.AntialiasedLineEnable = TRUE;
+		rasterDesc.FillMode              = D3D11_FILL_WIREFRAME;
+		rasterDesc.CullMode              = D3D11_CULL_NONE;
 		HR(m_device->CreateRasterizerState(&rasterDesc, m_rasterWireframe.ReleaseAndGetAddressOf()));
 
 		rasterDesc.FillMode = D3D11_FILL_SOLID;
