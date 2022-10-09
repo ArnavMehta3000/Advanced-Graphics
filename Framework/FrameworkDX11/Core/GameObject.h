@@ -2,7 +2,7 @@
 #include "IDrawable.h"
 #include "Core/Buffers.h"
 
-class Texture2D;
+struct Texture2D;
 
 struct Transform
 {

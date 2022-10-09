@@ -41,5 +41,5 @@ void GameObject::Update(double dt)
 
 void GameObject::Draw() const noexcept
 {
-	//D3D_CONTEXT->DrawIndexed()
+	D3D_CONTEXT->DrawIndexed(Primitives::Cube::IndicesCount, 0, 0);
 }

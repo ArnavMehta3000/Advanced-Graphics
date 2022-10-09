@@ -1,17 +1,10 @@
 #include "pch.h"
 #include "Direct3D.h"
-#include "DDSTextureLoader.h"
-#include "Core/Texture2D.h"
+#include "Core/Core.h"
 
 Direct3D* Direct3D::s_instance = nullptr;
 
-Direct3D::Direct3D()
-	:
-	m_driverType(D3D_DRIVER_TYPE_NULL),
-	m_featureLevel(D3D_FEATURE_LEVEL_11_0),
-	m_d3dDesc()
-{
-}
+Direct3D::Direct3D() {}
 
 void Direct3D::Kill()
 {
@@ -27,20 +20,15 @@ Direct3D* Direct3D::GetInstance()
 	return s_instance;
 }
 
-bool Direct3D::Init(HWND hwnd, bool vsync)
+bool Direct3D::Init(HWND hwnd, bool isVsync)
 {
 	m_hWnd = hwnd;
-	m_vsync = vsync;
-
-	m_d3dDesc.WindowHandle = hwnd;
-	m_d3dDesc.IsVsync = vsync;
-
-
+	m_isVsync = isVsync;
 
 	// Get window client rect
-	RECT rc;
+	CREATE_ZERO(RECT, rc);
 	GetClientRect(m_hWnd, &rc);
-	UINT width  = rc.right - rc.left;
+	UINT width = rc.right - rc.left;
 	UINT height = rc.bottom - rc.top;
 
 
@@ -71,7 +59,7 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 			{
 				if (displayModeList[i].Height == (unsigned int)height)
 				{
-					numerator = displayModeList[i].RefreshRate.Numerator;
+					numerator   = displayModeList[i].RefreshRate.Numerator;
 					denominator = displayModeList[i].RefreshRate.Denominator;
 				}
 			}
@@ -79,11 +67,11 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 		HR(adapter->GetDesc(&adapterDesc));
 
 		// Store memory info (in mb)
-		m_d3dDesc.VRAM = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
-		m_d3dDesc.RAM = (int)(adapterDesc.SharedSystemMemory / 1024 / 1024);
+		VRAM = (int)(adapterDesc.DedicatedVideoMemory / 1024 / 1024);
+		RAM  = (int)(adapterDesc.SharedSystemMemory / 1024 / 1024);
 		// Store the gpu name
 		size_t strLength;
-		wcstombs_s(&strLength, m_d3dDesc.GPU, 128, adapterDesc.Description, 128);
+		wcstombs_s(&strLength, GPU, 128, adapterDesc.Description, 128);
 
 		// Cleanup 1
 		delete[] displayModeList;
@@ -94,40 +82,40 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 
 		// Create swapchain description
 		CREATE_ZERO(DXGI_SWAP_CHAIN_DESC, swapChainDesc);
-		swapChainDesc.BufferCount = 1;
-		swapChainDesc.BufferDesc.Width = width;
-		swapChainDesc.BufferDesc.Height = height;
-		swapChainDesc.BufferDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
-		if (vsync)
+		swapChainDesc.BufferCount                            = 1;
+		swapChainDesc.BufferDesc.Width                       = width;
+		swapChainDesc.BufferDesc.Height                      = height;
+		swapChainDesc.BufferDesc.Format                      = DXGI_FORMAT_R16G16B16A16_FLOAT;
+		if (isVsync)
 		{
-			swapChainDesc.BufferDesc.RefreshRate.Numerator = numerator;
+			swapChainDesc.BufferDesc.RefreshRate.Numerator   = numerator;
 			swapChainDesc.BufferDesc.RefreshRate.Denominator = denominator;
 		}
 		else
 		{
-			swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;  // Lock swapchain refresh rate to 60hz
+			swapChainDesc.BufferDesc.RefreshRate.Numerator   = 60;  // Lock swapchain refresh rate to 60hz
 			swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
 		}
-		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
-		swapChainDesc.OutputWindow = hwnd;
-		swapChainDesc.SampleDesc.Count = 1;  // Anti aliasing here
-		swapChainDesc.SampleDesc.Quality = 0;
-		swapChainDesc.Windowed = TRUE;
-		swapChainDesc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-		swapChainDesc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-		swapChainDesc.Flags = 0;
+		swapChainDesc.BufferUsage                            = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+		swapChainDesc.OutputWindow                           = hwnd;
+		swapChainDesc.SampleDesc.Count                       = 1;  // Anti aliasing here
+		swapChainDesc.SampleDesc.Quality                     = 0;
+		swapChainDesc.Windowed                               = TRUE;
+		swapChainDesc.BufferDesc.ScanlineOrdering            = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+		swapChainDesc.BufferDesc.Scaling                     = DXGI_MODE_SCALING_UNSPECIFIED;
+		swapChainDesc.SwapEffect                             = DXGI_SWAP_EFFECT_DISCARD;
+		swapChainDesc.Flags                                  = 0;
 
-		m_d3dDesc.DriverType = D3D_DRIVER_TYPE_HARDWARE;
-		m_d3dDesc.FeatureLevel = D3D_FEATURE_LEVEL_11_0;
+		auto driverType = D3D_DRIVER_TYPE_HARDWARE;
+		auto featureLevel = D3D_FEATURE_LEVEL_11_1;
 
 		// Create device / swapchain / immediate context
 		HR(D3D11CreateDeviceAndSwapChain(
 			nullptr,
-			m_d3dDesc.DriverType,
+			driverType,
 			NULL,
 			0,
-			&m_d3dDesc.FeatureLevel, 1,
+			&featureLevel, 1,
 			D3D11_SDK_VERSION,
 			&swapChainDesc,
 			m_swapChain.ReleaseAndGetAddressOf(),
@@ -147,36 +135,35 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 	HR(m_device->CreateRenderTargetView(backBufferPtr.Get(), nullptr, m_renderTargetView.ReleaseAndGetAddressOf()));
 	COM_RELEASE(backBufferPtr);
 
-
 	// Create depth stencil texture
 	{
 		CREATE_ZERO(D3D11_TEXTURE2D_DESC, dstDesc);
-		dstDesc.Width = width;
-		dstDesc.Height = height;
-		dstDesc.MipLevels = 1;
-		dstDesc.ArraySize = 1;
-		dstDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		dstDesc.SampleDesc.Count = 1;
+		dstDesc.Width              = width;
+		dstDesc.Height             = height;
+		dstDesc.MipLevels          = 1;
+		dstDesc.ArraySize          = 1;
+		dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dstDesc.SampleDesc.Count   = 1;
 		dstDesc.SampleDesc.Quality = 0;
-		dstDesc.Usage = D3D11_USAGE_DEFAULT;
-		dstDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		dstDesc.CPUAccessFlags = 0;
-		dstDesc.MiscFlags = 0;
+		dstDesc.Usage              = D3D11_USAGE_DEFAULT;
+		dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
+		dstDesc.CPUAccessFlags     = 0;
+		dstDesc.MiscFlags          = 0;
 		HR(m_device->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
 
 		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
-		dsvDesc.Format = dstDesc.Format;
-		dsvDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Format             = dstDesc.Format;
+		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Texture2D.MipSlice = 0;
 		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
 		m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 	}
-	
-	// Craete vieport
+
+	// Create viewport
 	CREATE_ZERO(D3D11_VIEWPORT, vp);
-	vp.Width = (FLOAT)width;
-	vp.Height = (FLOAT)height;
+	vp.Width    = (FLOAT)width;
+	vp.Height   = (FLOAT)height;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
@@ -194,12 +181,28 @@ bool Direct3D::Init(HWND hwnd, bool vsync)
 	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 	HR(m_device->CreateSamplerState(&sampDesc, m_samplerAnisotropicWrap.ReleaseAndGetAddressOf()));
 
+	// Create rasterizer states
+	{
+		CREATE_ZERO(D3D11_RASTERIZER_DESC, rasterDesc);
+		rasterDesc.FillMode = D3D11_FILL_WIREFRAME;
+		rasterDesc.CullMode = D3D11_CULL_NONE;
+		HR(m_device->CreateRasterizerState(&rasterDesc, m_rasterWireframe.ReleaseAndGetAddressOf()));
+
+		rasterDesc.FillMode = D3D11_FILL_SOLID;
+		rasterDesc.CullMode = D3D11_CULL_BACK;
+		HR(m_device->CreateRasterizerState(&rasterDesc, m_rasterSolid.ReleaseAndGetAddressOf()));
+	}
+
+	SetWireframe(false);
+
 	return true;
 }
 
 void Direct3D::Shutdown()
 {
 	COM_RELEASE(m_samplerAnisotropicWrap);
+	COM_RELEASE(m_rasterSolid);
+	COM_RELEASE(m_rasterWireframe);
 	COM_RELEASE(m_depthStencilTexture);
 	COM_RELEASE(m_depthStencilView);
 	COM_RELEASE(m_renderTargetView);
@@ -207,7 +210,6 @@ void Direct3D::Shutdown()
 	COM_RELEASE(m_swapChain);
 	COM_RELEASE(m_device);
 }
-
 
 void Direct3D::BeginFrame(const std::array<float, 4> clearColor)
 {
@@ -218,17 +220,19 @@ void Direct3D::BeginFrame(const std::array<float, 4> clearColor)
 
 void Direct3D::EndFrame()
 {
-	if (m_d3dDesc.IsVsync)
+	if (m_isVsync)
 		m_swapChain->Present(1, 0);  // Lock present to refresh rate
 	else
-		m_swapChain->Present(0, 0);  // Present as fast as possible
+		m_swapChain->Present(0, 0);  // Present as fast as swap chain can
 }
+
 
 
 
 void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
 {
-	if (!vs) return;
+	if (!vs)
+		vs = new VertexShader();
 
 	vs->Name = srcFile;
 
@@ -237,17 +241,17 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 	shaderFlags |= D3DCOMPILE_DEBUG;
 	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif // _DEBUG
-	
+
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3DCompileFromFile(
-		srcFile, 
-		nullptr, 
-		nullptr, 
-		entryPoint, 
-		profile, 
-		shaderFlags, 
-		0, 
-		vs->Blob.ReleaseAndGetAddressOf(), 
+		srcFile,
+		nullptr,
+		nullptr,
+		entryPoint,
+		profile,
+		shaderFlags,
+		0,
+		vs->Blob.ReleaseAndGetAddressOf(),
 		errorBlob.ReleaseAndGetAddressOf()
 	);
 
@@ -256,7 +260,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 		if (errorBlob)
 		{
 			// TODO: Log error message (handle hot reloading here)
-			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}
 		HR(hr);
@@ -265,7 +269,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 	{
 		if (errorBlob)
 		{
-			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}
 	}
@@ -274,7 +278,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 	// Create vertex shader
 	HR(m_device->CreateVertexShader(vs->Blob->GetBufferPointer(), vs->Blob->GetBufferSize(), nullptr, vs->Shader.ReleaseAndGetAddressOf()));
 
-	
+
 	// Create input layout from vertex shader
 	// https://learn.microsoft.com/en-us/windows/win32/api/d3d11shader/nn-d3d11shader-id3d11shaderreflection
 	{
@@ -296,11 +300,11 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 
 			// Create input element descripton
 			CREATE_ZERO(D3D11_INPUT_ELEMENT_DESC, elementDesc);
-			elementDesc.SemanticName         = paramDesc.SemanticName;
-			elementDesc.SemanticIndex        = paramDesc.SemanticIndex;
-			elementDesc.InputSlot            = 0;
-			elementDesc.AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
-			elementDesc.InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
+			elementDesc.SemanticName = paramDesc.SemanticName;
+			elementDesc.SemanticIndex = paramDesc.SemanticIndex;
+			elementDesc.InputSlot = 0;
+			elementDesc.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+			elementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 			elementDesc.InstanceDataStepRate = 0;
 
 			// Determine DXGI format
@@ -354,19 +358,28 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 
 		COM_RELEASE(vsReflection);
 	}
+
+#ifdef _DEBUG
+	std::wstring wfile(srcFile);
+	LOG("Created vertex shader from file: " << std::string(wfile.begin(), wfile.end()));
+#endif // _DEBUG
+
 }
 
 void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
 {
+	if (!ps)
+		ps = new PixelShader();
+
 	ps->Name = srcFile;
 
 	DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
 #ifdef _DEBUG
-		shaderFlags |= D3DCOMPILE_DEBUG;
+	shaderFlags |= D3DCOMPILE_DEBUG;
 	shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
 #endif // _DEBUG
 
-		ComPtr<ID3DBlob> errorBlob = nullptr;
+	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3DCompileFromFile(
 		srcFile,
 		nullptr,
@@ -400,47 +413,20 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 	COM_RELEASE(errorBlob);
 
 	HR(m_device->CreatePixelShader(ps->Blob->GetBufferPointer(), ps->Blob->GetBufferSize(), nullptr, ps->Shader.ReleaseAndGetAddressOf()));
+
+#ifdef _DEBUG
+	std::wstring wfile(srcFile);
+	LOG("Created pixel shader from file: " << std::string(wfile.begin(), wfile.end()));
+#endif // _DEBUG
 }
 
 
-void Direct3D::CreateVertexBuffer(VertexBuffer*& vb, UINT typeSize, UINT byteWidth, const void* data, D3D11_USAGE usage, UINT cpuAccessFlags)
+void Direct3D::CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size)
 {
-	if (!vb)
-		vb = new VertexBuffer();
-
-	vb->Stride = typeSize;
-
-	CREATE_ZERO(D3D11_BUFFER_DESC, bd);
-	bd.Usage          = usage;
-	bd.ByteWidth      = byteWidth;
-	bd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = cpuAccessFlags;
-
-	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, initData);
-	initData.pSysMem = data;
-	HR(m_device->CreateBuffer(&bd, &initData, vb->Buffer.ReleaseAndGetAddressOf()));
-}
-
-void Direct3D::CreateIndexBuffer(IndexBuffer*& ib, UINT byteWidth, const void* data, D3D11_USAGE usage, UINT cpuAccessFlags)
-{
-	if (!ib)
-		ib = new IndexBuffer();
-
-	CREATE_ZERO(D3D11_BUFFER_DESC, bd);
-	bd.Usage          = usage;
-	bd.ByteWidth      = byteWidth;
-	bd.BindFlags      = D3D11_BIND_INDEX_BUFFER;
-	bd.CPUAccessFlags = cpuAccessFlags;
-
-	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, initData);
-	initData.pSysMem = data;
-	HR(m_device->CreateBuffer(&bd, &initData, ib->Buffer.ReleaseAndGetAddressOf()));
-}
-
-void Direct3D::CreateTexture(Texture2D*& tex, const wchar_t* fileName)
-{
-	if (!tex)
-		tex = new Texture2D();
-
-	HR(CreateDDSTextureFromFile(m_device.Get(), fileName, nullptr, tex->ResourceView.ReleaseAndGetAddressOf()));
+	CREATE_ZERO(D3D11_BUFFER_DESC, cbd);
+	cbd.Usage          = D3D11_USAGE_DEFAULT;
+	cbd.ByteWidth      = size;
+	cbd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
+	cbd.CPUAccessFlags = 0;
+	HR(m_device->CreateBuffer(&cbd, nullptr, buf.ReleaseAndGetAddressOf()));
 }

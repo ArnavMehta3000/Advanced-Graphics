@@ -77,11 +77,12 @@ bool App::Init()
 	ImGui::StyleColorsDark();
 #endif // ENABLE_IMGUI
 
-	m_gameObject = new GameObject(
-		sizeof(SimpleVertex) * ARRAYSIZE(Primitives::Cube::CubeVertices), 
-		Primitives::Cube::CubeVertices,
-		sizeof(WORD) * ARRAYSIZE(Primitives::Cube::CubeIndices),
-		Primitives::Cube::CubeIndices);
+	namespace cube = Primitives::Cube;
+
+	m_gameObject = new GameObject(cube::VerticesByteWidth, 
+								  cube::Vertices,
+								  cube::IndicesByteWidth,
+							 	  cube::Indices);
 
 	
 	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);

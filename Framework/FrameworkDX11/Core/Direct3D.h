@@ -3,7 +3,7 @@
 #include "Core/Shaders.h"
 #include "Core/Buffers.h"
 
-class Texture2D;
+struct Texture2D;
 
 struct Direct3DDesc
 {

@@ -52,12 +52,12 @@ HRESULT DrawableGameObject::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceConte
 
 	D3D11_BUFFER_DESC bd = {};
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Primitives::Cube::CubeVertices);
+	bd.ByteWidth = Primitives::Cube::VerticesByteWidth;
 	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA InitData = {};
-	InitData.pSysMem = Primitives::Cube::CubeVertices;
+	InitData.pSysMem = Primitives::Cube::Vertices;
 	HRESULT hr = pd3dDevice->CreateBuffer(&bd, &InitData, &m_pVertexBuffer);
 	if (FAILED(hr))
 		return hr;
@@ -69,10 +69,10 @@ HRESULT DrawableGameObject::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceConte
 
 
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(WORD) * ARRAYSIZE(Primitives::Cube::CubeIndices);        // 36 vertices needed for 12 triangles in a triangle list
+	bd.ByteWidth = Primitives::Cube::IndicesByteWidth;        // 36 vertices needed for 12 triangles in a triangle list
 	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	bd.CPUAccessFlags = 0;
-	InitData.pSysMem = Primitives::Cube::CubeIndices;
+	InitData.pSysMem = Primitives::Cube::Indices;
 	hr = pd3dDevice->CreateBuffer(&bd, &InitData, &m_pIndexBuffer);
 	if (FAILED(hr))
 		return hr;
