@@ -93,6 +93,7 @@
     <ClInclude Include="Core\Core.h" />
     <ClInclude Include="Core\GameObject.h" />
     <ClInclude Include="Core\Structures.h" />
+    <ClInclude Include="Core\Timer.h" />
     <ClInclude Include="Core\Window.h" />
     <ClInclude Include="Graphics\Direct3D.h" />
     <ClInclude Include="Graphics\Primitives.h" />
@@ -111,6 +112,7 @@
     <ClCompile Include="Core\Application.cpp" />
     <ClCompile Include="Core\Camera.cpp" />
     <ClCompile Include="Core\GameObject.cpp" />
+    <ClCompile Include="Core\Timer.cpp" />
     <ClCompile Include="Core\Window.cpp" />
     <ClCompile Include="Graphics\Direct3D.cpp" />
     <ClCompile Include="Graphics\Shaders.cpp" />

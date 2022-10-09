@@ -18,7 +18,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_window(nullptr),
 	m_vertexShader(nullptr),
 	m_pixelShader(nullptr),
-	m_gamObject(nullptr)
+	m_gamObject(nullptr),
+	m_appTimer(Timer())
 {
 #ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
@@ -65,7 +66,7 @@ bool Application::Init()
 
 
 	// Create and set game objects properties
-	using t = Primitives::Triangle;
+	using t = Primitives::Cube;
 	m_gamObject = new GameObject();
 	m_gamObject->InitMesh(t::Vertices, t::Indices, t::VerticesTypeSize, t::VerticesByteWidth, t::IndicesByteWidth, t::IndicesCount);
 	m_gamObject->Set();
@@ -81,17 +82,22 @@ bool Application::Init()
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	D3D->SetWireframe(true);
+	D3D->SetWireframe(false);
 
 	return true;
 }
 
 void Application::Run()
 {
+	m_appTimer.Reset();
+	m_appTimer.Start();
+
 	while (m_window->ProcessMessages())
 	{
+		m_appTimer.Tick();
+
 		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
-		OnUpdate(0);
+		OnUpdate(m_appTimer);
 		OnRender();
 #if ENABLE_IMGUI
 		OnGui();
@@ -112,7 +118,7 @@ static float x = 10, y = 0;
 
 void Application::OnUpdate(double dt)
 {
-	m_camera->Update(0.0f, KEYBOARD, MOUSE);
+	m_camera->Update(dt, KEYBOARD, MOUSE);
 
 	float speed = 1.0f;
 	if (GetAsyncKeyState(VK_CONTROL))
@@ -120,7 +126,6 @@ void Application::OnUpdate(double dt)
 	if (GetAsyncKeyState(VK_SHIFT))
 		x -= speed;
 
-	
 
 	// Update constant bufffers
 	CREATE_ZERO(VSConstantBuffer, cb);

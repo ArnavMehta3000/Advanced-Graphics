@@ -21,7 +21,7 @@ void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertex
 	vbd.CPUAccessFlags    = 0;
 
 	D3D11_SUBRESOURCE_DATA InitData = {};
-	InitData.pSysMem = Primitives::Triangle::Vertices;
+	InitData.pSysMem = vertices;
 
 	m_stride     = vertexTypeSize;
 	m_offset     = 0;

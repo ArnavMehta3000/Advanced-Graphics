@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/Timer.h"
 #include "Core/Window.h"
 #include "Graphics/Direct3D.h"
 #include "Core/GameObject.h"
@@ -31,6 +32,7 @@ private:
 #endif // ENABLE_IMGUI
 
 private:
+	Timer m_appTimer;
 	Window* m_window;
 
 	VertexShader* m_vertexShader;
