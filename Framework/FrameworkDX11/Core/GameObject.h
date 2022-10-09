@@ -1,42 +1,9 @@
 #pragma once
 #include "IDrawable.h"
+#include "structures.h"
 #include "Core/Buffers.h"
 
 struct Texture2D;
-
-struct Transform
-{
-	sm::Vector3 Position;
-	sm::Vector3 Rotation;
-	sm::Vector3 Scale;
-	sm::Matrix WorldMatrix;
-
-	void UpdateMatrix()
-	{
-		sm::Matrix rot = 
-			sm::Matrix::CreateRotationX(XMConvertToRadians(Rotation.x)) * 
-			sm::Matrix::CreateRotationY(XMConvertToRadians(Rotation.y)) * 
-			sm::Matrix::CreateRotationZ(XMConvertToRadians(Rotation.z));
-		WorldMatrix = sm::Matrix::CreateScale(Scale) * rot * sm::Matrix::CreateTranslation(Position);
-	}
-	
-	Transform()
-	{
-		Position = sm::Vector3::Zero;
-		Rotation = sm::Vector3::Zero;
-		Scale = sm::Vector3::One;
-		UpdateMatrix();
-	}
-
-	Transform(const sm::Vector3 pos, const sm::Vector3 rot, const sm::Vector3 scale)
-	{
-		Position = pos;
-		Rotation = rot;
-		Scale = scale;
-		UpdateMatrix();
-	}
-	
-};
 
 class GameObject : public IDrawable
 {
@@ -50,10 +17,13 @@ public:
 	virtual void Draw() const noexcept override;
 
 public:
-	Transform m_transform;
+	MaterialPropertiesConstantBuffer m_materialProps;
+	sm::Vector3 m_position;
+	sm::Matrix m_world;
 
 private:
-	VertexBuffer* m_vertexBuffer;
-	IndexBuffer* m_indexBuffer;
-	Texture2D* m_texture;
+ 	ConstantBuffer* m_materialCBuffer;
+	VertexBuffer*   m_vertexBuffer;
+	IndexBuffer*    m_indexBuffer;
+	Texture2D*      m_texture;
 };

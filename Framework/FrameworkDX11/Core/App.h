@@ -3,12 +3,13 @@
 #include "Defines.h"
 #include "structures.h"
 
-#define ENABLE_IMGUI
+//#define ENABLE_IMGUI
 
 class Window;
 class GameObject;
 struct VertexShader;
 struct PixelShader;
+struct ConstantBuffer;
 
 class App
 {
@@ -27,15 +28,21 @@ protected:
 	virtual void OnGui();
 #endif // ENABLE_IMGUI
 
+private:
+	void CalculateLighting();
 
 private:
-	GameObject* m_gameObject;
-	Window* m_window;
-	VertexShader* m_vertexShader;
-	PixelShader* m_pixelShader;
+	GameObject*     m_gameObject;
+	Window*         m_window;
+	VertexShader*   m_vertexShader;
+	PixelShader*    m_pixelShader;
 
-	ComPtr<ID3D11Buffer> m_constantBuffer;
-	ComPtr<ID3D11Buffer> m_lightCBuffer;
+	ConstantBuffer* m_constantBuffer;
+	ConstantBuffer* m_lightCBuffer;
 
+
+	sm::Matrix world;
+	sm::Matrix view;
+	sm::Matrix projection;
 };
 

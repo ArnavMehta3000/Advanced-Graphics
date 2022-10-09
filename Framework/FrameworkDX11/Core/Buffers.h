@@ -22,3 +22,13 @@ struct IndexBuffer
 
 	void Release();
 };
+
+struct ConstantBuffer
+{
+	ConstantBuffer() {}
+	~ConstantBuffer() { this->Release(); }
+
+	ComPtr<ID3D11Buffer> Buffer;
+
+	void Release();
+};

@@ -476,7 +476,7 @@ HRESULT		InitMesh()
     bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
     bd.CPUAccessFlags = 0;
 	bd.Usage = D3D11_USAGE_DEFAULT;
-	bd.ByteWidth = sizeof(ConstantBuffer);
+	bd.ByteWidth = sizeof(VSConstantBuffer);
 	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	bd.CPUAccessFlags = 0;
 	hr = g_pd3dDevice->CreateBuffer(&bd, nullptr, &g_pConstantBuffer);
@@ -603,12 +603,12 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam 
 void setupLightForRender()
 {
     Light light;
-    light.Enabled = static_cast<int>(true);
-    light.LightType = PointLight;
-    light.Color = XMFLOAT4(Colors::White);
-    light.SpotAngle = XMConvertToRadians(45.0f);
-    light.ConstantAttenuation = 1.0f;
-    light.LinearAttenuation = 1;
+    light.Enabled              = static_cast<int>(true);
+    light.LightType            = PointLight;
+    light.Color                = XMFLOAT4(Colors::White);
+    light.SpotAngle            = XMConvertToRadians(45.0f);
+    light.ConstantAttenuation  = 1.0f;
+    light.LinearAttenuation    = 1;
     light.QuadraticAttenuation = 1;
 
 
@@ -675,7 +675,7 @@ void Render()
 	XMMATRIX mGO = XMLoadFloat4x4(g_GameObject.getTransform());
 
     // store this and the view / projection in a constant buffer for the vertex shader to use
-    CREATE_ZERO(ConstantBuffer, cb1);
+    CREATE_ZERO(VSConstantBuffer, cb1);
 	cb1.mWorld = XMMatrixTranspose( mGO);
 	cb1.mView = XMMatrixTranspose( g_View );
 	cb1.mProjection = XMMatrixTranspose( g_Projection );

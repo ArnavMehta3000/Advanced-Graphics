@@ -11,3 +11,8 @@ void IndexBuffer::Release()
 {
 	COM_RELEASE(Buffer);
 }
+
+void ConstantBuffer::Release()
+{
+	COM_RELEASE(Buffer);
+}

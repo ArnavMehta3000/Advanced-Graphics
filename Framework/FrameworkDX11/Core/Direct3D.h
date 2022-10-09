@@ -42,6 +42,7 @@ public:
 
 	void CreateVertexBuffer(VertexBuffer*& vb, UINT typeSize, UINT byteWidth, const void* data, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccessFlags = 0);
 	void CreateIndexBuffer(IndexBuffer*& ib, UINT byteWidth, const void* data, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccessFlags = 0);
+	void CreateConstantBuffer(ConstantBuffer*& cb, UINT byteWidth, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccessFlags = 0);
 
 	void CreateTexture(Texture2D*& tex, const wchar_t* fileName);
 

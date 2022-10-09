@@ -13,7 +13,7 @@ struct SimpleVertex
 	XMFLOAT2 TexCoord;
 };
 
-struct ConstantBuffer
+struct VSConstantBuffer
 {
 	XMMATRIX mWorld;
 	XMMATRIX mView;
