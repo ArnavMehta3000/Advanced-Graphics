@@ -114,22 +114,21 @@ void Application::Shutdown()
 }
 
 
-static float x = 10, y = 0;
 
 void Application::OnUpdate(double dt)
 {
 	m_camera->Update(dt, KEYBOARD, MOUSE);
 
 	float speed = 1.0f;
-	if (GetAsyncKeyState(VK_CONTROL))
+	/*if (GetAsyncKeyState(VK_CONTROL))
 		x += speed;
 	if (GetAsyncKeyState(VK_SHIFT))
-		x -= speed;
+		x -= speed;*/
 
 
 	// Update constant bufffers
 	CREATE_ZERO(VSConstantBuffer, cb);
-	cb.World       = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
+	cb.World       = sm::Matrix::CreateRotationY(/*XMConvertToRadians*/(m_appTimer.TotalTime()));
 	cb.View        = m_camera->GetView().Transpose();
 	cb.Projection  = m_camera->GetProjection().Transpose();
 
