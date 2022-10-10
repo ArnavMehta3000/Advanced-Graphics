@@ -32,9 +32,9 @@ struct Light
     float  QuadraticAttenuation; // 4 bytes
     int    LightType;            // 4 bytes
     bool   Enabled;              // 4 bytes
-    int2   Padding;              // 8 bytes
+    float  Range;                // 4 bytes
+    float  Padding;              // 4 bytes
 };
-
 
 struct VS_IN
 {
@@ -125,8 +125,7 @@ LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, f
     distance = length(vertexToLight);
     vertexToLight = vertexToLight / distance;
 
-    float attenuation = DoAttenuation(light, distance);
-    attenuation = 1;
+    float attenuation = DoAttenuation(light, light.Range);
 
 
     result.Diffuse = DoDiffuse(light, vertexToLight, N) * attenuation;
@@ -160,7 +159,6 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N)
 
     return totalResult;
 }
-
 
 // ----------------
 //  VERTEX SHADER
@@ -208,6 +206,7 @@ float4 PS(PS_IN IN) : SV_TARGET
 
     return finalColor;
 }
+
 float4 PSSolid(PS_IN input) : SV_TARGET
 {
     return vOutputColor;

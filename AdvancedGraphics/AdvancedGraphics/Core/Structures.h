@@ -1,10 +1,4 @@
 #pragma once
-
-struct TriangleVertex
-{
-	sm::Vector3 Position;
-};
-
 struct SimpleVertex
 {
 	sm::Vector3 Pos;
@@ -46,7 +40,7 @@ struct MaterialProperties
 	_Material Material;
 };
 
-enum LightType
+enum class LightType
 {
 	DirectionalLight = 0,
 	PointLight = 1,
@@ -54,8 +48,9 @@ enum LightType
 };
 
 
-
-#define MAX_LIGHTS 1
+#define POINT_LIGHTS 1
+#define DIRECTIONAL_LIGHTS 0
+#define MAX_LIGHTS POINT_LIGHTS + DIRECTIONAL_LIGHTS
 
 struct Light
 {
@@ -67,7 +62,7 @@ struct Light
 		, ConstantAttenuation(1.0f)
 		, LinearAttenuation(0.0f)
 		, QuadraticAttenuation(0.0f)
-		, LightType(DirectionalLight)
+		, LightType((int)LightType::DirectionalLight)
 		, Enabled(0)
 	{}
 
@@ -80,17 +75,19 @@ struct Light
 	float       QuadraticAttenuation;
 	int         LightType;
 	int         Enabled;
-	int         Padding[2];
+	float       Range;
+	float       Padding;
 };
 
 struct LightProperties
 {
 	LightProperties()
-		: EyePosition(0, 0, 0, 1)
-		, GlobalAmbient(1.2f, 0.2f, 0.8f, 1.0f)
+		: EyePosition(0.0f, 0.0f, 0.0f, 1.0f)
+		, GlobalAmbient(0.1f, 0.1f, 0.1f, 1.0f)
 	{}
 
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
 	Light       Lights[MAX_LIGHTS];
 };
+

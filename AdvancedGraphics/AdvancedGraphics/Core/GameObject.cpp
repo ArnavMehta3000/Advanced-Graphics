@@ -6,7 +6,11 @@
 
 GameObject::GameObject()
 	:
-	m_stride(0)
+	m_stride(0),
+	m_position(0.0f),
+	m_rotation(0.0f),
+	m_scale(1.0f)
+
 {
 }
 
@@ -18,7 +22,7 @@ GameObject::~GameObject()
 	COM_RELEASE(m_materialCBuffer);
 }
 
-void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount)
+void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount, const wchar_t* textureFile)
 {
 	// Create vertex buffer
 	CREATE_ZERO(D3D11_BUFFER_DESC, vbd);
@@ -54,7 +58,7 @@ void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertex
 	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
 
 	// Load texture 
-	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, L"Assets\\stone.dds", nullptr, m_textureRV.ReleaseAndGetAddressOf()));
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, textureFile, nullptr, m_textureRV.ReleaseAndGetAddressOf()));
 }
 
 void GameObject::Set()
@@ -70,6 +74,12 @@ void GameObject::Set()
 
 void GameObject::Update(double dt)
 {
+	sm::Matrix scale       = sm::Matrix::CreateScale(m_scale);
+	sm::Matrix rotation    = sm::Matrix::CreateFromYawPitchRoll(m_rotation);
+	sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
+
+	m_worldTransform = scale * rotation * translation;
+
 	D3D_CONTEXT->UpdateSubresource(m_materialCBuffer.Get(), 0, nullptr, &m_material, 0, 0);
 }
 

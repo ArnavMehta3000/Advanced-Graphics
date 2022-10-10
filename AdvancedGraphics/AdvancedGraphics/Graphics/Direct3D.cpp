@@ -193,6 +193,10 @@ bool Direct3D::Init(HWND hwnd, bool isVsync)
 		rasterDesc.FillMode = D3D11_FILL_SOLID;
 		rasterDesc.CullMode = D3D11_CULL_BACK;
 		HR(m_device->CreateRasterizerState(&rasterDesc, m_rasterSolid.ReleaseAndGetAddressOf()));
+
+		rasterDesc.FillMode = D3D11_FILL_SOLID;
+		rasterDesc.CullMode = D3D11_CULL_NONE;
+		HR(m_device->CreateRasterizerState(&rasterDesc, m_rasterCullNone.ReleaseAndGetAddressOf()));
 	}
 
 	SetWireframe(false);
@@ -204,6 +208,7 @@ void Direct3D::Shutdown()
 {
 	COM_RELEASE(m_samplerAnisotropicWrap);
 	COM_RELEASE(m_rasterSolid);
+	COM_RELEASE(m_rasterCullNone);
 	COM_RELEASE(m_rasterWireframe);
 	COM_RELEASE(m_depthStencilTexture);
 	COM_RELEASE(m_depthStencilView);

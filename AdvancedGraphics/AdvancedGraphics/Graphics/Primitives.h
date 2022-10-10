@@ -6,11 +6,11 @@ namespace Primitives
 	class Triangle
 	{
 	public:
-		const static inline TriangleVertex Vertices[] =
+		const static inline SimpleVertex Vertices[] =
 		{
-			XMFLOAT3(-0.5f, -0.5f, 0.0f),
-			XMFLOAT3(0.5f, -0.5f, 0.0f),
-			XMFLOAT3(0.0f,  0.5f, 0.0f),
+			{ XMFLOAT3(-0.5f, -0.5f, 0.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },  // Left
+			{ XMFLOAT3(0.5f, -0.5f, 0.0f),  XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },  // Right
+			{ XMFLOAT3(0.0f,  0.5f, 0.0f),  XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(0.5f, 0.5f) },  // Top
 		};
 
 		const static inline WORD Indices[] =
@@ -18,9 +18,9 @@ namespace Primitives
 			2, 1, 0
 		};
 
-		const static inline UINT VerticesTypeSize = sizeof(TriangleVertex);
+		const static inline UINT VerticesTypeSize = sizeof(SimpleVertex);
 		const static inline UINT VerticesCount = ARRAYSIZE(Vertices);
-		const static inline UINT VerticesByteWidth = sizeof(TriangleVertex) * ARRAYSIZE(Vertices);
+		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Vertices);
 
 		const static inline UINT IndicesTypeSize = sizeof(WORD);
 		const static inline UINT IndicesCount = ARRAYSIZE(Indices);

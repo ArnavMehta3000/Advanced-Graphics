@@ -18,6 +18,9 @@ public:
 	inline ComPtr<ID3D11SamplerState> GetSamplerState() { return m_samplerAnisotropicWrap; }
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
+	
+	/// <param name="cullBack">True - solid | False - Cull None</param>
+	void SetCullMode(bool cullBack) { m_context->RSSetState((cullBack) ? m_rasterSolid.Get() : m_rasterCullNone.Get()); }
 
 	void CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile = "vs_5_0", LPCSTR entryPoint = "VS");
 	void CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profile = "ps_5_0", LPCSTR entryPoint = "PS");
@@ -41,6 +44,7 @@ private:
 
 	ComPtr<ID3D11RasterizerState>  m_rasterWireframe;
 	ComPtr<ID3D11RasterizerState>  m_rasterSolid;
+	ComPtr<ID3D11RasterizerState>  m_rasterCullNone;
 
 
 	HWND m_hWnd;

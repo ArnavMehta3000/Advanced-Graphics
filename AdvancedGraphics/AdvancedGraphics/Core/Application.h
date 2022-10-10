@@ -44,9 +44,13 @@ private:
 	ComPtr<ID3D11Buffer> m_lightCBuffer;
 
 	GameObject* m_gameObject;
+	GameObject* m_goLight;
 	Camera m_camera;
 
-	float m_atten = 1.0f;
+	sm::Vector3 m_lightPosition;
+	sm::Vector3 m_attenuation;
+	sm::Color   m_lightColor;
+	float m_lightRange;
 
 	XMFLOAT4X4 world, view, projection;
 };
