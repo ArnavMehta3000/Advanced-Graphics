@@ -27,3 +27,5 @@ private:
 	UINT m_stride;
 	UINT m_offset = 0;
 };
+
+#define GO_CREATE_MESH(goPtr, mesh) goPtr->InitMesh(mesh::Vertices, mesh::Indices, mesh::VerticesTypeSize, mesh::VerticesByteWidth, mesh::IndicesByteWidth, mesh::IndicesCount)

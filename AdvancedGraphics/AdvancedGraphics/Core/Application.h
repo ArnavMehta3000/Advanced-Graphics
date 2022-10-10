@@ -6,7 +6,7 @@
 #include "Core/Camera.h"
 
 
-#define ENABLE_IMGUI 0
+#define ENABLE_IMGUI 1
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
 
 class Application
@@ -43,8 +43,10 @@ private:
 	ComPtr<ID3D11Buffer> m_constantBuffer;
 	ComPtr<ID3D11Buffer> m_lightCBuffer;
 
-	GameObject* m_gamObject;
-	Camera* m_camera;
+	GameObject* m_gameObject;
+	Camera m_camera;
+
+	float m_atten = 1.0f;
 
 	XMFLOAT4X4 world, view, projection;
 };

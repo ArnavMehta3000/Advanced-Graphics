@@ -423,12 +423,12 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 }
 
 
-void Direct3D::CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size)
+void Direct3D::CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size, D3D11_USAGE usage, UINT cpuAccess)
 {
 	CREATE_ZERO(D3D11_BUFFER_DESC, cbd);
-	cbd.Usage          = D3D11_USAGE_DEFAULT;
+	cbd.Usage          = usage;
 	cbd.ByteWidth      = size;
 	cbd.BindFlags      = D3D11_BIND_CONSTANT_BUFFER;
-	cbd.CPUAccessFlags = 0;
+	cbd.CPUAccessFlags = cpuAccess;
 	HR(m_device->CreateBuffer(&cbd, nullptr, buf.ReleaseAndGetAddressOf()));
 }

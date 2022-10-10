@@ -18,7 +18,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_window(nullptr),
 	m_vertexShader(nullptr),
 	m_pixelShader(nullptr),
-	m_gamObject(nullptr),
+	m_gameObject(nullptr),
 	m_appTimer(Timer())
 {
 #ifdef _DEBUG
@@ -26,6 +26,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 #endif // _DEBUG
 
 	m_window = new Window(hInst, width, height);
+	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
 }
 
 Application::~Application()
@@ -33,7 +34,7 @@ Application::~Application()
 	COM_RELEASE(m_constantBuffer);
 
 	//SAFE_DELETE(m_camera);
-	SAFE_DELETE(m_gamObject)
+	SAFE_DELETE(m_gameObject)
 	SAFE_DELETE(m_vertexShader);
 	SAFE_DELETE(m_pixelShader);
 	SAFE_DELETE(m_window);
@@ -66,12 +67,9 @@ bool Application::Init()
 
 
 	// Create and set game objects properties
-	using t = Primitives::Cube;
-	m_gamObject = new GameObject();
-	m_gamObject->InitMesh(t::Vertices, t::Indices, t::VerticesTypeSize, t::VerticesByteWidth, t::IndicesByteWidth, t::IndicesCount);
-	m_gamObject->Set();
-
-	m_camera = new Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
+	m_gameObject = new GameObject();
+	GO_CREATE_MESH(m_gameObject, Primitives::Cube);
+	m_gameObject->Set();
 
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
 	D3D->CreateConstantBuffer(m_lightCBuffer, sizeof(LightProperties));
@@ -120,17 +118,18 @@ void Application::Shutdown()
 void Application::CalculateLighting()
 {
 	Light light;
-	light.Enabled              = static_cast<int>(true);
+	light.Enabled              = TRUE;
 	light.LightType            = PointLight;
 	light.Color                = XMFLOAT4(Colors::White);
 	light.SpotAngle            = XMConvertToRadians(45.0f);
-	light.ConstantAttenuation  = 1.0f;
+	light.ConstantAttenuation  = m_atten;
 	light.LinearAttenuation    = 1;
 	light.QuadraticAttenuation = 1;
 
 
+
 	// set up the light
-	light.Position = sm::Vector4(m_camera->Position().x, m_camera->Position().y, m_camera->Position().z, 0.0f);
+	light.Position = sm::Vector4(0.0f, 0.0f, -3.0f, 1.0f);
 	light.Direction = light.Position * -1.0f;
 	light.Direction.Normalize();
 
@@ -142,30 +141,30 @@ void Application::CalculateLighting()
 
 void Application::OnUpdate(double dt)
 {
-	m_camera->Update(dt, KEYBOARD, MOUSE);
+	m_camera.Update(dt, KEYBOARD, MOUSE);
 
 	float speed = 1.0f;
 
 
 	// Update constant bufffers
 	CREATE_ZERO(VSConstantBuffer, cb);
-	cb.World       = sm::Matrix::CreateRotationY(m_appTimer.TotalTime());
-	cb.View        = m_camera->GetView().Transpose();
-	cb.Projection  = m_camera->GetProjection().Transpose();
+	cb.World       = sm::Matrix::Identity;//::CreateTranslation(0,0,sin(m_appTimer.TotalTime())).Transpose();
+	cb.View        = m_camera.GetView().Transpose();
+	cb.Projection  = m_camera.GetProjection().Transpose();
 
 	cb.OutputColor = { 0, 1, 0, 1 };
 	D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
 
 	
-
-	m_gamObject->Update(dt);
+	// Update game objects
+	m_gameObject->Update(dt);
 }
 
 void Application::OnRender()
 {
 	CalculateLighting();
 
-	m_gamObject->Draw();
+	m_gameObject->Draw();
 }
 
 
@@ -179,7 +178,7 @@ void Application::OnGui()
 	// UI render here
 	{
 		ImGui::Begin("Imgui Test");
-		ImGui::Text("Hello");
+		ImGui::SliderFloat("Attenuation", &m_atten, 0.5f, 10.0f);
 		ImGui::End();
 	}
 

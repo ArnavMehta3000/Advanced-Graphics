@@ -5,6 +5,7 @@
 class Camera
 {
 public:
+	Camera() = default;
 	Camera(float angle, float clientWidth, float clientHeight, float nearPlane = 0.01f, float farPlane = 100.0f);
 	~Camera();
 

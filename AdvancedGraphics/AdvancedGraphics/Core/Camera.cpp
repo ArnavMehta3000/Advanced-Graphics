@@ -16,8 +16,8 @@ Camera::Camera(float angle, float clientWidth, float clientHeight, float nearPla
 	m_nearPlane(nearPlane),
 	m_farPlane(farPlane)
 {
-	m_speed = 0.1f;
-	m_sensitivity = 0.05f;
+	m_speed = 0.01f;
+	m_sensitivity = 0.01f;
 }
 
 Camera::~Camera()

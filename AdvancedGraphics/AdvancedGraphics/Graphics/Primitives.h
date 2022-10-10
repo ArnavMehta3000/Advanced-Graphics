@@ -27,48 +27,39 @@ namespace Primitives
 		const static inline UINT IndicesByteWidth = sizeof(WORD) * ARRAYSIZE(Indices);
 	};
 
+	// Cube vertices taken from MSDN: Defining a simple cube
+	// https://learn.microsoft.com/en-us/windows/win32/direct3d9/defining-a-simple-cube
 	class Cube
 	{
 	public:
 		const static inline SimpleVertex Vertices[] =
 		{
-			{ XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT3(-0.5773f, 0.5773f, 0.5773f),   XMFLOAT2(1.0f, 0.0f) } ,
-			{ XMFLOAT3(-1.0f,-1.0f, 1.0f), XMFLOAT3(-0.5773f, 0.5773f, -0.5773f),  XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(-1.0f, 1.0f,-1.0f), XMFLOAT3(-0.5773f, -0.5773f, 0.5773f),  XMFLOAT2(1.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(-0.5773f, -0.5773f, -0.5773f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f,-1.0f,-1.0f),  XMFLOAT3(0.5773f, -0.5773f, -0.5773f),  XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3(1.0f,-1.0f, 1.0f),  XMFLOAT3(0.5773f, 0.5773f, 0.5773f),    XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3(1.0f, 1.0f,-1.0f),  XMFLOAT3(0.5773f, 0.5773f, -0.5773f),   XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(1.0f, 1.0f, 1.0f),  XMFLOAT3(0.5773f, -0.5773f, 0.5773f),   XMFLOAT2(1.0f, 1.0f) }
+			{ XMFLOAT3( 1.0f, 1.0f,-1.0f), XMFLOAT3( 0.333333f,  0.666667f, -0.666667f), XMFLOAT2(0.0f, 1.0f) },  // 6 - 1
+			{ XMFLOAT3(-1.0f, 1.0f,-1.0f), XMFLOAT3(-0.816497f,  0.408248f, -0.408248f), XMFLOAT2(1.0f, 1.0f) },  // 2 - 2
+			{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(-0.333333f,  0.666667f,  0.666667f), XMFLOAT2(0.0f, 1.0f) },  // 3 - 3
+			{ XMFLOAT3( 1.0f, 1.0f, 1.0f), XMFLOAT3( 0.816497f,  0.408248f,  0.408248f), XMFLOAT2(1.0f, 1.0f) },  // 7 - 4
+			{ XMFLOAT3( 1.0f,-1.0f,-1.0f), XMFLOAT3( 0.666667f, -0.666667f, -0.333333f), XMFLOAT2(0.0f, 0.0f) },  // 4 - 5
+			{ XMFLOAT3(-1.0f,-1.0f,-1.0f), XMFLOAT3(-0.408248f, -0.408248f, -0.816497f), XMFLOAT2(1.0f, 0.0f) },  // 0 - 6
+			{ XMFLOAT3(-1.0f,-1.0f, 1.0f), XMFLOAT3(-0.666667f, -0.666667f,  0.333333f), XMFLOAT2(0.0f, 0.0f) },  // 1 - 7
+			{ XMFLOAT3( 1.0f,-1.0f, 1.0f), XMFLOAT3( 0.408248f, -0.408248f,  0.816497f), XMFLOAT2(1.0f, 0.0f) },  // 5 - 8
 		};
 
 
 
 		const static inline WORD Indices[] =
 		{
-			// Face 1
-			1, 2, 0,// -x
-			1,3,2,
-
-			// Face 2
-			4,6,5, // +x
-			5,6,7,
-
-			// Face 3
-			0,5,1, // -y
+			0,1,2,
+			0,2,3,
 			0,4,5,
-
-			// Face 4
-			2,7,6, // +y
-			2,3,7,
-
-			// Face 5
-			0,6,4, // -z
-			0,2,6,
-
-			// Face 6
-			1,7,3, // +z
-			1,5,7,
+			0,5,1,
+			1,5,6,
+			1,6,2,
+			2,6,7,
+			2,7,3,
+			3,7,4,
+			3,4,0,
+			4,7,6,
+			4,6,5
 		};
 
 		const static inline UINT VerticesTypeSize = sizeof(SimpleVertex);

@@ -53,6 +53,8 @@ enum LightType
 	SpotLight = 2
 };
 
+
+
 #define MAX_LIGHTS 1
 
 struct Light
@@ -85,7 +87,7 @@ struct LightProperties
 {
 	LightProperties()
 		: EyePosition(0, 0, 0, 1)
-		, GlobalAmbient(0.2f, 0.2f, 0.8f, 1.0f)
+		, GlobalAmbient(1.2f, 0.2f, 0.8f, 1.0f)
 	{}
 
 	sm::Vector4 EyePosition;
