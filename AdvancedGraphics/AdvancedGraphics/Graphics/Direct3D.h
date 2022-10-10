@@ -39,8 +39,8 @@ private:
 
 	ComPtr<ID3D11SamplerState>     m_samplerAnisotropicWrap;
 
-	ComPtr<ID3D11RasterizerState> m_rasterWireframe;
-	ComPtr<ID3D11RasterizerState> m_rasterSolid;
+	ComPtr<ID3D11RasterizerState>  m_rasterWireframe;
+	ComPtr<ID3D11RasterizerState>  m_rasterSolid;
 
 
 	HWND m_hWnd;

@@ -24,6 +24,8 @@ public:
 
 	
 private:
+	void CalculateLighting();
+
 	void OnUpdate(double dt);
 	void OnRender();
 
@@ -39,6 +41,7 @@ private:
 	PixelShader* m_pixelShader;
 
 	ComPtr<ID3D11Buffer> m_constantBuffer;
+	ComPtr<ID3D11Buffer> m_lightCBuffer;
 
 	GameObject* m_gamObject;
 	Camera* m_camera;

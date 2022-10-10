@@ -43,7 +43,7 @@ Application::~Application()
 
 bool Application::Init()
 {
-	if (!D3D->Init(m_window->GetHandle(), true))
+	if (!D3D->Init(m_window->GetHandle(), false))
 	{
 		LOG("Failed to initialize Direct3D");
 		return false;
@@ -74,9 +74,11 @@ bool Application::Init()
 	m_camera = new Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
 
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
+	D3D->CreateConstantBuffer(m_lightCBuffer, sizeof(LightProperties));
 
 	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
 	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
 		
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
@@ -115,20 +117,39 @@ void Application::Shutdown()
 
 
 
+void Application::CalculateLighting()
+{
+	Light light;
+	light.Enabled              = static_cast<int>(true);
+	light.LightType            = PointLight;
+	light.Color                = XMFLOAT4(Colors::White);
+	light.SpotAngle            = XMConvertToRadians(45.0f);
+	light.ConstantAttenuation  = 1.0f;
+	light.LinearAttenuation    = 1;
+	light.QuadraticAttenuation = 1;
+
+
+	// set up the light
+	light.Position = sm::Vector4(m_camera->Position().x, m_camera->Position().y, m_camera->Position().z, 0.0f);
+	light.Direction = light.Position * -1.0f;
+	light.Direction.Normalize();
+
+	LightProperties lightProperties;
+	lightProperties.EyePosition = light.Position;
+	lightProperties.Lights[0] = light;
+	D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
+}
+
 void Application::OnUpdate(double dt)
 {
 	m_camera->Update(dt, KEYBOARD, MOUSE);
 
 	float speed = 1.0f;
-	/*if (GetAsyncKeyState(VK_CONTROL))
-		x += speed;
-	if (GetAsyncKeyState(VK_SHIFT))
-		x -= speed;*/
 
 
 	// Update constant bufffers
 	CREATE_ZERO(VSConstantBuffer, cb);
-	cb.World       = sm::Matrix::CreateRotationY(/*XMConvertToRadians*/(m_appTimer.TotalTime()));
+	cb.World       = sm::Matrix::CreateRotationY(m_appTimer.TotalTime());
 	cb.View        = m_camera->GetView().Transpose();
 	cb.Projection  = m_camera->GetProjection().Transpose();
 
@@ -142,6 +163,8 @@ void Application::OnUpdate(double dt)
 
 void Application::OnRender()
 {
+	CalculateLighting();
+
 	m_gamObject->Draw();
 }
 
