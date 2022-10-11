@@ -6,7 +6,12 @@
 #include "Core/Camera.h"
 
 
+#ifdef _DEBUG
 #define ENABLE_IMGUI 1
+#else
+#define ENABLE_IMGUI 0
+#endif // _DEBUG
+
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
 
 class Application

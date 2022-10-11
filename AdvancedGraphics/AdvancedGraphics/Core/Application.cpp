@@ -19,10 +19,12 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_vertexShader(nullptr),
 	m_pixelShader(nullptr),
 	m_gameObject(nullptr),
+	m_goLight(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(0.0f, 0.0f, -5.0f),
 	m_attenuation(1.0f, 1.0f, 1.0f),
-	m_lightColor(Colors::White)
+	m_lightColor(Colors::White),
+	m_lightRange(10.0f)
 {
 #ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
@@ -30,6 +32,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 
 	m_window = new Window(hInst, width, height);
 	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
+	m_camera.Position(sm::Vector3(0.0f, 0.0f, -8.0f));
 }
 
 Application::~Application()
@@ -71,7 +74,7 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	GO_CREATE_MESH(m_gameObject, Primitives::Cube, L"Assets\\stone.dds");
+	GO_CREATE_MESH(m_gameObject, Primitives::Cube, L"Assets\\conenormal.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();
@@ -151,14 +154,16 @@ void Application::CalculateLighting()
 
 void Application::OnUpdate(double dt)
 {
-	m_camera.Update(dt, KEYBOARD, MOUSE);
-	m_gameObject->Update(dt);
-	m_goLight->Update(dt);
-
-
 	m_goLight->m_position = m_lightPosition;
+	m_gameObject->m_rotation.x += (float)dt;
+	m_gameObject->m_rotation.y += (float)dt;
+	m_gameObject->m_rotation.z += (float)dt;
 
 	
+	m_camera.Update(dt, KEYBOARD, MOUSE);
+
+	m_gameObject->Update(dt);
+	m_goLight->Update(dt);	
 }
 
 void Application::OnRender()

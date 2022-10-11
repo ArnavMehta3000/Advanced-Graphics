@@ -87,6 +87,8 @@ bool Window::ProcessMessages()
 			m_mouseState = m_mouse->GetState();
 
 			m_mouse->SetMode(m_mouseState.rightButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
+			m_mouse->ResetScrollWheelValue();
+
 			return true;
 		}
 	}

@@ -118,17 +118,17 @@ LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, f
     LightingResult result;
 
     float3 LightDirectionToVertex = (vertexPos - light.Position).xyz;
-    float distance = length(LightDirectionToVertex);
-    LightDirectionToVertex = LightDirectionToVertex / distance;
+    float distance                = length(LightDirectionToVertex);
+    LightDirectionToVertex        = LightDirectionToVertex / distance;
 
     float3 vertexToLight = (light.Position - vertexPos).xyz;
-    distance = length(vertexToLight);
-    vertexToLight = vertexToLight / distance;
+    distance             = length(vertexToLight);
+    vertexToLight        = vertexToLight / distance;
 
     float attenuation = DoAttenuation(light, light.Range);
 
 
-    result.Diffuse = DoDiffuse(light, vertexToLight, N) * attenuation;
+    result.Diffuse  = DoDiffuse(light, vertexToLight, N) * attenuation;
     result.Specular = DoSpecular(light, vertexToEye, LightDirectionToVertex, N) * attenuation;
 
     return result;
@@ -150,11 +150,11 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N)
 		
         result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
 		
-        totalResult.Diffuse += result.Diffuse;
+        totalResult.Diffuse  += result.Diffuse;
         totalResult.Specular += result.Specular;
     }
 
-    totalResult.Diffuse = saturate(totalResult.Diffuse);
+    totalResult.Diffuse  = saturate(totalResult.Diffuse);
     totalResult.Specular = saturate(totalResult.Specular);
 
     return totalResult;
@@ -198,9 +198,7 @@ float4 PS(PS_IN IN) : SV_TARGET
     float4 specular = Material.Specular * lit.Specular;
 
     if (Material.UseTexture)
-    {
         texColor = txDiffuse.Sample(samLinear, IN.Tex);
-    }
 
     float4 finalColor = (emissive + ambient + diffuse + specular) * texColor;
 

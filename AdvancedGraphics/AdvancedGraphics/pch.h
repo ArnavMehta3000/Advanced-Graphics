@@ -5,6 +5,8 @@
 #include <tchar.h>
 #include <memory>
 
+#include <algorithm>
+#include <functional>
 #include <string>
 #include <sstream>
 #include <vector>

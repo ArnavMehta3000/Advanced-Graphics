@@ -2,6 +2,9 @@
 #include "Camera.h"
 #include "Core/Core.h"
 
+#define SPEED_GAIN 0.00001f
+#define MAX_SPEED 0.5f
+
 Camera::Camera(float angle, float clientWidth, float clientHeight, float nearPlane, float farPlane)
 	:
 	m_position(sm::Vector3(0.0f, 0.0f, -3.0f)),
@@ -16,7 +19,7 @@ Camera::Camera(float angle, float clientWidth, float clientHeight, float nearPla
 	m_nearPlane(nearPlane),
 	m_farPlane(farPlane)
 {
-	m_speed = 0.01f;
+	m_speed = 0.05f;
 	m_sensitivity = 0.01f;
 }
 
@@ -26,54 +29,54 @@ Camera::~Camera()
 
 void Camera::Update(double dt, const DirectX::Keyboard::State& kb, const DirectX::Mouse::State& mouse)
 {
-	Move(dt, kb);
-	Rotate(dt, mouse);
+	if (mouse.positionMode == Mouse::MODE_RELATIVE)  // Only move camera when rmb is down
+	{
+		Move(dt, kb);
+		Rotate(dt, mouse);
+	}
 	
-	sm::Matrix translation = XMMatrixLookToLH(m_position, m_target, m_up);
+	sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
 	sm::Matrix rotation = sm::Matrix::CreateFromYawPitchRoll(m_rotation);
-
 	sm::Matrix camWorld = rotation * translation;
 
-	m_view = camWorld;
+	// View matrix is inverse of the world matrix
+	m_view = camWorld.Invert();  
 	m_projection = XMMatrixPerspectiveFovLH(m_viewAngle, m_width / m_height, m_nearPlane, m_farPlane);
 }
 
 void Camera::Move(double dt, const DirectX::Keyboard::State& kb)
 {
+	// Stores the amount/direction to move this frame
 	sm::Vector3 move = sm::Vector3::Zero;
 
-	if (kb.Up || kb.W)
-		move.z += 1.f;
+	if (kb.W)
+		move.z += m_speed;
+	if (kb.S)
+		move.z -= m_speed;
+	if (kb.A)
+		move.x -= m_speed;
+	if (kb.D)
+		move.x += m_speed;
 
-	if (kb.Down || kb.S)
-		move.z -= 1.f;
-
-	if (kb.Left || kb.A)
-		move.x += 1.f;
-
-	if (kb.Right || kb.D)
-		move.x -= 1.f;
-
-	if (kb.PageUp || kb.Space)
-		move.y += 1.f;
-
-	if (kb.PageDown || kb.X)
-		move.y -= 1.f;
+	if (kb.Q)
+		move.y -= m_speed;
+	if (kb.E)
+		move.y += m_speed;
 
 	sm::Quaternion q = sm::Quaternion::CreateFromYawPitchRoll(m_rotation);
 
 	move = sm::Vector3::Transform(move, q);
-
 	move *= m_speed;
-
 	m_position += move;
 }
 
 void Camera::Rotate(double dt, const DirectX::Mouse::State& mouse)
 {
-	if (mouse.positionMode == Mouse::MODE_RELATIVE)  // When rmb is pressed
-	{
-		m_rotation.y += mouse.x * m_sensitivity;
-		m_rotation.x += mouse.y * m_sensitivity;
-	}
+	
+	m_rotation.y += mouse.x * m_sensitivity;
+	m_rotation.x += mouse.y * m_sensitivity;
+
+	float change = mouse.scrollWheelValue * SPEED_GAIN;
+	m_speed += change;
+	m_speed = std::clamp(m_speed, 0.0f, MAX_SPEED);
 }
