@@ -55,6 +55,7 @@ private:
 	sm::Vector3 m_lightPosition;
 	sm::Color   m_lightColor;
 	float m_lightRange;
+	bool m_isWireframe;
 
 	XMFLOAT4X4 world, view, projection;
 };
