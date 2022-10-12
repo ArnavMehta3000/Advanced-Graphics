@@ -17,10 +17,12 @@ Camera::Camera(float angle, float clientWidth, float clientHeight, float nearPla
 	m_width(clientWidth),
 	m_height(clientHeight),
 	m_nearPlane(nearPlane),
-	m_farPlane(farPlane)
+	m_farPlane(farPlane),
+	m_speed(0.05f),
+	m_sensitivity(0.01f)
 {
-	m_speed = 0.05f;
-	m_sensitivity = 0.01f;
+	// Create the view and projection matrices on creation
+	UpdateMatrices();
 }
 
 Camera::~Camera()
@@ -33,15 +35,19 @@ void Camera::Update(double dt, const DirectX::Keyboard::State& kb, const DirectX
 	{
 		Move(dt, kb);
 		Rotate(dt, mouse);
-	
-		sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
-		sm::Matrix rotation = sm::Matrix::CreateFromYawPitchRoll(m_rotation);
-		sm::Matrix camWorld = rotation * translation;
-
-		// View matrix is inverse of the world matrix
-		m_view = camWorld.Invert();  
-		m_projection = XMMatrixPerspectiveFovLH(m_viewAngle, m_width / m_height, m_nearPlane, m_farPlane);
 	}
+	UpdateMatrices();
+}
+
+void Camera::UpdateMatrices()
+{
+	sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
+	sm::Matrix rotation    = sm::Matrix::CreateFromYawPitchRoll(m_rotation);
+	sm::Matrix camWorld    = rotation * translation;
+
+	// View matrix is inverse of the world matrix
+	m_view       = camWorld.Invert();
+	m_projection = XMMatrixPerspectiveFovLH(m_viewAngle, m_width / m_height, m_nearPlane, m_farPlane);
 }
 
 void Camera::Move(double dt, const DirectX::Keyboard::State& kb)

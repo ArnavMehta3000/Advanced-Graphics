@@ -21,6 +21,7 @@ public:
 private:
 	void Move(double dt, const DirectX::Keyboard::State& kb);
 	void Rotate(double dt, const DirectX::Mouse::State& mouse);
+	void UpdateMatrices();
 
 private:
 	sm::Vector3 m_position;
