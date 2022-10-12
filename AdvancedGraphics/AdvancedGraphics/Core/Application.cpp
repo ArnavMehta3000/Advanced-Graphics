@@ -74,6 +74,7 @@ bool Application::Init()
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
 	GO_CREATE_MESH(m_gameObject, Primitives::Cube, L"Assets\\color.dds");
+	m_gameObject->InitMesh("Assets\\Cube.obj", L"Assets\\color.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();

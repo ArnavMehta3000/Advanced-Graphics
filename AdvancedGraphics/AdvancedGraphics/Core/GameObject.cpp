@@ -3,6 +3,8 @@
 #include "Graphics/Primitives.h"
 #include "Graphics/Direct3D.h"
 #include "Utils/DDSTextureLoader.h"
+#define TINYOBJLOADER_IMPLEMENTATION
+#include "Utils/tiny_obj_loader.h"
 
 GameObject::GameObject()
 	:
@@ -20,6 +22,89 @@ GameObject::~GameObject()
 	COM_RELEASE(m_vertexBuffer);
 	COM_RELEASE(m_indexBuffer);
 	COM_RELEASE(m_materialCBuffer);
+}
+
+// https://github.com/tinyobjloader/tinyobjloader
+void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
+{
+	tinyobj::attrib_t attributes;
+	std::vector<tinyobj::shape_t> shapes;
+	std::vector<tinyobj::material_t> material;
+	std::string err;
+	
+	if (!tinyobj::LoadObj(&attributes, &shapes, &material, &err, objFile, "", false))
+	{
+		LOG(err);
+		HR(E_FAIL);  // HRESULT used to halt execution here
+	}
+
+	std::vector<sm::Vector3> vertices;
+	std::vector<sm::Vector3> normals;
+	std::vector<sm::Vector2> uvs;
+	std::vector<WORD> indices;
+
+
+	// Loop over shapes
+	for (size_t s = 0; s < shapes.size(); s++)
+	{
+		// Loop over faces
+		size_t indexOffset = 0;
+		for (size_t f = 0; f < shapes[s].mesh.num_face_vertices.size(); f++)
+		{
+			size_t fv = size_t(shapes[s].mesh.num_face_vertices[f]);
+
+			// Loop over vertices in the face
+			for (size_t v = 0; v < fv; v++)
+			{
+				// access to vertex
+				tinyobj::index_t idx = shapes[s].mesh.indices[indexOffset + v];
+				tinyobj::real_t vx = attributes.vertices[3 * size_t(idx.vertex_index) + 0];
+				tinyobj::real_t vy = attributes.vertices[3 * size_t(idx.vertex_index) + 1];
+				tinyobj::real_t vz = attributes.vertices[3 * size_t(idx.vertex_index) + 2];
+
+				vertices.push_back(sm::Vector3(vx, vy, vz));
+				indices.push_back(idx.vertex_index);
+
+				// Check if `normal_index` is zero or positive. negative = no normal data
+				if (idx.normal_index >= 0)
+				{
+					tinyobj::real_t nx = attributes.normals[3 * size_t(idx.normal_index) + 0];
+					tinyobj::real_t ny = attributes.normals[3 * size_t(idx.normal_index) + 1];
+					tinyobj::real_t nz = attributes.normals[3 * size_t(idx.normal_index) + 2];
+
+					normals.push_back(sm::Vector3(nx, ny, nz));
+				}
+
+				// Check if `texcoord_index` is zero or positive. negative = no texcoord data
+				if (idx.texcoord_index >= 0)
+				{
+					tinyobj::real_t tx = attributes.texcoords[2 * size_t(idx.texcoord_index) + 0];
+					tinyobj::real_t ty = attributes.texcoords[2 * size_t(idx.texcoord_index) + 1];
+					uvs.push_back(sm::Vector2(tx, ty));
+				}
+			}
+			indexOffset += fv;
+		}
+	}
+
+	std::vector<SimpleVertex> vertexBuffer;
+	for (size_t i = 0; i < vertices.size(); i++)
+	{
+		SimpleVertex sv;
+		sv.Pos = vertices[i];
+		sv.Normal = normals[i];
+		sv.TexCoord = uvs[i];
+		vertexBuffer.push_back(sv);
+	}
+
+	CREATE_ZERO(D3D11_BUFFER_DESC, vbd);
+	vbd.Usage          = D3D11_USAGE_DEFAULT;
+	vbd.ByteWidth      = sizeof(SimpleVertex) * vertices.size();
+	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, vertexInitData);
+	vertexInitData.pSysMem = &vertices[0];
+	HR(D3D_DEVICE->CreateBuffer(&vbd, &vertexInitData, m_vertexBuffer.ReleaseAndGetAddressOf()));
 }
 
 void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount, const wchar_t* textureFile)

@@ -10,6 +10,7 @@ public:
 	GameObject();
 	~GameObject();
 
+	void InitMesh(const char* objFile, const wchar_t* textureFile);
 	void InitMesh(const void* vertices, const void * indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount, const wchar_t* textureFile);
 	const sm::Matrix& GetWorldTransform() { return m_worldTransform; }
 
@@ -37,6 +38,7 @@ private:
 	UINT m_indexCount = 0;
 	UINT m_stride;
 	UINT m_offset = 0;
+
 };
 
 #define GO_CREATE_MESH(goPtr, mesh, tex) goPtr->InitMesh(mesh::Vertices, mesh::Indices, mesh::VerticesTypeSize, mesh::VerticesByteWidth, mesh::IndicesByteWidth, mesh::IndicesCount, tex)
