@@ -351,3 +351,4 @@ MigrationBackup/
 Framework/Build
 Framework/FrameworkDX11/imgui.ini
 AdvancedGraphics/Build
+AdvancedGraphics/AdvancedGraphics/imgui.ini
