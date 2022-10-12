@@ -22,9 +22,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_goLight(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(0.0f, 0.0f, -5.0f),
-	m_attenuation(1.0f, 1.0f, 1.0f),
 	m_lightColor(Colors::White),
-	m_lightRange(10.0f)
+	m_lightRange(5.0)
 {
 #ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
@@ -133,9 +132,9 @@ void Application::CalculateLighting()
 	light.LightType            = (int)LightType::PointLight;
 	light.Color                = m_lightColor;
 	light.SpotAngle            = XMConvertToRadians(45.0f);
-	light.ConstantAttenuation  = m_attenuation.x;
-	light.LinearAttenuation    = m_attenuation.y;
-	light.QuadraticAttenuation = m_attenuation.z;
+	light.ConstantAttenuation  = 1.0f;
+	light.LinearAttenuation    = 1.0f;
+	light.QuadraticAttenuation = 1.0f;
 	light.Range                = 1.0f / m_lightRange;
 
 
@@ -205,8 +204,7 @@ void Application::OnGui()
 		ImGui::Begin("Lighting");
 		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -10.0f, 10.0f);
 		ImGui::DragFloat3("Light Color", &m_lightColor.x, 0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Attenuation", &m_attenuation.x, 0.01f, 0.1f, 50.0f);
-		ImGui::DragFloat("Range", &m_lightRange, 0.01f, 0.1f, 50.0f);
+		ImGui::DragFloat("Range", &m_lightRange, 0.1f, 0.1f, 50.0f);
 		ImGui::End();
 	}
 

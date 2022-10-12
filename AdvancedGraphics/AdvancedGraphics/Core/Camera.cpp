@@ -29,19 +29,19 @@ Camera::~Camera()
 
 void Camera::Update(double dt, const DirectX::Keyboard::State& kb, const DirectX::Mouse::State& mouse)
 {
-	if (mouse.positionMode == Mouse::MODE_RELATIVE)  // Only move camera when rmb is down
+	if (mouse.positionMode == Mouse::MODE_RELATIVE)  // Only update camera when rmb is down
 	{
 		Move(dt, kb);
 		Rotate(dt, mouse);
-	}
 	
-	sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
-	sm::Matrix rotation = sm::Matrix::CreateFromYawPitchRoll(m_rotation);
-	sm::Matrix camWorld = rotation * translation;
+		sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
+		sm::Matrix rotation = sm::Matrix::CreateFromYawPitchRoll(m_rotation);
+		sm::Matrix camWorld = rotation * translation;
 
-	// View matrix is inverse of the world matrix
-	m_view = camWorld.Invert();  
-	m_projection = XMMatrixPerspectiveFovLH(m_viewAngle, m_width / m_height, m_nearPlane, m_farPlane);
+		// View matrix is inverse of the world matrix
+		m_view = camWorld.Invert();  
+		m_projection = XMMatrixPerspectiveFovLH(m_viewAngle, m_width / m_height, m_nearPlane, m_farPlane);
+	}
 }
 
 void Camera::Move(double dt, const DirectX::Keyboard::State& kb)

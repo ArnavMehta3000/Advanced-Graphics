@@ -53,7 +53,6 @@ private:
 	Camera m_camera;
 
 	sm::Vector3 m_lightPosition;
-	sm::Vector3 m_attenuation;
 	sm::Color   m_lightColor;
 	float m_lightRange;
 
