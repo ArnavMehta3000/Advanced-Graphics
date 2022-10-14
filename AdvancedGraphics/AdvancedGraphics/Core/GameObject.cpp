@@ -14,13 +14,6 @@ GameObject::GameObject()
 	m_scale(1.0f)
 
 {
-	// Create material constant buffer
-	m_material.Material.Diffuse = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.Specular = sm::Vector4(1.0f, 0.2f, 0.2f, 1.0f);
-	m_material.Material.SpecularPower = 32.0f;
-	m_material.Material.UseTexture = true;
-
-	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
 }
 
 GameObject::~GameObject()
@@ -42,13 +35,13 @@ void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 	if (!tinyobj::LoadObj(&attributes, &shapes, &material, &err, objFile, "", false))
 	{
 		LOG(err);
-		HR(E_FAIL);  // HRESULT fail used to halt execution here
+		HR(E_FAIL);  // HRESULT used to halt execution here
 	}
 
 	std::vector<sm::Vector3> vertices;
 	std::vector<sm::Vector3> normals;
 	std::vector<sm::Vector2> uvs;
-	std::vector<DWORD> indices;  // Tiny obj uses uint32_t -> DWORD
+	std::vector<WORD> indices;
 
 
 	// Loop over shapes
@@ -94,7 +87,6 @@ void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 		}
 	}
 
-	LOG("Vertices");
 	std::vector<SimpleVertex> vertexBuffer;
 	for (size_t i = 0; i < vertices.size(); i++)
 	{
@@ -102,27 +94,17 @@ void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 		sv.Pos = vertices[i];
 		sv.Normal = normals[i];
 		sv.TexCoord = uvs[i];
-		LOG(i << ": " << sv.Pos.x << " " << sv.Pos.y << " " << sv.Pos.z << "\tindex: " << indices[i]);
 		vertexBuffer.push_back(sv);
 	}
 
 	CREATE_ZERO(D3D11_BUFFER_DESC, vbd);
 	vbd.Usage          = D3D11_USAGE_DEFAULT;
-	vbd.ByteWidth      = sizeof(SimpleVertex) * (UINT)vertices.size();
+	vbd.ByteWidth      = sizeof(SimpleVertex) * vertices.size();
 	vbd.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = 0;
 	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, vertexInitData);
 	vertexInitData.pSysMem = &vertices[0];
 	HR(D3D_DEVICE->CreateBuffer(&vbd, &vertexInitData, m_vertexBuffer.ReleaseAndGetAddressOf()));
-
-	CREATE_ZERO(D3D11_BUFFER_DESC, ibd);
-	ibd.Usage = D3D11_USAGE_DEFAULT;
-	ibd.ByteWidth = sizeof(DWORD) * (UINT)indices.size();
-	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	ibd.CPUAccessFlags = 0;
-	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, indexInitData);
-	indexInitData.pSysMem = &indices[0];
-	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_indexBuffer.ReleaseAndGetAddressOf()));
 }
 
 void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount, const wchar_t* textureFile)
@@ -152,7 +134,13 @@ void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertex
 	indexInitData.pSysMem      = indices;	
 	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_indexBuffer.ReleaseAndGetAddressOf()));
 
-	
+	// Create material constant buffer
+	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.Specular      = sm::Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+	m_material.Material.SpecularPower = 32.0f;
+	m_material.Material.UseTexture    = true;
+
+	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
 
 	// Load texture 
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, textureFile, nullptr, m_textureRV.ReleaseAndGetAddressOf()));

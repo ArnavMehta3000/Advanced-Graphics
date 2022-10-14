@@ -93,8 +93,7 @@ bool Application::Init()
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	m_isWireframe = false;
-	D3D->SetWireframe(m_isWireframe);
+	D3D->SetWireframe(false);
 
 	return true;
 }
@@ -155,12 +154,6 @@ void Application::CalculateLighting()
 
 void Application::OnUpdate(double dt)
 {
-	if (KEYBOARD.LeftControl)
-	{
-		m_isWireframe = !m_isWireframe; 
-		D3D->SetWireframe(m_isWireframe);
-	}
-
 	m_goLight->m_position = m_lightPosition;
 	m_gameObject->m_rotation.x += (float)dt;
 	m_gameObject->m_rotation.y += (float)dt;
