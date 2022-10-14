@@ -45,3 +45,5 @@ void SafeRelease(T** ppT)
         __debugbreak(); \
     }\
 } 
+
+#define LOG_VEC(v) v.x << ", " << v.y << ". " << v.z
