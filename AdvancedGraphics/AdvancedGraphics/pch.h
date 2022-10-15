@@ -1,6 +1,7 @@
 #pragma once
 
 // Precompiled header file for the project.
+#include <Windows.h>
 #include <iostream>
 #include <tchar.h>
 #include <memory>

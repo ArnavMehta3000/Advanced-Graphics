@@ -1,6 +1,5 @@
 #pragma once
-#include "Core/Core.h"
-#include "Core/Structures.h"
+#include "Graphics/Mesh.h"
 
 
 
@@ -30,6 +29,7 @@ private:
 	ComPtr<ID3D11Buffer> m_vertexBuffer;
 	ComPtr<ID3D11Buffer> m_indexBuffer;
 
+	Mesh* m_mesh;
 	MaterialProperties   m_material;
 	ComPtr<ID3D11Buffer> m_materialCBuffer;
 
@@ -38,6 +38,8 @@ private:
 	UINT m_indexCount = 0;
 	UINT m_stride;
 	UINT m_offset = 0;
+
+	bool m_isObj;
 
 };
 

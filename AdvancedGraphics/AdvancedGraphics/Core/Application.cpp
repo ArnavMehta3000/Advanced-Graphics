@@ -73,8 +73,7 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	GO_CREATE_MESH(m_gameObject, Primitives::Cube, L"Assets\\color.dds");
-	//m_gameObject->InitMesh("Assets\\Cube.obj", L"Assets\\color.dds");
+	m_gameObject->InitMesh("Assets\\Cube.obj", L"Assets\\color.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();
@@ -180,7 +179,6 @@ void Application::OnRender()
 	D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
 	
 	D3D->SetCullMode(false);
-	m_goLight->Set();
 	m_goLight->Draw();
 
 	// Update constant bufffers
@@ -188,7 +186,6 @@ void Application::OnRender()
 	D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
 
 	D3D->SetCullMode(true);
-	m_gameObject->Set();
 	m_gameObject->Draw();
 }
 
