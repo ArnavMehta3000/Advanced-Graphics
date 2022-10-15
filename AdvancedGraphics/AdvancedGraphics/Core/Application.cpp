@@ -73,7 +73,7 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\Cube.obj", L"Assets\\color.dds");
+	m_gameObject->InitMesh("Assets\\Cube.obj", L"Assets\\BrickWallDiff.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();
@@ -154,9 +154,6 @@ void Application::CalculateLighting()
 void Application::OnUpdate(double dt)
 {
 	m_goLight->m_position = m_lightPosition;
-	m_gameObject->m_rotation.x += (float)dt;
-	m_gameObject->m_rotation.y += (float)dt;
-	m_gameObject->m_rotation.z += (float)dt;
 
 	
 	m_camera.Update(dt, KEYBOARD, MOUSE);
@@ -202,7 +199,6 @@ void Application::OnGui()
 		ImGui::Begin("Lighting");
 		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -10.0f, 10.0f);
 		ImGui::DragFloat3("Light Color", &m_lightColor.x, 0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat("Range", &m_lightRange, 0.1f, 0.1f, 50.0f);
 		ImGui::End();
 	}
 

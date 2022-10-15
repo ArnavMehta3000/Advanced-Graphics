@@ -34,7 +34,7 @@ GameObject::~GameObject()
 }
 
 // https://github.com/tinyobjloader/tinyobjloader
-// https://www.youtube.com/watch?v=jdiPVfIHmEA&t=1227s
+// Vertex Buffer creation from: https://www.youtube.com/watch?v=jdiPVfIHmEA&t=1227s
 void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 {
 	namespace TO = tinyobj;
@@ -44,9 +44,10 @@ void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 
 	TO::attrib_t attrib;
 	std::vector<TO::shape_t> shapes;
-	std::vector<TO::material_t> materials;
+	std::vector<TO::material_t> materials;  // Not used
 	std::string err;
 
+	LOG("Attempting load OBJ: " << objFile);
 	if (!TO::LoadObj(&attrib, &shapes, &materials, &err, objFile, "", false)) { LOG(err); HR(E_FAIL); }  // HRESULT used to halt execution here
 
 	std::vector<SimpleVertex> vertices;
@@ -98,6 +99,7 @@ void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 	}
 
 	m_mesh = new Mesh(vertices);
+	LOG("OBJ load successful");
 
 	vertices.clear();
 	indices.clear();
