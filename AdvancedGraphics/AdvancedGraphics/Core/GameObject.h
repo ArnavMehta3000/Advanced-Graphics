@@ -9,8 +9,12 @@ public:
 	GameObject();
 	~GameObject();
 
-	void InitMesh(const char* objFile, const wchar_t* textureFile);
-	void InitMesh(const void* vertices, const void * indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount, const wchar_t* textureFile);
+	void InitMesh(const char* objFile);
+	void InitMesh(const void* vertices, const void * indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount);
+	
+	void SetTexture(const wchar_t* diffuse, const wchar_t* normal);
+	void SetTexture(const wchar_t* diffuse);
+
 	const sm::Matrix& GetWorldTransform() { return m_worldTransform; }
 
 
@@ -33,14 +37,15 @@ private:
 	MaterialProperties   m_material;
 	ComPtr<ID3D11Buffer> m_materialCBuffer;
 
-	ComPtr<ID3D11ShaderResourceView> m_textureRV;
+	ComPtr<ID3D11ShaderResourceView> m_textureDiffRV;
+	ComPtr<ID3D11ShaderResourceView> m_textureNormRV;
+
 
 	UINT m_indexCount = 0;
 	UINT m_stride;
 	UINT m_offset = 0;
 
 	bool m_isObj;
-
 };
 
-#define GO_CREATE_MESH(goPtr, mesh, tex) goPtr->InitMesh(mesh::Vertices, mesh::Indices, mesh::VerticesTypeSize, mesh::VerticesByteWidth, mesh::IndicesByteWidth, mesh::IndicesCount, tex)
+#define GO_CREATE_MESH(goPtr, mesh) goPtr->InitMesh(mesh::Vertices, mesh::Indices, mesh::VerticesTypeSize, mesh::VerticesByteWidth, mesh::IndicesByteWidth, mesh::IndicesCount)

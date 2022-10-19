@@ -12,14 +12,14 @@ GameObject::GameObject()
 	m_position(0.0f),
 	m_rotation(0.0f),
 	m_scale(1.0f),
+	m_isObj(false),
 	m_mesh(nullptr)
 
 {
 	// Create material constant buffer
-	m_material.Material.Diffuse = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.Specular = sm::Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.Specular      = sm::Vector4(1.0f, 0.2f, 0.2f, 1.0f);
 	m_material.Material.SpecularPower = 32.0f;
-	m_material.Material.UseTexture = true;
 
 	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
 }
@@ -27,7 +27,7 @@ GameObject::GameObject()
 GameObject::~GameObject()
 {
 	SAFE_DELETE(m_mesh);
-	COM_RELEASE(m_textureRV);
+	COM_RELEASE(m_textureDiffRV);
 	COM_RELEASE(m_vertexBuffer);
 	COM_RELEASE(m_indexBuffer);
 	COM_RELEASE(m_materialCBuffer);
@@ -35,13 +35,11 @@ GameObject::~GameObject()
 
 // https://github.com/tinyobjloader/tinyobjloader
 // Vertex Buffer creation from: https://www.youtube.com/watch?v=jdiPVfIHmEA&t=1227s
-void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
+void GameObject::InitMesh(const char* objFile)
 {
 	namespace TO = tinyobj;
 	m_isObj = true;
-	// Load texture 
-	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, textureFile, nullptr, m_textureRV.ReleaseAndGetAddressOf()));
-
+	
 	TO::attrib_t attrib;
 	std::vector<TO::shape_t> shapes;
 	std::vector<TO::material_t> materials;  // Not used
@@ -107,7 +105,7 @@ void GameObject::InitMesh(const char* objFile, const wchar_t* textureFile)
 	materials.clear();
 }
 
-void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount, const wchar_t* textureFile)
+void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount)
 {
 	// Create vertex buffer
 	CREATE_ZERO(D3D11_BUFFER_DESC, vbd);
@@ -136,20 +134,43 @@ void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertex
 
 	
 
-	// Load texture 
-	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, textureFile, nullptr, m_textureRV.ReleaseAndGetAddressOf()));
+}
+
+void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal)
+{
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, normal, nullptr, m_textureNormRV.ReleaseAndGetAddressOf()));
+	m_material.Material.UseTexture = true;
+	m_material.Material.UseNormals = true;
+}
+
+void GameObject::SetTexture(const wchar_t* diffuse)
+{
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
+	m_material.Material.UseTexture = true;
+	m_material.Material.UseNormals = false;
 }
 
 void GameObject::Set()
 {
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
-	D3D_CONTEXT->PSSetShaderResources(0, 1, m_textureRV.GetAddressOf());
 	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_materialCBuffer.GetAddressOf());
+
+	// Set texture resources
+	if (m_material.Material.UseNormals && m_material.Material.UseTexture)
+	{
+		ID3D11ShaderResourceView* textureSrv[] = { m_textureDiffRV.Get(), m_textureNormRV.Get() };
+		D3D_CONTEXT->PSSetShaderResources(0, 2, textureSrv);
+	}
+	else if (m_material.Material.UseTexture)
+		D3D_CONTEXT->PSSetShaderResources(0, 1, m_textureDiffRV.GetAddressOf()) ;
 
 
 	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &m_stride, &m_offset);
 	D3D_CONTEXT->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 }
+
+
 
 void GameObject::Update(double dt)
 {
