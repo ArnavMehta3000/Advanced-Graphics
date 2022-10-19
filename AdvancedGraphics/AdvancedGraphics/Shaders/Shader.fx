@@ -5,8 +5,13 @@
 Texture2D txDiffuse    : register(t0);
 Texture2D txNormal     : register(t1);
 SamplerState samLinear : register(s0);
+// ---------------------------------------------------------------------
 
 
+
+// ------------
+//  STRUCTURES
+// ------------
 struct VS_IN
 {
     float3 Position  : POSITION;
@@ -26,6 +31,7 @@ struct PS_IN
     float3   ToLightT  : LIGHTTANGENT;
     float3x3 TBN       : TBN;
 };
+// ---------------------------------------------------------------------
 
 
 // ------------------
@@ -45,14 +51,74 @@ cbuffer MaterialProperties : register(b1)
 
 cbuffer LightProperties : register(b2)
 {
-	float4 EyePosition;  
-	float4 GlobalAmbient;
+	float4     EyePosition;  
+	float4     GlobalAmbient;
     PointLight Light;
 }; 
 float3 ToTangentSpace(float3 v, float3x3 InvTBN)
 {
     return normalize(mul(v, InvTBN));
 }
+// ---------------------------------------------------------------------
+
+
+// -----------
+//  FUNCTIONS
+// -----------
+float4 CalculatePointLights()
+{
+    // Variables needed
+        // LightPosW
+        // VertexPosW
+        // VertexNormalW
+        // EyePosW
+        // LightColor
+        // SpecularPower
+        // ObjectDiffuse...?
+
+    // Calculate to light
+        // light pos - vertex pos
+
+    // Calculate to eye
+        //  eye pos - vertex pos
+
+    // Get distance to light
+        // length tolight
+
+
+    // Phong Diffuse
+    // Normalize to light
+        // tolight /= dist to light
+
+    // Get light intensity for pixel
+        // saturate -> dot(tolight, vertexNormal)
+
+
+    // Blinn specular
+    // Normalize to eye
+        // to eye = normalize(toeye)
+
+    // Get halfway point 
+        // halfway = normalize(toeye + tolight)
+    
+    // Get specular intensity
+        // saturate -> dot(halfway, normal)
+
+    // Calulate final color
+        // fincalColor += lightColor * pow(specColor^^ * specularPower) * lightIntensity
+
+    // Calculate attenuation
+    // Get distance to light and normalize it
+        // distToLight = 1.0f - saturate(distToLight^^ / Range)  // Range is not reciprocated
+       
+    // Get attenuation value
+        // Atten = distToLightNormalized^2
+    
+    // Apply to final color
+        // finalColor /= objectDiffuse * atten
+}
+// ---------------------------------------------------------------------
+
 
 // ----------------
 //  VERTEX SHADER
@@ -89,11 +155,12 @@ PS_IN VS(VS_IN input)
     
     return output;
 }
+// ---------------------------------------------------------------------
+
 
 // ---------------
 //  PIXEL SHADER
 // ---------------
-
 float4 PS(PS_IN input) : SV_TARGET
 {
     //float4 texColor  = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -131,3 +198,4 @@ float4 PS(PS_IN input) : SV_TARGET
     //(emissive + ambient + diffuse + specular) * texColor;
     return finalColor;
 }
+// ---------------------------------------------------------------------

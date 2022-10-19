@@ -143,6 +143,5 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Shaders\Structures.hlsli" />
   </ItemGroup>
 </Project>

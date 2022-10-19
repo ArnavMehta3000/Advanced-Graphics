@@ -46,7 +46,7 @@ void GameObject::InitMesh(const char* objFile)
 	std::string err;
 
 	LOG("Attempting load OBJ: " << objFile);
-	if (!TO::LoadObj(&attrib, &shapes, &materials, &err, objFile, "", false)) { LOG(err); HR(E_FAIL); }  // HRESULT used to halt execution here
+	if (!TO::LoadObj(&attrib, &shapes, &materials, &err, objFile, "", false)) { LOG(err); HR(E_PENDING); }  // HRESULT used to halt execution here
 
 	std::vector<SimpleVertex> vertices;
 	std::vector<WORD> indices;
@@ -91,7 +91,8 @@ void GameObject::InitMesh(const char* objFile)
 
 				};
 			}
-
+			
+			// Add the created vertex to the vertex buffer vector
 			vertices.push_back(vertex);
 		}
 	}

@@ -54,12 +54,13 @@ struct PointLight
 		:
 		Position(0.0f, 0.0f, -5.0f),
 		Color(Colors::White),
-		Attenuation(1.0f)
+		Attenuation(1.0f),
+		Range(100.0f)
 	{}
 	sm::Vector3 Position;
 	sm::Vector3	Color;
 	float       Attenuation;
-	float       Padding;
+	float       Range;
 };
 
 struct LightProperties
@@ -71,5 +72,5 @@ struct LightProperties
 
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
-	PointLight PointLight;
+	PointLight  PointLight;
 };

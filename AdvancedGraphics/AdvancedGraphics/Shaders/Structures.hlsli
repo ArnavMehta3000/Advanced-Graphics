@@ -13,5 +13,5 @@ struct PointLight
     float3 Position;     // 12 bytes
     float3 Color;        // 12 bytes
     float  Attenuation;  // 4 bytes
-    float  Padding;      // 4 bytes
+    float  Range;        // 4 bytes
 };
