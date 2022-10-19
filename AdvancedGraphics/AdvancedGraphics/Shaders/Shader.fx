@@ -29,7 +29,7 @@ struct PS_IN
     float2   Tex       : TEXCOORD0;
     float3   LightDirT : TLIGHTDIR;
     float3   EyeDirT   : TEYEDIR;
-    float3   InvTBN    : INVTBN;
+    float3x3 TBN       : TBN;
 };
 // ---------------------------------------------------------------------
 
@@ -51,9 +51,9 @@ cbuffer MaterialProperties : register(b1)
 
 cbuffer LightProperties : register(b2)
 {
-	float4     EyePosition;    // 16 bytes
+	float4     EyePosition;           // 16 bytes
     float4 GlobalAmbient = (float4)0; // 16 bytes
-    PointLight Light;          // 48 bytes
+    PointLight Light;                 // 48 bytes
 }; 
 // ---------------------------------------------------------------------
 
@@ -72,12 +72,12 @@ LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, f
     LightingResult result;
     
     // Diffuse
-    //float3 lightDir          = normalize(Light.Position.xyz - vertexPos);
+    //float3 lightDir          = normalize(Light.Position.xyz - vertexPos);  //Unused for normal mapping
     float diffuseIntensity   = max(dot(lightDir, vertexNormal), 0.0f);
     result.Diffuse           = Light.Diffuse * diffuseIntensity;
     
     // Specular
-    //float3 viewDir    = normalize(EyePosition.xyz - vertexPos);
+    //float3 viewDir    = normalize(EyePosition.xyz - vertexPos);           // Unused for normal mapping
     float3 reflectDir = reflect(-lightDir, vertexNormal);
     float specular    = pow(max(dot(viewDir, reflectDir), 0.0f), Material.SpecularPower);
     result.Specular   = Light.Specular * specular;
@@ -119,7 +119,7 @@ PS_IN VS(VS_IN input)
     float3x3 TBN      = float3x3(T, B, N);
     
     float3x3 invTBN   = transpose(TBN);
-    output.InvTBN     = invTBN;
+    output.TBN        = TBN;
     
     float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
     float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
@@ -149,14 +149,14 @@ float4 PS(PS_IN input) : SV_TARGET
     {
         // Uncompress the normals from the normal map
         float4 texNormal = txNormal.Sample(samLinear, input.Tex);
-        float4 bumpedNormalW = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
+        float4 bumpedNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
         
-        // Direction vectors are in tangent space
+        // For testing purposes
         float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
         float3 viewDir = normalize(EyePosition.xyz - input.PositionW.xyz); // To Eye
+        //pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpedNormalT.xyz));
         
-        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpedNormalW.xyz));
-        //pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, normalize(bumpedNormalW.xyz));
+        pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, normalize(bumpedNormalT.xyz));
     }
     else
     {
