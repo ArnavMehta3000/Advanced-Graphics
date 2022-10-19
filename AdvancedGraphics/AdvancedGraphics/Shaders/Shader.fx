@@ -27,9 +27,9 @@ struct PS_IN
     float4   PositionW : POSITION;
     float3   Norm      : NORMAL;
     float2   Tex       : TEXCOORD0;
-    float3   ToEyeT    : EYETANGENT;
-    float3   ToLightT  : LIGHTTANGENT;
-    float3x3 TBN       : TBN;
+    float3   LightDirT : TLIGHTDIR;
+    float3   EyeDirT   : TEYEDIR;
+    float3   InvTBN    : INVTBN;
 };
 // ---------------------------------------------------------------------
 
@@ -55,28 +55,29 @@ cbuffer LightProperties : register(b2)
     float4 GlobalAmbient = (float4)0; // 16 bytes
     PointLight Light;          // 48 bytes
 }; 
-float3 ToTangentSpace(float3 v, float3x3 InvTBN)
-{
-    return normalize(mul(v, InvTBN));
-}
 // ---------------------------------------------------------------------
 
 
 // -----------
 //  FUNCTIONS
 // -----------
-LightingResult CalculatePointLights(float3 vertexPos, float3 vertexNormal)
+float3 ToTangentSpace(float3 v, float3x3 InvTBN)
+{
+    return normalize(mul(v, InvTBN));
+}
+
+LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, float3 vertexNormal)
 {
     // Lighting calculation reference taken from HLSL Development Cookbook by Doron Feinstein
     LightingResult result;
     
     // Diffuse
-    float3 lightDir          = normalize(Light.Position.xyz - vertexPos);
+    //float3 lightDir          = normalize(Light.Position.xyz - vertexPos);
     float diffuseIntensity   = max(dot(lightDir, vertexNormal), 0.0f);
     result.Diffuse           = Light.Diffuse * diffuseIntensity;
     
     // Specular
-    float3 viewDir    = normalize(EyePosition.xyz - vertexPos);
+    //float3 viewDir    = normalize(EyePosition.xyz - vertexPos);
     float3 reflectDir = reflect(-lightDir, vertexNormal);
     float specular    = pow(max(dot(viewDir, reflectDir), 0.0f), Material.SpecularPower);
     result.Specular   = Light.Specular * specular;
@@ -108,7 +109,6 @@ PS_IN VS(VS_IN input)
     output.Position   = mul(output.Position, View);
     output.Position   = mul(output.Position, Projection);
 
-
     output.Norm       = mul(float4(input.Norm, 0), World).xyz;
     output.Tex        = input.Tex;
     
@@ -117,15 +117,16 @@ PS_IN VS(VS_IN input)
     float3 B          = normalize(mul(float4(input.Binormal, 0.0f), World)).xyz;
     float3 N          = output.Norm;
     float3x3 TBN      = float3x3(T, B, N);
-    output.TBN        = TBN;
     
     float3x3 invTBN   = transpose(TBN);
-    float3 toEye      = normalize(EyePosition.xyz - input.Position);
-    float3 toLight    = normalize(Light.Position.xyz - input.Position);
+    output.InvTBN     = invTBN;
+    
+    float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
+    float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
     
     // Convert eye and light vectors to tangent space
-    output.ToEyeT     = ToTangentSpace(toEye, invTBN);
-    output.ToLightT   = ToTangentSpace(toLight, invTBN);
+    output.LightDirT = ToTangentSpace(lightDir, invTBN);
+    output.EyeDirT   = ToTangentSpace(viewDir, invTBN);
     
     return output;
 }
@@ -143,25 +144,28 @@ float4 PS(PS_IN input) : SV_TARGET
     
     if (Material.UseTexture)
         texColor = txDiffuse.Sample(samLinear, input.Tex);
-    
-    //if (Material.UseNormals)
-    //{
-    //    // Uncompress normals
-    //    float4 texNormal     = txNormal.Sample(samLinear, IN.Tex);
-    //    float3 bumpedNormalW = normalize(2.0f * texNormal.xyz - 1.0f);
-    //    //NormalSampleToWorldSpace(texNormal.xyz, normalize(IN.Norm), normalize(IN.Tangent), normalize(IN.Binormal));
-        
-    //    lit = ComputeLighting(IN.PositionW, normalize(bumpedNormalW), IN.ToEyeT, IN.ToLightT);
-        
-    //    float3 toEye = normalize(EyePosition.xyz - IN.PositionW.xyz);
-    //    float3 toLight = normalize(PointLight.Position.xyz - IN.PositionW.xyz);
-        
-    //    lit = DoMyLight(PointLight, IN.PositionW.xyz, toEye, toLight, normalize(IN.Norm));
-    //}
-    //else
-    //    lit = ComputeLighting(IN.PositionW, normalize(IN.Norm), IN.ToEyeT, IN.ToLightT);
 
-    pointLight = CalculatePointLights(input.PositionW.xyz, normalize(input.Norm));
+    if (Material.UseNormals)
+    {
+        // Uncompress the normals from the normal map
+        float4 texNormal = txNormal.Sample(samLinear, input.Tex);
+        float4 bumpedNormalW = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
+        
+        // Direction vectors are in tangent space
+        float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
+        float3 viewDir = normalize(EyePosition.xyz - input.PositionW.xyz); // To Eye
+        
+        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpedNormalW.xyz));
+        //pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, normalize(bumpedNormalW.xyz));
+    }
+    else
+    {
+        float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
+        float3 viewDir = normalize(EyePosition.xyz - input.PositionW.xyz);     // To Eye
+        
+        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Norm));    
+    }
+    
 
     float4 ambient  = GlobalAmbient;
     float4 diffuse  = Material.Diffuse * pointLight.Diffuse;

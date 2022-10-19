@@ -130,7 +130,7 @@ void Application::Shutdown()
 
 void Application::CalculateLighting()
 {
-	// set up the light
+	// Set up the light
 	PointLight light  = PointLight();
 	light.Position    = TO_VEC4(m_lightPosition, 1.0f);
 	light.Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
