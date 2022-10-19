@@ -52,5 +52,7 @@ private:
 
 	sm::Vector3          m_lightPosition;
 	sm::Vector3          m_lightColor;
-	sm::Vector3          m_lightAttenuation;
+	float                m_lightRange;
+	float                m_lightAttenuation;
+	float                m_lightPower;
 };
