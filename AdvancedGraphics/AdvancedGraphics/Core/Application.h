@@ -10,6 +10,8 @@
 
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
 
+#define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
+
 class Application
 {
 #define KEYBOARD m_window->GetKbState()
@@ -49,7 +51,6 @@ private:
 	Camera               m_camera;
 
 	sm::Vector3          m_lightPosition;
-	sm::Color            m_lightColor;
-	float                m_lightAmbient;
-	float                m_lightRange;
+	sm::Vector3          m_lightColor;
+	sm::Vector3          m_lightAttenuation;
 };

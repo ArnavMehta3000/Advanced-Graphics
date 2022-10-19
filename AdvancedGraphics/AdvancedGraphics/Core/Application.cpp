@@ -21,9 +21,9 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_gameObject(nullptr),
 	m_goLight(nullptr),
 	m_appTimer(Timer()),
-	m_lightPosition(0.0f, 0.0f, -5.0f),
+	m_lightPosition(0.0f, 0.0f, -3.0f),
 	m_lightColor(Colors::White),
-	m_lightAmbient(0.1f)
+	m_lightAttenuation(1.0f)
 {
 #ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
@@ -130,18 +130,17 @@ void Application::Shutdown()
 void Application::CalculateLighting()
 {
 	// set up the light
-	PointLight light;
-	light.Position    = m_lightPosition;
-	light.Color       = { m_lightColor.x, m_lightColor.y, m_lightColor.z, 1.0f};
-	light.Attenuation = 1.0;
-	light.Range = m_lightRange;
+	PointLight light  = PointLight();
+	light.Position    = TO_VEC4(m_lightPosition, 1.0f);
+	light.Color       = TO_VEC4(m_lightColor, 1.0f);
 
 
-	auto pos = m_camera.Position();
-	LightProperties lightProperties;
-	lightProperties.GlobalAmbient = sm::Vector4(m_lightAmbient, m_lightAmbient, m_lightAmbient, 1.0f);
-	lightProperties.EyePosition   = sm::Vector4(pos.x, pos.y, pos.z, 1.0f);
-	lightProperties.PointLight    = light;
+	auto& pos = m_camera.Position();
+	LightProperties lightProperties = LightProperties();
+	lightProperties.EyePosition     = sm::Vector4(pos.x, pos.y, pos.z, 1.0f);
+	lightProperties.PointLight      = light;
+
+	// Updat lighting constant buffer
 	D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
 }
 
@@ -200,11 +199,10 @@ void Application::OnGui()
 
 	// UI render here
 	{
-		ImGui::Begin("Lighting");
+		ImGui::Begin("Point Lighting");
+		ImGui::DragFloat3("Light Color", &m_lightColor.x,  0.01f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
-		ImGui::DragFloat3("Light Color",    &m_lightColor.x,    0.01f,  0.0f,  1.0f);
-		ImGui::DragFloat("Light Range",  &m_lightRange,  0.01f,  1.0f,  100.0f);
-		ImGui::DragFloat("Ambient Color",  &m_lightAmbient,  0.01f,  0.0f,  1.0f);
+		ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.01f,  0.01f,  1.0f);
 		ImGui::End();
 	}
 

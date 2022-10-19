@@ -270,7 +270,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}
-		HR(hr);
+		HR(hr);  // If error halts here, check console for message
 	}
 	else  // Compiled warnings
 	{

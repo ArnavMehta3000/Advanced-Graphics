@@ -51,9 +51,9 @@ cbuffer MaterialProperties : register(b1)
 
 cbuffer LightProperties : register(b2)
 {
-	float4     EyePosition;  
-	float4     GlobalAmbient;
-    PointLight Light;
+	float4     EyePosition;    // 16 bytes
+	float4     GlobalAmbient;  // 16 bytes
+    PointLight Light;          // 48 bytes
 }; 
 float3 ToTangentSpace(float3 v, float3x3 InvTBN)
 {
@@ -69,51 +69,51 @@ float4 CalculatePointLights(float3 vertexPos, float3 vertexNormal)
 {
     // Lighting calculation reference taken from HLSL Development Cookbook by Doron Feinstein
     float4 finalColor = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    
-    float3 toLight;
-    float3 toEye;
-    float  distToLight;
-    float  NDotL;
-    float3 halfway;
-    float  NDotH;
-    float  distToLightNorm;
-    float  attenuation;
+
 
     // Calculate to light
-    toLight = Light.Position - vertexPos;
+    float3 toLight = Light.Position.xyz - vertexPos;
 
     // Calculate to eye
-    toEye = EyePosition.xyz - vertexPos;
+    float3 toEye = EyePosition.xyz - vertexPos;
     
     // Get distance to light
-    distToLight = length(toLight);
+    float distToLight = length(toLight);
     
     // ----- Phong Diffuse -----
     // Normalize to light
     toLight /= distToLight;
     
     // Get light intensity for pixel
-    NDotL = dot(toLight, vertexNormal);
+    float NDotL = dot(toLight, vertexNormal);
     NDotL = saturate(NDotL);
     
     // Set final color for diffuse lighting
-    finalColor = float4(Light.Color * NDotL, 1.0f);
+    float4 diffuse = float4(Light.Color.rgb * NDotL, 1.0f);
+    finalColor += diffuse;
     
     // ----- Blinn specular -----
     // Normalize to eye
     toEye = normalize(toEye);
     
     // Get halfway point 
-    halfway = normalize(toEye + toLight);
+    float3 halfway = normalize(toEye + toLight);
 
     // Get specular intensity
-    NDotH = dot(halfway, vertexNormal);
+    float NDotH = dot(halfway, vertexNormal);
     
     // Add specular lighting to final color
-    finalColor += float4(Light.Color.rgb * pow(Material.Specular.rgb, Material.SpecularPower) * finalColor.rgb, 1.0f);
+    //float4 specular = float4(Light.Color * pow(Material.Specular, Material.SpecularPower).xyz * finalColor.rgb, 1.0f);
+    //finalColor += specular;
     
-
-
+    // Attenuation
+    //float attenuation = Light.Attenuation.x + (Light.Attenuation.y * distToLight) + (Light.Attenuation.z * distToLight * distToLight);
+    //finalColor *= attenuation;
+    
+    
+    //finalColor *= attenuation;
+    
+    
     return finalColor;
 }
 // ---------------------------------------------------------------------
@@ -189,7 +189,7 @@ float4 PS(PS_IN input) : SV_TARGET
     pointLight = CalculatePointLights(input.PositionW.xyz, input.Norm);
     //(emissive + ambient + diffuse + specular) * texColor;
 
-    finalColor = texColor * pointLight;
+    finalColor = texColor * (pointLight + GlobalAmbient);
     return finalColor;
 }
 // ---------------------------------------------------------------------
