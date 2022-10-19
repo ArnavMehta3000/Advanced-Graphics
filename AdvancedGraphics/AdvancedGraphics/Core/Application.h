@@ -51,8 +51,7 @@ private:
 	Camera               m_camera;
 
 	sm::Vector3          m_lightPosition;
-	sm::Vector3          m_lightColor;
-	float                m_lightRange;
-	float                m_lightAttenuation;
-	float                m_lightPower;
+	sm::Vector3          m_lightDiffuse;
+	sm::Vector3          m_lightSpecular;
+	sm::Vector3          m_lightAttenuation;
 };

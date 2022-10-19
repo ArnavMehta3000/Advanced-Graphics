@@ -65,52 +65,29 @@ float3 ToTangentSpace(float3 v, float3x3 InvTBN)
 // -----------
 //  FUNCTIONS
 // -----------
-LightingResult CalculatePointLights(float3 vertexPos, float3 vertexNormal, float2 uv)
+LightingResult CalculatePointLights(float3 vertexPos, float3 vertexNormal)
 {
     // Lighting calculation reference taken from HLSL Development Cookbook by Doron Feinstein
     LightingResult result;
+    
+    // Diffuse
+    float3 lightDir          = normalize(Light.Position.xyz - vertexPos);
+    float diffuseIntensity   = max(dot(lightDir, vertexNormal), 0.0f);
+    result.Diffuse           = Light.Diffuse * diffuseIntensity;
+    
+    // Specular
+    float3 viewDir    = normalize(EyePosition.xyz - vertexPos);
+    float3 reflectDir = reflect(-lightDir, vertexNormal);
+    float specular    = pow(max(dot(viewDir, reflectDir), 0.0f), Material.SpecularPower);
+    result.Specular   = Light.Specular * specular;
+    
+    // Attenuation
+    float distance    = length(Light.Position.xyz - vertexPos);
+    float3 la         = Light.Attenuation.xyz;
+    float attenuation = 1.0f / (la.x + (la.y * distance) + (la.z * distance * distance));
 
-
-    // Calculate direction from vertex to light position and eye position
-    float3 toLight = Light.Position.xyz - vertexPos;
-    float3 toEye   = EyePosition.xyz - vertexPos;
-    
-    // Get distance to light
-    float distToLight = length(toLight);
-    
-    // Check if light is in range
-    //if (distToLight < Light.Range)
-    //{
-        // ----- Phong Diffuse -----
-        toLight /= distToLight; // Normalize toLight vector
-    
-        // Get light intensity for pixel
-        float NDotL = dot(toLight, vertexNormal);
-        NDotL = saturate(NDotL);
-    
-        // Set final color for diffuse lighting
-        float4 diffuse = float4(Light.Color.rgb * Light.Power * NDotL, 1.0f);
-        result.Diffuse = diffuse;
-        
-        // ----- Blinn specular -----
-        toEye = normalize(toEye);
-    
-        // Get halfway point & specular intensity (NDotH)
-        float3 halfway = normalize(toEye + toLight);
-        float NDotH = dot(halfway, vertexNormal);
-    
-        // Add specular lighting to final color
-        float4 specular = float4(Light.Color.rgb * pow(Material.Specular, Material.SpecularPower).xyz * result.Diffuse.rgb, 1.0f);
-        result.Specular = specular;
-    //}
-   // else  // Light not in range, set diffuse to be 
-   // {
-    //    result.Diffuse = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    //    result.Specular = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    //}    
-    
-    
-    
+    result.Diffuse  *= attenuation;
+    result.Specular *= attenuation;
     
     return result;
 }
@@ -184,8 +161,7 @@ float4 PS(PS_IN input) : SV_TARGET
     //else
     //    lit = ComputeLighting(IN.PositionW, normalize(IN.Norm), IN.ToEyeT, IN.ToLightT);
 
-    pointLight = CalculatePointLights(input.PositionW.xyz, input.Norm, input.Tex);
-    //(emissive + ambient + diffuse + specular) * texColor;
+    pointLight = CalculatePointLights(input.PositionW.xyz, normalize(input.Norm));
 
     float4 ambient  = GlobalAmbient;
     float4 diffuse  = Material.Diffuse * pointLight.Diffuse;

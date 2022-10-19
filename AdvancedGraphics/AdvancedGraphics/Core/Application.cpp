@@ -22,10 +22,9 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_goLight(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(0.0f, 0.0f, -3.0f),
-	m_lightColor(Colors::White),
-	m_lightRange(3.0f),
-	m_lightAttenuation(1.0f),
-	m_lightPower(1.0f)
+	m_lightDiffuse(Colors::White),
+	m_lightSpecular(Colors::White),
+	m_lightAttenuation(1.0f)
 {
 #ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
@@ -134,10 +133,9 @@ void Application::CalculateLighting()
 	// set up the light
 	PointLight light  = PointLight();
 	light.Position    = TO_VEC4(m_lightPosition, 1.0f);
-	light.Color       = TO_VEC4(m_lightColor, 1.0f);
-	light.Range       = m_lightRange;
-	light.Attenuation = m_lightAttenuation;
-	light.Power       = m_lightPower;
+	light.Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
+	light.Specular    = TO_VEC4(m_lightSpecular, 1.0f);
+	light.Attenuation = sm::Vector4(m_lightAttenuation);
 
 
 	auto& pos = m_camera.Position();
@@ -205,11 +203,11 @@ void Application::OnGui()
 	// UI render here
 	{
 		ImGui::Begin("Point Lighting");
-		ImGui::DragFloat3("Light Color", &m_lightColor.x,  0.01f, 0.0f, 1.0f);
 		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
-		ImGui::DragFloat("Light Range", &m_lightRange, 0.1f,  0.5f,  50.0f);
-		ImGui::DragFloat("Light Attenuation", &m_lightAttenuation, 0.001f,  0.00f,  100.0f);
-		ImGui::DragFloat("Light Power", &m_lightPower, 0.1f,  0.01f,  3.0f);
+		ImGui::Spacing();
+		ImGui::DragFloat3("Light Diffuse", &m_lightDiffuse.x,  0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat3("Light Specular", &m_lightSpecular.x,  0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f,  0.00f,  100.0f);
 		ImGui::End();
 	}
 

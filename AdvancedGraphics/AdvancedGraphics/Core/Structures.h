@@ -53,17 +53,15 @@ struct PointLight
 	PointLight()
 		:
 		Position(0.0f, 0.0f, -2.0f, 1.0f),
-		Color(1.0f, 1.0f, 1.0f, 1.0f),
-		Range(2.0),
-		Attenuation(1.0f),
-		Power(1.0f)
+		Diffuse(1.0f, 1.0f, 1.0f, 1.0f),
+		Specular(1.0f, 1.0f, 1.0f, 1.0f),
+		Attenuation(1.0f, 1.0f, 1.0f, 1.0f)
 	{}
+
 	sm::Vector4 Position;
-	sm::Vector4	Color;
-	float Range;
-	float Attenuation;
-	float Power;
-	float Padding;
+	sm::Vector4	Diffuse;
+	sm::Vector4	Specular;
+	sm::Vector4	Attenuation;  // w component not used
 };
 
 struct LightProperties

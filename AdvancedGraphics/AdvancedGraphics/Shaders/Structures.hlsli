@@ -10,12 +10,10 @@ struct _Material
 
 struct PointLight
 {
-    float4 Position;     // 16 bytes
-    float4 Color;        // 16 bytes
-    float  Range;        // 4 bytes
-    float  Attenuation;  // 4 bytes
-    float  Power;      // 8 bytes
-    float  Padding;      // 8 bytes
+    float4 Position;    // 16 bytes
+    float4 Diffuse;     // 16 bytes
+    float4 Specular;    // 16 bytes
+    float4 Attenuation; // 16 bytes  (w component not used)
 };
 
 struct LightingResult
