@@ -51,4 +51,5 @@ private:
 	sm::Vector3          m_lightPosition;
 	sm::Color            m_lightColor;
 	float                m_lightAmbient;
+	float                m_lightRange;
 };

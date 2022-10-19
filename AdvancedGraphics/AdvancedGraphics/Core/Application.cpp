@@ -132,8 +132,9 @@ void Application::CalculateLighting()
 	// set up the light
 	PointLight light;
 	light.Position    = m_lightPosition;
-	light.Color       = Colors::White;
+	light.Color       = { m_lightColor.x, m_lightColor.y, m_lightColor.z, 1.0f};
 	light.Attenuation = 1.0;
+	light.Range = m_lightRange;
 
 
 	auto pos = m_camera.Position();
@@ -202,6 +203,7 @@ void Application::OnGui()
 		ImGui::Begin("Lighting");
 		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
 		ImGui::DragFloat3("Light Color",    &m_lightColor.x,    0.01f,  0.0f,  1.0f);
+		ImGui::DragFloat("Light Range",  &m_lightRange,  0.01f,  1.0f,  100.0f);
 		ImGui::DragFloat("Ambient Color",  &m_lightAmbient,  0.01f,  0.0f,  1.0f);
 		ImGui::End();
 	}

@@ -18,7 +18,7 @@ GameObject::GameObject()
 {
 	// Create material constant buffer
 	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.Specular      = sm::Vector4(1.0f, 0.2f, 0.2f, 1.0f);
+	m_material.Material.Specular      = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_material.Material.SpecularPower = 32.0f;
 
 	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
