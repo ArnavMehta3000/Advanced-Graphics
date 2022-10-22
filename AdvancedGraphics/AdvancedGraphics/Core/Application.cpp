@@ -72,7 +72,7 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\Cube.obj");
+	m_gameObject->InitMesh("Assets\\SmoothCube.obj");
 	m_gameObject->SetTexture(L"Assets\\MetalGrateDIFF.dds", L"Assets\\MetalGrateNORM.dds");
 	
 	// Visualizer for light position
