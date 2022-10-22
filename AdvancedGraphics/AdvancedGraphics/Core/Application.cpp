@@ -21,14 +21,12 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_gameObject(nullptr),
 	m_goLight(nullptr),
 	m_appTimer(Timer()),
-	m_lightPosition(0.0f, 0.0f, -3.0f),
+	m_lightPosition(-2.0f, 1.5f, -2.0f),
 	m_lightDiffuse(Colors::White),
 	m_lightSpecular(Colors::White),
 	m_lightAttenuation(1.0f)
 {
-#ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
-#endif // _DEBUG
 
 	m_window = new Window(hInst, width, height);
 	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
@@ -202,12 +200,19 @@ void Application::OnGui()
 
 	// UI render here
 	{
-		ImGui::Begin("Point Lighting");
-		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
-		ImGui::Spacing();
-		ImGui::DragFloat3("Light Diffuse", &m_lightDiffuse.x,  0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Light Specular", &m_lightSpecular.x,  0.01f, 0.0f, 1.0f);
-		ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f,  0.00f,  100.0f);
+		ImGui::Begin("Editor");
+		ImGui::SetWindowPos({ 0,0 }, ImGuiCond_Always);
+		ImGui::SetWindowSize({ 350, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
+
+		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
+
+			ImGui::Spacing();
+			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
+			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
+			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f,  0.00f,  100.0f);
+		}
 		ImGui::End();
 	}
 
