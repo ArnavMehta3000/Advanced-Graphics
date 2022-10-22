@@ -1,6 +1,6 @@
 #include "Structures.hlsli"
 
-
+// https://www.cs.utexas.edu/~fussell/courses/cs384g-spring2016/lectures/normal_mapping_tangent.pdf
 
 Texture2D txDiffuse    : register(t0);
 Texture2D txNormal     : register(t1);
@@ -150,13 +150,14 @@ float4 PS(PS_IN input) : SV_TARGET
         // Uncompress the normals from the normal map
         float4 texNormal = txNormal.Sample(samLinear, input.Tex);
         float4 bumpedNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
+        float3 bumpNormalW = mul(bumpedNormalT.xyz, input.TBN);
         
         // For testing purposes
         float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
         float3 viewDir = normalize(EyePosition.xyz - input.PositionW.xyz); // To Eye
         //pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpedNormalT.xyz));
         
-        pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, normalize(bumpedNormalT.xyz));
+        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpNormalW.xyz));
     }
     else
     {

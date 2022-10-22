@@ -73,7 +73,7 @@ bool Application::Init()
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
 	m_gameObject->InitMesh("Assets\\Cube.obj");
-	m_gameObject->SetTexture(L"Assets\\BrickWallDiff.dds", L"Assets\\BrickWallNorm.dds");
+	m_gameObject->SetTexture(L"Assets\\MetalGrateDIFF.dds", L"Assets\\MetalGrateNORM.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();
