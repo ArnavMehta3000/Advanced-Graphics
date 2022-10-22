@@ -51,7 +51,7 @@ cbuffer MaterialProperties : register(b1)
 
 cbuffer LightProperties : register(b2)
 {
-	float4     EyePosition;           // 16 bytes
+	float4 EyePosition;               // 16 bytes
     float4 GlobalAmbient = (float4)0; // 16 bytes
     PointLight Light;                 // 48 bytes
 }; 
@@ -114,8 +114,9 @@ PS_IN VS(VS_IN input)
     
     // Create the TBN matrix
     float3 T          = normalize(mul(float4(input.Tangent,  0.0f), World)).xyz;
-    float3 B          = normalize(mul(float4(input.Binormal, 0.0f), World)).xyz;
     float3 N          = output.Norm;
+    float3 B          = cross(T, N); //normalize(mul(float4(input.Binormal, 0.0f), World)).xyz;
+    T                 = normalize(T - dot(T, N) * N);  //Gram-Schmidt process
     float3x3 TBN      = float3x3(T, B, N);
     
     float3x3 invTBN   = transpose(TBN);
@@ -139,30 +140,30 @@ PS_IN VS(VS_IN input)
 float4 PS(PS_IN input) : SV_TARGET
 {
     LightingResult pointLight;
-    float4 finalColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    float4 finalColor = (float)0;
     float4 texColor   = { 1.0f, 1.0f, 1.0f, 1.0f };
     
     if (Material.UseTexture)
         texColor = txDiffuse.Sample(samLinear, input.Tex);
 
+    // This uses world space normal mapping
     if (Material.UseNormals)
     {
         // Uncompress the normals from the normal map
-        float4 texNormal = txNormal.Sample(samLinear, input.Tex);
-        float4 bumpedNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
-        float3 bumpNormalW = mul(bumpedNormalT.xyz, input.TBN);
+        float4 texNormal     = txNormal.Sample(samLinear, input.Tex);
+        float4 bumpNormalT   = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
+        float3 bumpNormalW   = mul(bumpNormalT.xyz, input.TBN);
         
         // For testing purposes
         float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
-        float3 viewDir = normalize(EyePosition.xyz - input.PositionW.xyz); // To Eye
-        //pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpedNormalT.xyz));
+        float3 viewDir  = normalize(EyePosition.xyz - input.PositionW.xyz);    // To Eye
         
-        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(bumpNormalW.xyz));
+        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, bumpNormalW.xyz);
     }
     else
     {
         float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
-        float3 viewDir = normalize(EyePosition.xyz - input.PositionW.xyz);     // To Eye
+        float3 viewDir  = normalize(EyePosition.xyz - input.PositionW.xyz);     // To Eye
         
         pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Norm));    
     }
