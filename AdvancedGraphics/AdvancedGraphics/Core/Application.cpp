@@ -21,13 +21,12 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_gameObject(nullptr),
 	m_goLight(nullptr),
 	m_appTimer(Timer()),
-	m_lightPosition(0.0f, 0.0f, -5.0f),
-	m_lightColor(Colors::White),
-	m_lightRange(5.0)
+	m_lightPosition(-2.0f, 1.5f, -2.0f),
+	m_lightDiffuse(Colors::White),
+	m_lightSpecular(Colors::White),
+	m_lightAttenuation(1.0f)
 {
-#ifdef _DEBUG
 	CREATE_AND_ATTACH_CONSOLE();
-#endif // _DEBUG
 
 	m_window = new Window(hInst, width, height);
 	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
@@ -73,11 +72,13 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\Cube.obj", L"Assets\\BrickWallDiff.dds");
+	m_gameObject->InitMesh("Assets\\Cube.obj");
+	m_gameObject->SetTexture(L"Assets\\BrickWallDiff.dds", L"Assets\\BrickWallNorm.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();
-	GO_CREATE_MESH(m_goLight, Primitives::Triangle, L"Assets\\stone.dds");
+	GO_CREATE_MESH(m_goLight, Primitives::Triangle);
+	m_goLight->SetTexture(L"Assets\\stone.dds");
 	m_goLight->m_scale = sm::Vector3(0.5f);
 
 
@@ -106,7 +107,7 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 
-		D3D->BeginFrame({ 0.01f, 0.01f, 0.1f, 1.0f });
+		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
 		OnUpdate(m_appTimer);
 		OnRender();
 #if ENABLE_IMGUI
@@ -127,33 +128,37 @@ void Application::Shutdown()
 
 void Application::CalculateLighting()
 {
-	Light light;
-	light.Enabled              = TRUE;
-	light.LightType            = (int)LightType::PointLight;
-	light.Color                = m_lightColor;
-	light.SpotAngle            = XMConvertToRadians(45.0f);
-	light.ConstantAttenuation  = 1.0f;
-	light.LinearAttenuation    = 1.0f;
-	light.QuadraticAttenuation = 1.0f;
-	light.Range                = 1.0f / m_lightRange;
+	// Set up the light
+	PointLight light  = PointLight();
+	light.Position    = TO_VEC4(m_lightPosition, 1.0f);
+	light.Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
+	light.Specular    = TO_VEC4(m_lightSpecular, 1.0f);
+	light.Attenuation = sm::Vector4(m_lightAttenuation);
 
 
+	auto& pos = m_camera.Position();
+	LightProperties lightProperties = LightProperties();
+	lightProperties.EyePosition     = sm::Vector4(pos.x, pos.y, pos.z, 1.0f);
+	lightProperties.PointLight      = light;
 
-	// set up the light
-	light.Position = sm::Vector4(m_lightPosition.x, m_lightPosition.y, m_lightPosition.z, 1.0f);
-	light.Direction = light.Position * -1.0f;
-	light.Direction.Normalize();
-
-
-	LightProperties lightProperties;
-	lightProperties.EyePosition = light.Position;
-	lightProperties.Lights[0] = light;
+	// Updat lighting constant buffer
 	D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
 }
 
 void Application::OnUpdate(double dt)
 {
 	m_goLight->m_position = m_lightPosition;
+	if (KEYBOARD.X)
+		m_gameObject->m_rotation.x += (float)dt;
+	if (KEYBOARD.Y)
+		m_gameObject->m_rotation.y += (float)dt;
+	if (KEYBOARD.Z)
+		m_gameObject->m_rotation.z += (float)dt;
+
+	if (KEYBOARD.G)
+		m_gameObject->m_position.x += (float)dt;
+	if (KEYBOARD.H)
+		m_gameObject->m_position.x -= (float)dt;
 
 	
 	m_camera.Update(dt, KEYBOARD, MOUSE);
@@ -169,7 +174,6 @@ void Application::OnRender()
 	CREATE_ZERO(VSConstantBuffer, cb);
 	cb.View = m_camera.GetView().Transpose();
 	cb.Projection = m_camera.GetProjection().Transpose();
-	cb.OutputColor = { 0, 1, 0, 1 };
 
 
 	cb.World = m_goLight->GetWorldTransform().Transpose();
@@ -196,9 +200,19 @@ void Application::OnGui()
 
 	// UI render here
 	{
-		ImGui::Begin("Lighting");
-		ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -10.0f, 10.0f);
-		ImGui::DragFloat3("Light Color", &m_lightColor.x, 0.01f, 0.0f, 1.0f);
+		ImGui::Begin("Editor");
+		ImGui::SetWindowPos({ 0,0 }, ImGuiCond_Always);
+		ImGui::SetWindowSize({ 350, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
+
+		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
+
+			ImGui::Spacing();
+			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
+			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
+			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f,  0.00f,  100.0f);
+		}
 		ImGui::End();
 	}
 

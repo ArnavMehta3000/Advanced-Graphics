@@ -10,6 +10,8 @@
 
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
 
+#define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
+
 class Application
 {
 #define KEYBOARD m_window->GetKbState()
@@ -35,22 +37,21 @@ private:
 #endif // ENABLE_IMGUI
 
 private:
-	Timer m_appTimer;
-	Window* m_window;
+	Timer                m_appTimer;
+	Window*              m_window;
 
-	VertexShader* m_vertexShader;
-	PixelShader* m_pixelShader;
+	VertexShader*        m_vertexShader;
+	PixelShader*         m_pixelShader;
 
 	ComPtr<ID3D11Buffer> m_constantBuffer;
 	ComPtr<ID3D11Buffer> m_lightCBuffer;
 
-	GameObject* m_gameObject;
-	GameObject* m_goLight;
-	Camera m_camera;
+	GameObject*          m_gameObject;
+	GameObject*          m_goLight;
+	Camera               m_camera;
 
-	sm::Vector3 m_lightPosition;
-	sm::Color   m_lightColor;
-	float m_lightRange;
-
-	XMFLOAT4X4 world, view, projection;
+	sm::Vector3          m_lightPosition;
+	sm::Vector3          m_lightDiffuse;
+	sm::Vector3          m_lightSpecular;
+	sm::Vector3          m_lightAttenuation;
 };

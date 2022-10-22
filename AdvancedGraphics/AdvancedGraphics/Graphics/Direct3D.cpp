@@ -253,7 +253,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 	HRESULT hr = D3DCompileFromFile(
 		srcFile,
 		nullptr,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		entryPoint,
 		profile,
 		shaderFlags,
@@ -270,7 +270,7 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}
-		HR(hr);
+		HR(hr);  // If error halts here, check console for message
 	}
 	else  // Compiled warnings
 	{
@@ -390,7 +390,7 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 	HRESULT hr = D3DCompileFromFile(
 		srcFile,
 		nullptr,
-		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,
 		entryPoint,
 		profile,
 		shaderFlags,
