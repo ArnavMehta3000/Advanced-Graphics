@@ -87,7 +87,10 @@ bool Application::Init()
 
 	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
+
 	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
+	D3D_CONTEXT->VSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
+
 	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
 		
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
@@ -212,6 +215,9 @@ void Application::OnGui()
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
 			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f,  0.00f,  100.0f);
+
+			auto pos = m_camera.Position();
+			ImGui::DragFloat3("Camera", &pos.x);
 		}
 		ImGui::End();
 	}

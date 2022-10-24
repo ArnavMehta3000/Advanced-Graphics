@@ -92,57 +92,6 @@ LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, f
     
     return result;
 }
-
-LightingResult CalculatePointLight(float3 vertexToEye, float3 vertexPos, float3 normal)
-{
-    LightingResult result = (LightingResult) 0;
-	
-    float3 lightDirectionToVertex = vertexPos - Light.Position.xyz;
-    float distance = length(lightDirectionToVertex);
-    lightDirectionToVertex /= distance; // normalize
-	
-    float3 vertexToLight = Light.Position.xyz - vertexPos;
-    distance = length(vertexToLight);
-    vertexToLight /= distance;
-	
-    float3 lightAtten = Light.Attenuation.xyz;
-    float attenuation = 1.0f / (lightAtten.x + (lightAtten.y * distance) + (lightAtten.z * distance * distance));
-	
-	// Diffuse
-    float NDotL = max(dot(normal, vertexToLight), 0.0f);
-    float4 diffuse = float4(Light.Diffuse.xyz * NDotL, 1.0f);
-	
-	// Specular
-    float4 lightDir = float4(normalize(-lightDirectionToVertex), 1.0f);
-    vertexToEye = normalize(vertexToEye);
-	
-    float lightIntensity = saturate(dot(normal, lightDir.xyz));
-    float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
-    if (lightIntensity > 0.0f)
-    {
-        float3 reflection = normalize(2 * lightIntensity * normal - lightDir.xyz);
-        specular = pow(saturate(dot(reflection, vertexToEye)), Material.SpecularPower);
-        specular = Light.Specular * specular;
-    }
-	
-    result.Diffuse = diffuse * attenuation;
-    result.Specular = specular * attenuation;
-	
-    return result;
-}
-
-LightingResult CalculateLighting(float3 vertexPos, float3 normal, float3 viewDir)
-{
-    LightingResult result = (LightingResult) 0;
-	
-	// This is in tangent space
-    //float3 vertexToEye = normalize(vertextoeyets - vertexPos).xyz;
-    float3 vertexToEye = normalize(EyePosition.xyz - vertexPos);
-	
-    result = CalculatePointLight(viewDir, vertexPos, normal);
-	
-    return result;
-}
 // ---------------------------------------------------------------------
 
 
@@ -165,9 +114,9 @@ PS_IN VS(VS_IN input)
     
     // Create the TBN matrix
     float3 T          = normalize(mul(float4(input.Tangent,  0.0f), World)).xyz;
-    float3 N          = output.Norm;
-    float3 B          = cross(T, N); //normalize(mul(float4(input.Binormal, 0.0f), World)).xyz;
-    T                 = normalize(T - dot(T, N) * N);  //Gram-Schmidt process
+    float3 N          = normalize(mul(float4(input.Norm, 0), World).xyz);
+    float3 B          = normalize(mul(float4(input.Binormal, 0.0f), World)).xyz;
+    //T                 = normalize(T - dot(T, N) * N);  //Gram-Schmidt process
     float3x3 TBN      = float3x3(T, B, N);
     
     float3x3 invTBN   = transpose(TBN);
@@ -203,13 +152,13 @@ float4 PS(PS_IN input) : SV_TARGET
         // Uncompress the normals from the normal map
         float4 texNormal     = txNormal.Sample(samLinear, input.Tex);
         float4 bumpNormalT   = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
-        float3 bumpNormalW   = mul(bumpNormalT.xyz, input.TBN);
         
         // For testing purposes
+        float3 bumpNormalW   = mul(bumpNormalT.xyz, input.TBN);
         float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
         float3 viewDir  = normalize(EyePosition.xyz - input.PositionW.xyz);    // To Eye
         
-        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, bumpNormalW.xyz);
+        pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, bumpNormalT.xyz);
     }
     else
     {
@@ -218,10 +167,6 @@ float4 PS(PS_IN input) : SV_TARGET
         
         pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Norm));    
     }
-    
-    // This is the new lighting copied from the given framework
-    pointLight = CalculateLighting(input.PositionW.xyz, input.Norm, normalize(EyePosition.xyz - input.PositionW.xyz));
-    
 
     float4 ambient  = GlobalAmbient;
     float4 diffuse  = Material.Diffuse * pointLight.Diffuse;
