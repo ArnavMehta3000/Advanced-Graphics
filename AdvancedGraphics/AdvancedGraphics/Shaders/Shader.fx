@@ -92,6 +92,57 @@ LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, f
     
     return result;
 }
+
+LightingResult CalculatePointLight(float3 vertexToEye, float3 vertexPos, float3 normal)
+{
+    LightingResult result = (LightingResult) 0;
+	
+    float3 lightDirectionToVertex = vertexPos - Light.Position.xyz;
+    float distance = length(lightDirectionToVertex);
+    lightDirectionToVertex /= distance; // normalize
+	
+    float3 vertexToLight = Light.Position.xyz - vertexPos;
+    distance = length(vertexToLight);
+    vertexToLight /= distance;
+	
+    float3 lightAtten = Light.Attenuation.xyz;
+    float attenuation = 1.0f / (lightAtten.x + (lightAtten.y * distance) + (lightAtten.z * distance * distance));
+	
+	// Diffuse
+    float NDotL = max(dot(normal, vertexToLight), 0.0f);
+    float4 diffuse = float4(Light.Diffuse.xyz * NDotL, 1.0f);
+	
+	// Specular
+    float4 lightDir = float4(normalize(-lightDirectionToVertex), 1.0f);
+    vertexToEye = normalize(vertexToEye);
+	
+    float lightIntensity = saturate(dot(normal, lightDir.xyz));
+    float4 specular = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    if (lightIntensity > 0.0f)
+    {
+        float3 reflection = normalize(2 * lightIntensity * normal - lightDir.xyz);
+        specular = pow(saturate(dot(reflection, vertexToEye)), Material.SpecularPower);
+        specular = Light.Specular * specular;
+    }
+	
+    result.Diffuse = diffuse * attenuation;
+    result.Specular = specular * attenuation;
+	
+    return result;
+}
+
+LightingResult CalculateLighting(float3 vertexPos, float3 normal, float3 viewDir)
+{
+    LightingResult result = (LightingResult) 0;
+	
+	// This is in tangent space
+    //float3 vertexToEye = normalize(vertextoeyets - vertexPos).xyz;
+    float3 vertexToEye = normalize(EyePosition.xyz - vertexPos);
+	
+    result = CalculatePointLight(viewDir, vertexPos, normal);
+	
+    return result;
+}
 // ---------------------------------------------------------------------
 
 
@@ -167,6 +218,9 @@ float4 PS(PS_IN input) : SV_TARGET
         
         pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Norm));    
     }
+    
+    // This is the new lighting copied from the given framework
+    pointLight = CalculateLighting(input.PositionW.xyz, input.Norm, normalize(EyePosition.xyz - input.PositionW.xyz));
     
 
     float4 ambient  = GlobalAmbient;
