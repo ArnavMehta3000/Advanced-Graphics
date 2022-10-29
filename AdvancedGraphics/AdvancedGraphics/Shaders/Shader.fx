@@ -29,7 +29,6 @@ struct PS_IN
     float2   Tex       : TEXCOORD0;
     float3   LightDirT : TLIGHTDIR;
     float3   EyeDirT   : TEYEDIR;
-    float3x3 TBN       : TBN;
 };
 // ---------------------------------------------------------------------
 
@@ -120,7 +119,6 @@ PS_IN VS(VS_IN input)
     float3x3 TBN      = float3x3(T, B, N);
     
     float3x3 invTBN   = transpose(TBN);
-    output.TBN        = TBN;
     
     float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
     float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
@@ -152,11 +150,6 @@ float4 PS(PS_IN input) : SV_TARGET
         // Uncompress the normals from the normal map
         float4 texNormal     = txNormal.Sample(samLinear, input.Tex);
         float4 bumpNormalT   = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
-        
-        // For testing purposes
-        float3 bumpNormalW   = mul(bumpNormalT.xyz, input.TBN);
-        float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
-        float3 viewDir  = normalize(EyePosition.xyz - input.PositionW.xyz);    // To Eye
         
         pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, bumpNormalT.xyz);
     }
