@@ -73,7 +73,7 @@ bool Application::Init()
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
 	m_gameObject->InitMesh("Assets\\SmoothCube.obj");
-	m_gameObject->SetTexture(L"Assets\\MetalGrateDIFF.dds", L"Assets\\MetalGrateNORM.dds");
+	m_gameObject->SetTexture(L"Assets\\rock_diffuse2.dds", L"Assets\\rock_bump.dds");
 	
 	// Visualizer for light position
 	m_goLight = new GameObject();
@@ -214,10 +214,7 @@ void Application::OnGui()
 			ImGui::Spacing();
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
-			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f,  0.00f,  100.0f);
-
-			auto pos = m_camera.Position();
-			ImGui::DragFloat3("Camera", &pos.x);
+			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f, 0.00f, 100.0f);
 		}
 		ImGui::End();
 	}
