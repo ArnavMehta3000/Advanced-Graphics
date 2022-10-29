@@ -4,6 +4,7 @@
 
 Texture2D txDiffuse    : register(t0);
 Texture2D txNormal     : register(t1);
+Texture2D txHeight     : register(t2);
 SamplerState samLinear : register(s0);
 // ---------------------------------------------------------------------
 
@@ -15,20 +16,23 @@ SamplerState samLinear : register(s0);
 struct VS_IN
 {
     float3 Position  : POSITION;
-    float3 Norm      : NORMAL;
-    float2 Tex       : TEXCOORD0;
+    float3 Normal    : NORMAL;
+    float2 UV        : TEXCOORD0;
     float3 Tangent   : TANGENT;
     float3 Binormal  : BINORMAL;
 };
 
 struct PS_IN
 {
-    float4   Position  : SV_POSITION;
-    float4   PositionW : POSITION;
-    float3   Norm      : NORMAL;
-    float2   Tex       : TEXCOORD0;
-    float3   LightDirT : TLIGHTDIR;
-    float3   EyeDirT   : TEYEDIR;
+    float4 Position  : SV_POSITION;
+    float4 PositionW : POSITION;
+    float3 PositionT : POSITIONT;
+    float3 Normal    : NORMAL;
+    float2 UV        : TEXCOORD0;
+    float3 NormalT   : NORMALT;
+    float3 LightDirT : TLIGHTDIR;
+    float3 EyeDirT   : TEYEDIR;
+    float3 EyePosT   : EYEPOSITIONT;
 };
 // ---------------------------------------------------------------------
 
@@ -108,12 +112,12 @@ PS_IN VS(VS_IN input)
     output.Position   = mul(output.Position, View);
     output.Position   = mul(output.Position, Projection);
 
-    output.Norm       = mul(float4(input.Norm, 0), World).xyz;
-    output.Tex        = input.Tex;
+    output.Normal     = mul(float4(input.Normal, 0), World).xyz;
+    output.UV        = input.UV;
     
     // Create the TBN matrix
     float3 T          = normalize(mul(float4(input.Tangent,  0.0f), World)).xyz;
-    float3 N          = normalize(mul(float4(input.Norm, 0), World).xyz);
+    float3 N          = normalize(mul(float4(input.Normal, 0), World).xyz);
     float3 B          = normalize(mul(float4(input.Binormal, 0.0f), World)).xyz;
     //T                 = normalize(T - dot(T, N) * N);  //Gram-Schmidt process
     float3x3 TBN      = float3x3(T, B, N);
@@ -123,9 +127,12 @@ PS_IN VS(VS_IN input)
     float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
     float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
     
-    // Convert eye and light vectors to tangent space
+    // Get tangent space vectors
     output.LightDirT = ToTangentSpace(lightDir, invTBN);
     output.EyeDirT   = ToTangentSpace(viewDir, invTBN);
+    output.PositionT = ToTangentSpace(output.PositionW.xyz, invTBN);
+    output.NormalT   = ToTangentSpace(output.Normal, invTBN);
+    output.EyePosT   = ToTangentSpace(EyePosition.xyz, invTBN);
     
     return output;
 }
@@ -142,13 +149,13 @@ float4 PS(PS_IN input) : SV_TARGET
     float4 texColor   = { 1.0f, 1.0f, 1.0f, 1.0f };
     
     if (Material.UseTexture)
-        texColor = txDiffuse.Sample(samLinear, input.Tex);
+        texColor = txDiffuse.Sample(samLinear, input.UV);
 
     // This uses world space normal mapping
     if (Material.UseNormals)
     {
         // Uncompress the normals from the normal map
-        float4 texNormal     = txNormal.Sample(samLinear, input.Tex);
+        float4 texNormal     = txNormal.Sample(samLinear, input.UV);
         float4 bumpNormalT   = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
         
         pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, bumpNormalT.xyz);
@@ -158,7 +165,7 @@ float4 PS(PS_IN input) : SV_TARGET
         float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
         float3 viewDir  = normalize(EyePosition.xyz - input.PositionW.xyz);     // To Eye
         
-        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Norm));    
+        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Normal));    
     }
 
     float4 ambient  = GlobalAmbient;
