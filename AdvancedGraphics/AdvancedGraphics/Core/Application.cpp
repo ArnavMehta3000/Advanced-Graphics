@@ -27,6 +27,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_lightAttenuation(1.0f)
 {
 	CREATE_AND_ATTACH_CONSOLE();
+	LOG("----- DEBUG CONSOLE ATTACHED -----");
 
 	m_window = new Window(hInst, width, height);
 	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
@@ -72,7 +73,7 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\SmoothCube.obj");
+	m_gameObject->InitMesh("Assets\\Cube.obj");
 	m_gameObject->SetTexture(L"Assets\\rock_diffuse2.dds", L"Assets\\rock_bump.dds", L"Assets\\rock_height.dds");
 	
 	// Visualizer for light position
@@ -98,6 +99,10 @@ bool Application::Init()
 
 	D3D->SetWireframe(false);
 
+	LOG("----- APPLICATION INITIALIZATION FINISHED -----");
+	LOG("----- CONSOLE FREED (SAFE TO CLOSE) -----");
+	FreeConsole();
+	
 	return true;
 }
 

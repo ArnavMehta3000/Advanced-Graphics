@@ -27,7 +27,6 @@ struct PS_IN
     float4 Position  : SV_POSITION;
     float4 PositionW : POSITION;
     float3 PositionT : POSITIONT;
-    float3 Normal    : NORMAL;
     float2 UV        : TEXCOORD0;
     float3 NormalT   : NORMALT;
     float3 LightDirT : TLIGHTDIR;
@@ -95,6 +94,17 @@ LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, f
     
     return result;
 }
+
+float2 ParallaxMapping(float2 uv, float3 viewDir)
+{
+    float heightScale = 0.1f;
+    float bias        = 0.0f;  // -0.01 or -0.02
+    float height      = txHeight.Sample(samLinear, uv).r;
+    float2 offset     = viewDir.xy / viewDir.z * (height * heightScale);
+    offset += bias;
+    
+    return uv - offset;
+}
 // ---------------------------------------------------------------------
 
 
@@ -112,7 +122,6 @@ PS_IN VS(VS_IN input)
     output.Position   = mul(output.Position, View);
     output.Position   = mul(output.Position, Projection);
 
-    output.Normal     = mul(float4(input.Normal, 0), World).xyz;
     output.UV        = input.UV;
     
     // Create the TBN matrix
@@ -126,12 +135,14 @@ PS_IN VS(VS_IN input)
     
     float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
     float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
+    float3 normal   = mul(float4(input.Normal, 0), World).xyz;
+    
     
     // Get tangent space vectors
     output.LightDirT = ToTangentSpace(lightDir, invTBN);
-    output.EyeDirT   = ToTangentSpace(viewDir, invTBN);
+    output.EyeDirT   = ToTangentSpace(viewDir, invTBN);    
     output.PositionT = ToTangentSpace(output.PositionW.xyz, invTBN);
-    output.NormalT   = ToTangentSpace(output.Normal, invTBN);
+    output.NormalT   = ToTangentSpace(normal, invTBN);
     output.EyePosT   = ToTangentSpace(EyePosition.xyz, invTBN);
     
     return output;
@@ -148,32 +159,36 @@ float4 PS(PS_IN input) : SV_TARGET
     float4 finalColor = (float)0;
     float4 texColor   = { 1.0f, 1.0f, 1.0f, 1.0f };
     
+    float2 texCoords = input.UV;
+    if (Material.UseHeight)
+    {
+        float3 viewDir = normalize(input.EyePosT - input.EyePosT);
+        float2 texCoords = ParallaxMapping(input.UV, viewDir);
+    }
+    
     if (Material.UseTexture)
-        texColor = txDiffuse.Sample(samLinear, input.UV);
+        texColor = txDiffuse.Sample(samLinear, texCoords);
 
     // This uses world space normal mapping
     if (Material.UseNormals)
     {
-        // Uncompress the normals from the normal map
-        float4 texNormal     = txNormal.Sample(samLinear, input.UV);
-        float4 bumpNormalT   = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // These normals are in tangent space
-        
+    // Uncompress the normals from the normal map (in tangent space)
+        float4 texNormal = txNormal.Sample(samLinear, texCoords);
+        float4 bumpNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
+    
         pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, bumpNormalT.xyz);
     }
     else
     {
-        float3 lightDir = normalize(Light.Position.xyz - input.PositionW.xyz); // To light
-        float3 viewDir  = normalize(EyePosition.xyz - input.PositionW.xyz);     // To Eye
-        
-        pointLight = DoPointLight(lightDir, viewDir, input.PositionW.xyz, normalize(input.Normal));    
+        pointLight = DoPointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, input.NormalT.xyz);
     }
 
-    float4 ambient  = GlobalAmbient;
-    float4 diffuse  = Material.Diffuse * pointLight.Diffuse;
+    float4 ambient = GlobalAmbient;
+    float4 diffuse = Material.Diffuse * pointLight.Diffuse;
     float4 specular = Material.Specular * pointLight.Specular;
     
     
     finalColor = texColor * (ambient + diffuse + specular);
     return finalColor;
-}
+    }
 // ---------------------------------------------------------------------
