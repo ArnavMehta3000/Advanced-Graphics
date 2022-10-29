@@ -23,7 +23,9 @@ struct _Material
 		Diffuse(1.0f, 1.0f, 1.0f, 1.0f),
 		Specular(1.0f, 1.0f, 1.0f, 1.0f),
 		SpecularPower(128.0f),
-		UseTexture(false)
+		UseTexture(false),
+		UseNormals(false),
+		UseHeight(false)
 	{}
 
 
@@ -32,7 +34,7 @@ struct _Material
 	float       SpecularPower;
 	int         UseTexture;
 	int         UseNormals;
-	float       Padding;
+	int         UseHeight;
 };
 
 struct MaterialProperties

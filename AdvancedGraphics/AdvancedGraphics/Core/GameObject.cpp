@@ -13,7 +13,10 @@ GameObject::GameObject()
 	m_rotation(0.0f),
 	m_scale(1.0f),
 	m_isObj(false),
-	m_mesh(nullptr)
+	m_mesh(nullptr),
+	m_textureDiffRV(nullptr),
+	m_textureNormRV(nullptr),
+	m_textureHeightRV(nullptr)
 
 {
 	// Create material constant buffer
@@ -28,6 +31,8 @@ GameObject::~GameObject()
 {
 	SAFE_DELETE(m_mesh);
 	COM_RELEASE(m_textureDiffRV);
+	COM_RELEASE(m_textureNormRV);
+	COM_RELEASE(m_textureHeightRV);
 	COM_RELEASE(m_vertexBuffer);
 	COM_RELEASE(m_indexBuffer);
 	COM_RELEASE(m_materialCBuffer);
@@ -137,12 +142,23 @@ void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertex
 
 }
 
+void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal, const wchar_t* height)
+{
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, normal, nullptr, m_textureNormRV.ReleaseAndGetAddressOf()));
+	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, height, nullptr, m_textureHeightRV.ReleaseAndGetAddressOf()));
+	m_material.Material.UseTexture = true;
+	m_material.Material.UseNormals = true;
+	m_material.Material.UseHeight  = true;
+}
+
 void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal)
 {
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, normal, nullptr, m_textureNormRV.ReleaseAndGetAddressOf()));
 	m_material.Material.UseTexture = true;
 	m_material.Material.UseNormals = true;
+	m_material.Material.UseHeight  = false;
 }
 
 void GameObject::SetTexture(const wchar_t* diffuse)
@@ -150,22 +166,16 @@ void GameObject::SetTexture(const wchar_t* diffuse)
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
 	m_material.Material.UseTexture = true;
 	m_material.Material.UseNormals = false;
+	m_material.Material.UseHeight = false;
 }
 
 void GameObject::Set()
 {
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
 	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_materialCBuffer.GetAddressOf());
-
-	// Set texture resources
-	if (m_material.Material.UseNormals && m_material.Material.UseTexture)
-	{
-		ID3D11ShaderResourceView* textureSrv[] = { m_textureDiffRV.Get(), m_textureNormRV.Get() };
-		D3D_CONTEXT->PSSetShaderResources(0, 2, textureSrv);
-	}
-	else if (m_material.Material.UseTexture)
-		D3D_CONTEXT->PSSetShaderResources(0, 1, m_textureDiffRV.GetAddressOf()) ;
-
+	
+	ID3D11ShaderResourceView* textureSrv[] = { m_textureDiffRV.Get(), m_textureNormRV.Get(), m_textureHeightRV.Get()};
+	D3D_CONTEXT->PSSetShaderResources(0, 3, textureSrv);
 
 	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &m_stride, &m_offset);
 	D3D_CONTEXT->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);

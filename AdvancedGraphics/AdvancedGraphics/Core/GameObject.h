@@ -12,6 +12,7 @@ public:
 	void InitMesh(const char* objFile);
 	void InitMesh(const void* vertices, const void * indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount);
 	
+	void SetTexture(const wchar_t* diffuse, const wchar_t* normal, const wchar_t* height);
 	void SetTexture(const wchar_t* diffuse, const wchar_t* normal);
 	void SetTexture(const wchar_t* diffuse);
 
@@ -39,6 +40,7 @@ private:
 
 	ComPtr<ID3D11ShaderResourceView> m_textureDiffRV;
 	ComPtr<ID3D11ShaderResourceView> m_textureNormRV;
+	ComPtr<ID3D11ShaderResourceView> m_textureHeightRV;
 
 
 	UINT m_indexCount = 0;

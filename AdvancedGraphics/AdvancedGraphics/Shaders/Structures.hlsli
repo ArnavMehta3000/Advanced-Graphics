@@ -5,7 +5,7 @@ struct _Material
     float  SpecularPower; // 4 bytes
     bool   UseTexture;    // 4 bytes
     bool   UseNormals;    // 4 bytes
-    float  Padding;       // 4 bytes
+    bool   UseHeight;     // 4 bytes
 };
 
 struct PointLight
