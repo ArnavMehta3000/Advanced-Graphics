@@ -18,7 +18,7 @@ Camera::Camera(float angle, float clientWidth, float clientHeight, float nearPla
 	m_height(clientHeight),
 	m_nearPlane(nearPlane),
 	m_farPlane(farPlane),
-	m_speed(0.05f),
+	m_speed(0.025f),
 	m_sensitivity(0.01f)
 {
 	// Create the view and projection matrices on creation

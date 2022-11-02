@@ -14,6 +14,7 @@ struct PointLight
     float4 Diffuse;     // 16 bytes
     float4 Specular;    // 16 bytes
     float4 Attenuation; // 16 bytes  (w component not used)
+    float4 Parallax;    // 16 bytes
 };
 
 struct LightingResult
