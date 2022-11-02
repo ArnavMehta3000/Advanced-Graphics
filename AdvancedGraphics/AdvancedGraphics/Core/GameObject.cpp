@@ -137,9 +137,6 @@ void GameObject::InitMesh(const void* vertices, const void* indices, UINT vertex
 	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, indexInitData);
 	indexInitData.pSysMem      = indices;	
 	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_indexBuffer.ReleaseAndGetAddressOf()));
-
-	
-
 }
 
 void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal, const wchar_t* height)

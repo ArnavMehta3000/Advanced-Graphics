@@ -4,6 +4,7 @@
 #include "Graphics/Direct3D.h"
 #include "Core/GameObject.h"
 #include "Core/Camera.h"
+#include "Graphics/RenderTexture.h"
 
 
 #define ENABLE_IMGUI 1
@@ -43,6 +44,8 @@ private:
 
 	VertexShader*        m_vertexShader;
 	PixelShader*         m_pixelShader;
+
+	
 
 	ComPtr<ID3D11Buffer> m_constantBuffer;
 	ComPtr<ID3D11Buffer> m_lightCBuffer;

@@ -72,6 +72,7 @@ bool Application::Init()
 	D3D->CreateVertexShader(m_vertexShader, DEFAULT_SHADER);
 	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
 
+	RenderTexture rt(1280, 720);
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
@@ -83,6 +84,7 @@ bool Application::Init()
 	GO_CREATE_MESH(m_goLight, Primitives::Triangle);
 	m_goLight->SetTexture(L"Assets\\stone.dds");
 	m_goLight->m_scale = sm::Vector3(0.5f);
+
 
 
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
@@ -111,8 +113,8 @@ bool Application::Init()
 void Application::CreateRenderTarget()
 {
 	CREATE_ZERO(D3D11_RENDER_TARGET_VIEW_DESC, rtvDesc);
-	CREATE_ZERO(D3D11_TEXTURE2D_DESC, texDesc);
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, srvDesc);
+	
 	
 
 }

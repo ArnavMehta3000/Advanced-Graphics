@@ -100,6 +100,7 @@
     <ClInclude Include="Core\Timer.h" />
     <ClInclude Include="Core\Window.h" />
     <ClInclude Include="Graphics\Mesh.h" />
+    <ClInclude Include="Graphics\RenderTexture.h" />
     <ClInclude Include="Utils\DDSTextureLoader.h" />
     <ClInclude Include="Graphics\Direct3D.h" />
     <ClInclude Include="Graphics\Primitives.h" />
@@ -122,6 +123,7 @@
     <ClCompile Include="Core\Timer.cpp" />
     <ClCompile Include="Core\Window.cpp" />
     <ClCompile Include="Graphics\Mesh.cpp" />
+    <ClCompile Include="Graphics\RenderTexture.cpp" />
     <ClCompile Include="Utils\DDSTextureLoader.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>

@@ -167,7 +167,6 @@ float CalculatePOMSelfShadowFactor(float2 uv, float3 lightDir, float3 normal)
     float shadowMultiplier = Light.Parallax.w;
 
     lightDir = normalize(lightDir);
-    // Compute all the derivatives
     float2 dx = ddx(uv);
     float2 dy = ddy(uv);
 
@@ -184,7 +183,7 @@ float CalculatePOMSelfShadowFactor(float2 uv, float3 lightDir, float3 normal)
 
     float2 currentTexCoords    = uv;
     float currentDepthMapValue = txHeight.SampleGrad(samLinear, currentTexCoords, dx, dy).r;
-    float currentLayerDepth = currentDepthMapValue;
+    float currentLayerDepth    = currentDepthMapValue;
 
     while(currentLayerDepth < currentDepthMapValue)
     {
