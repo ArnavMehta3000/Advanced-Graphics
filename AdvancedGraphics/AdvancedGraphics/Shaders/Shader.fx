@@ -24,15 +24,16 @@ struct VS_IN
 
 struct PS_IN
 {
-    float4 Position  : SV_POSITION;
-    float4 PositionW : POSITION;
-    float3 PositionT : POSITIONT;
-    float2 UV        : TEXCOORD0;
-    float3 NormalT   : NORMALT;
-    float3 NormalW   : NORMALW;
-    float3 LightDirT : TLIGHTDIR;
-    float3 EyeDirT   : TEYEDIR;
-    float3 EyePosT   : EYEPOSITIONT;
+    float4 Position        : SV_POSITION;
+    float4 PositionW       : POSITION;
+    float3 PositionT       : POSITIONT;
+    float2 UV              : TEXCOORD0;
+    float3 NormalT         : NORMALT;
+    float3 NormalW         : NORMALW;
+    float3 LightDirT       : TLIGHTDIR;
+    float3 EyeDirT         : TEYEDIR;
+    float3 EyePosT         : EYEPOSITIONT;
+    float2 ParallaxOffsetT : POFFSETT;
 };
 // ---------------------------------------------------------------------
 
@@ -69,6 +70,14 @@ float3 ToTangentSpace(float3 v, float3x3 InvTBN)
     return normalize(mul(v, InvTBN));
 }
 
+bool IsUVInBounds(float2 uv)
+{
+    if (uv.x > 1.0f || uv.y > 1.0f || uv.x < 0.0f || uv.y < 0.0f)
+        return false;
+    else
+        return true;
+}
+
 LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, float3 vertexNormal)
 {
     // Lighting calculation reference taken from HLSL Development Cookbook by Doron Feinstein
@@ -95,125 +104,70 @@ LightingResult DoPointLight(float3 lightDir, float3 viewDir, float3 vertexPos, f
     
     return result;
 }
-
+// https://shaderbits.com/blog/curved-surface-parallax-occlusion-mapping#:~:text=Parallax%20Mapping%20refers%20to%20the,height%20field%20checking%20for%20intersections.
 float2 SimpleParallaxMapping(float2 uv, float3 viewDir)
 {
     viewDir = normalize(viewDir);
     
-    float heightScale = 0.01f;
-    float bias        = 0.0f;  // -0.01 or -0.02
-    float height      = txHeight.Sample(samLinear, uv).r;
-    float2 offset     = viewDir.xy / viewDir.z * (height * heightScale);
+    const float heightScale = 0.05f;
+    const float bias        = -0.01f;  // -0.01 or -0.02
+
+    float height  = txHeight.Sample(samLinear, uv).r;
+    float2 offset = viewDir.xy / viewDir.z * (height * heightScale);
+    
     offset += bias;
     
     float2 result = uv - offset;  
-   
     return result;
 }
 
-float2 CalculatePOMUVOffset(float2 offset, float2 uv, int stepCount)
+float2 StepParallaxMapping(float2 uv, float3 viewDir)
 {
-    float currentHeight = 0.0f;
-    float stepSize = 1.0f / (float)stepCount;
-    float prevHeight = 1.0f;
-    float nextHeight = 0.0f;
-    int stepIndex = 0;
+    viewDir = normalize(viewDir);
 
-    float2 texOffsetPerStep = stepSize * offset;
-    float2 texCurrentOffset = uv;
-    float currentBound = 1.0f;
-    float parallaxAmt = 0.0f;
+    const float heightScale = 0.01f;
+    const float bias        = -0.01f;  // -0.01 or -0.02
 
-    float2 pt1 = 0;
-    float2 pt2 = 0;
+    const int maxSteps = 5;
+    const float minLayers  = 8.0f;
+    const float maxLayers  = 32.0f;
+    float layerCount = lerp(maxLayers, minLayers, max(dot(float3(0.0f, 0.0f, 1.0f), viewDir), 0.0f));
 
-    float2 texOffset2 = 0;
-    float2 dx = ddx(uv);
-    float2 dy = ddy(uv);
+    float layerDepth = 1.0f / layerCount;
+    float currentLayerDepth = 0.0f;  // Current depth location
+
+    float2 offset  = viewDir.xy * heightScale;  // Ray march shift direction
+    float2 deltaUV = offset / layerCount;
+
+    float2 currentTexCoords    = uv;
+    float currentHeightMapVal  = txHeight.Sample(samLinear, currentTexCoords).r;
 
     // Ray march
-    while(stepIndex < stepCount)
+    int steps = 0;
+    while (currentLayerDepth < currentHeightMapVal || steps < maxSteps)
     {
-        texCurrentOffset -= texOffsetPerStep;
-        currentHeight = txHeight.SampleGrad(samLinear, texCurrentOffset, dx, dy).r;
-        
-        currentBound -= stepSize;
-
-        if (currentHeight > currentBound)
-        {
-            pt1 = float2(currentBound, currentHeight);
-            pt2 = float2(currentBound + stepSize, prevHeight);
-
-            texOffset2 = texCurrentOffset - texOffsetPerStep;
-
-            stepIndex = stepCount + 1;
-        }
-        else
-        {
-            stepIndex++;
-            prevHeight = currentHeight;
-        }
+        currentTexCoords -= deltaUV;
+        currentHeightMapVal = txHeight.Sample(samLinear, currentTexCoords).r;
+        currentLayerDepth += layerDepth;
+        steps++;
     }
 
-    // Linearly  Interpolate
-    float delta1 = pt1.x - pt1.y;
-    float delta2 = pt2.x - pt2.y;
-    float difference = delta2 - delta1;
-
-    if (difference == 0.0f)
-        parallaxAmt = 0.0f;
-    else
-        parallaxAmt = (pt1.x * delta2 - pt2.x * delta1) / difference;
-
-    float2 parallaxOffset = offset * (1.0f - parallaxAmt);
-    return uv - parallaxOffset;
+    return currentTexCoords;
 }
 
-int GetPOMRayStepCount(float3 viewDir, float3 normal)
+// https://github.com/tgjones/slimshader-cpp/blob/master/src/Shaders/Sdk/Direct3D11/DetailTessellation11/POM.hlsl
+float2 POM(float2 uv, float3 viewDir, float3 normal, float2 parallaxOffset)
 {
-    const int minLayers = 8;
-    const int maxLayers = 32;
-
-    
-    float t = dot(normalize(viewDir), normal);
-    int numLayers = (int)lerp(maxLayers, minLayers, t);
-    
-    return numLayers;
-}
-
-float CalculatePOMSelfShadow(float2 offset, float2 uv, int stepCount)
-{
+    // Compute all the derivatives
     float2 dx = ddx(uv);
     float2 dy = ddy(uv);
 
-    float currentHeight = 0.0f;
-    float stepSize = 1.0f / (float) stepCount;
-    float stepIndex = 0.0f;
+    const float minLayers  = 8.0f;
+    const float maxLayers  = 32.0f;
+    float layerCount = lerp(maxLayers, minLayers, max(dot(float3(0.0f, 0.0f, 1.0f), viewDir), 0.0f));
 
-    float2 texOffsetPerStep = stepSize * offset;
-    float2 texCurrentOffset = uv;
-    float currentBound = txHeight.SampleGrad(samLinear, texCurrentOffset, dx, dy).r;
-    float softShadow = 0.0f;
-
-    while (stepIndex < stepCount)
-    {
-        texCurrentOffset += texOffsetPerStep * offset;
-        currentHeight = txHeight.SampleGrad(samLinear, texCurrentOffset, dx, dy).r;
-
-        currentBound += stepSize;
-
-        if (currentHeight > currentBound)
-        {
-            float newSoftShadow = (currentHeight - currentBound) * (1.0f - (float)stepIndex / (float(stepCount)));
-            softShadow = max(softShadow, newSoftShadow);
-        }
-        else
-            stepIndex++;
-
-        float softShadowFactor = 0.01f;
-        float shadow = (stepIndex >= stepCount) ? ((1.0f - clamp(softShadowFactor * softShadow, 0.0f, 1.0f))) : 1.0f;
-        return shadow;
-    }
+    int numSteps = (int) lerp(maxLayers, minLayers, max(dot(viewDir, normal), 0.0f));  // Max to prevent ler t = -1
+    
 }
 
 // ---------------------------------------------------------------------
@@ -256,7 +210,15 @@ PS_IN VS(VS_IN input)
     output.PositionT = ToTangentSpace(output.PositionW.xyz, invTBN);
     output.NormalT   = ToTangentSpace(normal, invTBN);
     output.EyePosT   = ToTangentSpace(EyePosition.xyz, invTBN);
-    
+
+    // Calculate parallax vectors
+    float2 parallaxDir = normalize(output.EyeDirT).xy;
+    // This length determines the max amount of displacement
+    float viewLengthTS = length(output.EyeDirT);
+    float parallaxLength = sqrt(pow(viewLengthTS, 2) - pow(output.EyeDirT, 2)) / output.EyeDirT.z;
+    // Get reverse of parallax displacement vector
+    output.ParallaxOffsetT = parallaxDir * parallaxLength;  // Maybe mutliply this by a height scale...?
+
     return output;
 }
 // ---------------------------------------------------------------------
@@ -275,11 +237,13 @@ float4 PS(PS_IN input) : SV_TARGET
     float2 texCoords = input.UV;
     if (Material.UseHeight)
     {
-        // float2 texCoords = SimpleParallaxMapping(input.UV, input.EyeDirT);
-        float2 texCoords = CalculatePOMUVOffset(float2(0.01,0.01), input.UV, GetPOMRayStepCount(input.EyeDirT, input.NormalT));
-    
-        //if (texCoords.x > 1.0f || texCoords.y > 1.0f || texCoords.x > 0.0f || texCoords.y > 0.0f)
-          //  discard;
+        // texCoords = SimpleParallaxMapping(input.UV, input.EyeDirT);
+        // texCoords = StepParallaxMapping(input.UV, input.EyeDirT);
+        texCoords = POM(input.UV, input.EyeDirT, input.NormalT, input.ParallaxOffsetT);
+        
+        // Discard pixel if coordinate is not in bounds
+        if (!IsUVInBounds(texCoords))
+            discard;
     }
     
     if (Material.UseTexture)
