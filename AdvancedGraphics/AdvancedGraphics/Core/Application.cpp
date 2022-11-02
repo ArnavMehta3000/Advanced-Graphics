@@ -25,7 +25,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_lightDiffuse(Colors::White),
 	m_lightSpecular(Colors::White),
 	m_lightAttenuation(1.0f),
-	m_parallaxData(8.0f, 32.0f, 0.05f, -0.01f)
+	m_parallaxData(8.0f, 32.0f, 0.05f, 1.0f),
+	m_biasData(0.01f, 0.01f, 0.0f, 0.0f)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -153,6 +154,7 @@ void Application::CalculateLighting()
 	light.Specular    = TO_VEC4(m_lightSpecular, 1.0f);
 	light.Attenuation = sm::Vector4(m_lightAttenuation);
 	light.Parallax    = m_parallaxData;
+	light.Bias        = m_biasData;
 
 
 	auto& pos = m_camera.Position();
@@ -236,9 +238,11 @@ void Application::OnGui()
 		if (ImGui::CollapsingHeader("Parallax Mapping", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::DragFloat("Min Layers", & m_parallaxData.x, 1, 5.0f, 50.0f);
-			ImGui::DragFloat("Max Layers", & m_parallaxData.y, 1, 20.0f, 50.0f);
+			ImGui::DragFloat("Max Layers", & m_parallaxData.y, 1, 20.0f, 150.0f);
 			ImGui::DragFloat("Height Scale", & m_parallaxData.z, 0.01f, -5.0f, 5.0f);
-			ImGui::DragFloat("Bias", & m_parallaxData.w, 0.001f, -0.5f, 0.5f);
+			ImGui::DragFloat("Shadow Factor", & m_parallaxData.w, 0.01f, 1.0f, 10.0f);
+			ImGui::Spacing();
+			ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
 		}
 		ImGui::End();
 	}

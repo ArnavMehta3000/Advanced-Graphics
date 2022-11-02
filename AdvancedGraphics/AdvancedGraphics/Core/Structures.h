@@ -64,7 +64,8 @@ struct PointLight
 	sm::Vector4	Diffuse;
 	sm::Vector4	Specular;
 	sm::Vector4	Attenuation;  // w component not used
-	sm::Vector4 Parallax;     // (x: minLayers | y : maxLayers | z : heightScale | w : bias)
+	sm::Vector4 Parallax;     // (x: minLayers | y : maxLayers | z : heightScale | w : shadowFactor)
+	sm::Vector4 Bias;         // (x: biasX | y : biasY | z : not used| w : not used)
 };
 
 struct LightProperties
