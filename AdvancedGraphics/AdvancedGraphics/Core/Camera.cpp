@@ -54,6 +54,7 @@ void Camera::Move(double dt, const DirectX::Keyboard::State& kb)
 {
 	// Stores the amount/direction to move this frame
 	sm::Vector3 move = sm::Vector3::Zero;
+	float height = 0;
 
 	if (kb.W)
 		move.z += m_speed;
@@ -65,15 +66,16 @@ void Camera::Move(double dt, const DirectX::Keyboard::State& kb)
 		move.x += m_speed;
 
 	if (kb.Q)
-		move.y -= m_speed;
+		height -= m_speed;
 	if (kb.E)
-		move.y += m_speed;
+		height += m_speed;
 
 	sm::Quaternion q = sm::Quaternion::CreateFromYawPitchRoll(m_rotation);
 
 	move = sm::Vector3::Transform(move, q);
 	move *= m_speed;
 	m_position += move;
+	m_position.y += height * m_speed;
 }
 
 void Camera::Rotate(double dt, const DirectX::Mouse::State& mouse)
