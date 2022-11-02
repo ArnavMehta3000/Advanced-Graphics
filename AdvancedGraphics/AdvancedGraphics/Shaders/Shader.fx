@@ -166,8 +166,62 @@ float2 POM(float2 uv, float3 viewDir, float3 normal, float2 parallaxOffset)
     const float maxLayers  = 32.0f;
     float layerCount = lerp(maxLayers, minLayers, max(dot(float3(0.0f, 0.0f, 1.0f), viewDir), 0.0f));
 
-    int numSteps = (int) lerp(maxLayers, minLayers, max(dot(viewDir, normal), 0.0f));  // Max to prevent ler t = -1
+    float numSteps = lerp(maxLayers, minLayers, max(dot(viewDir, normal), 0.0f));  // Max to prevent ler t = -1
     
+    float currentHeight = 0.0f;
+    float stepSize      = 1.0f / numSteps;
+    float prevHeight    = 1.0f;
+    float nexHeight     = 1.0f;
+
+    float stepIndex = 0;
+    bool condition = true;
+    
+    float2 texOffsetPerStep = stepSize * parallaxOffset;
+    float2 texCurrentOffset = uv;
+    float currentBound = 1.0f;
+    float parallaxAmt = 0.0f;
+
+    float2 point1 = 0.0f;
+    float2 point2 = 0.0f;
+
+    float2 uvoffset = float2(.0f, 0.0f);
+
+    while (stepIndex < numSteps)
+    {
+        texCurrentOffset -= texOffsetPerStep;
+        currentBound -= stepSize;
+
+        currentHeight = txHeight.SampleGrad(samLinear, texCurrentOffset, dx, dy).r;
+
+        if (currentHeight > currentBound)
+        {
+            point1 = float2(currentBound, currentHeight);
+            point2 = float2(currentBound + stepSize, prevHeight);
+
+            uvoffset = texCurrentOffset - texOffsetPerStep;
+
+            stepIndex = numSteps + 1;
+        }
+        else
+        {
+            stepIndex++;
+            prevHeight = currentHeight;
+        }
+    }
+
+    // Interpolate
+    float delta1 = point1.x - point1.y;
+    float delta2 = point2.x - point2.y;
+    float denominator = delta2 - delta1;
+
+    [flatten] 
+    if (denominator == 0.0f)
+        parallaxAmt = 0.0f;
+    else
+        parallaxAmt = (point1.x * delta2 - point2.x * delta1) / denominator;
+
+    float2 finalOffset = parallaxOffset * (1.0f - parallaxAmt);
+    return uv - finalOffset;
 }
 
 // ---------------------------------------------------------------------
@@ -215,7 +269,7 @@ PS_IN VS(VS_IN input)
     float2 parallaxDir = normalize(output.EyeDirT).xy;
     // This length determines the max amount of displacement
     float viewLengthTS = length(output.EyeDirT);
-    float parallaxLength = sqrt(pow(viewLengthTS, 2) - pow(output.EyeDirT, 2)) / output.EyeDirT.z;
+    float parallaxLength = sqrt(pow(viewLengthTS, 2) - pow(output.EyeDirT.z, 2)) / output.EyeDirT.z;
     // Get reverse of parallax displacement vector
     output.ParallaxOffsetT = parallaxDir * parallaxLength;  // Maybe mutliply this by a height scale...?
 
