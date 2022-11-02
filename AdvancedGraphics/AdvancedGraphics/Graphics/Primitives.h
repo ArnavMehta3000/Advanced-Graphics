@@ -18,12 +18,12 @@ namespace Primitives
 			2, 1, 0
 		};
 
-		const static inline UINT VerticesTypeSize = sizeof(SimpleVertex);
-		const static inline UINT VerticesCount = ARRAYSIZE(Vertices);
+		const static inline UINT VerticesTypeSize  = sizeof(SimpleVertex);
+		const static inline UINT VerticesCount     = ARRAYSIZE(Vertices);
 		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Vertices);
 
-		const static inline UINT IndicesTypeSize = sizeof(WORD);
-		const static inline UINT IndicesCount = ARRAYSIZE(Indices);
+		const static inline UINT IndicesTypeSize  = sizeof(WORD);
+		const static inline UINT IndicesCount     = ARRAYSIZE(Indices);
 		const static inline UINT IndicesByteWidth = sizeof(WORD) * ARRAYSIZE(Indices);
 	};
 
@@ -44,8 +44,6 @@ namespace Primitives
 			{ XMFLOAT3( 1.0f,-1.0f, 1.0f), XMFLOAT3( 0.408248f, -0.408248f,  0.816497f), XMFLOAT2(1.0f, 0.0f) },  // 5 - 8
 		};
 
-
-
 		const static inline WORD Indices[] =
 		{
 			0,1,2,
@@ -62,12 +60,39 @@ namespace Primitives
 			4,6,5
 		};
 
-		const static inline UINT VerticesTypeSize = sizeof(SimpleVertex);
-		const static inline UINT VerticesCount = ARRAYSIZE(Vertices);
+		const static inline UINT VerticesTypeSize  = sizeof(SimpleVertex);
+		const static inline UINT VerticesCount     = ARRAYSIZE(Vertices);
 		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Vertices);
 
-		const static inline UINT IndicesTypeSize = sizeof(WORD);
-		const static inline UINT IndicesCount = ARRAYSIZE(Indices);
+		const static inline UINT IndicesTypeSize  = sizeof(WORD);
+		const static inline UINT IndicesCount     = ARRAYSIZE(Indices);
+		const static inline UINT IndicesByteWidth = sizeof(WORD) * ARRAYSIZE(Indices);
+	};
+
+	// Fullscreen Quad
+	class FSQuad
+	{
+	public:
+		const static inline SimpleVertex Vertices[] =
+		{
+			{ XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT3(-1.0f,  1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT3( 1.0f,  1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT3( 1.0f, -1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+		};
+
+		const static inline WORD Indices[] =
+		{
+			0, 1, 2,
+			0, 2, 3
+		};
+
+		const static inline UINT VerticesTypeSize  = sizeof(SimpleVertex);
+		const static inline UINT VerticesCount     = ARRAYSIZE(Vertices);
+		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Vertices);
+
+		const static inline UINT IndicesTypeSize  = sizeof(WORD);
+		const static inline UINT IndicesCount     = ARRAYSIZE(Indices);
 		const static inline UINT IndicesByteWidth = sizeof(WORD) * ARRAYSIZE(Indices);
 	};
 }

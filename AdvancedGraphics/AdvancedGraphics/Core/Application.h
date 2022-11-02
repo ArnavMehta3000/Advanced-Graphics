@@ -44,9 +44,6 @@ private:
 	VertexShader*        m_vertexShader;
 	PixelShader*         m_pixelShader;
 
-	ComPtr<ID3D11RenderTargetView> m_renderTargetView;
-	ComPtr<ID3D11Texture2D>        m_rtTexture;
-
 	ComPtr<ID3D11Buffer> m_constantBuffer;
 	ComPtr<ID3D11Buffer> m_lightCBuffer;
 
