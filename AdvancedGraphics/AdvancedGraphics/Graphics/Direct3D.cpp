@@ -405,7 +405,7 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 		if (errorBlob)
 		{
 			// TODO: Log error message (handle hot reloading here)
-			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}
 		HR(hr);
@@ -414,7 +414,7 @@ void Direct3D::CreatePixelShader(PixelShader*& ps, LPCWSTR srcFile, LPCSTR profi
 	{
 		if (errorBlob)
 		{
-			OutputDebugStringA(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
+			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}
 	}

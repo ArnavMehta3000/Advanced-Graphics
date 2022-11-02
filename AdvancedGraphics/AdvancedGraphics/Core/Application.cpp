@@ -106,6 +106,15 @@ bool Application::Init()
 	return true;
 }
 
+void Application::CreateRenderTarget()
+{
+	CREATE_ZERO(D3D11_RENDER_TARGET_VIEW_DESC, rtvDesc);
+	CREATE_ZERO(D3D11_TEXTURE2D_DESC, texDesc);
+	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, srvDesc);
+	
+
+}
+
 void Application::Run()
 {
 	m_appTimer.Reset();
