@@ -55,4 +55,5 @@ private:
 	sm::Vector3          m_lightDiffuse;
 	sm::Vector3          m_lightSpecular;
 	sm::Vector3          m_lightAttenuation;
+	sm::Vector4          m_parallaxData;
 };

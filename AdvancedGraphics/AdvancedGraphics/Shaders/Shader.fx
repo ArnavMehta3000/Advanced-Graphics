@@ -127,16 +127,18 @@ float2 CalculatePOM(float2 uv, float3 viewDir, float3 normal)
     float2 dx = ddx(uv);
     float2 dy = ddy(uv);
 
-    float minLayers = 8.0;
-    float maxLayers = 32.0;
-    float heightScale     = 0.05;
+    float minLayers   = Light.Parallax.x;
+    float maxLayers   = Light.Parallax.y;
+    float heightScale = Light.Parallax.z;
+    float bias        = Light.Parallax.w;  // Maybe convert bias to float 2 for X/Y Axis?
 
-    float numLayers = lerp(maxLayers, minLayers, abs(dot(viewDir, normal)));
-    float layerDepth = 1.0 / numLayers;
+    float numLayers         = lerp(maxLayers, minLayers, abs(dot(viewDir, normal)));
+    float layerDepth        = 1.0 / numLayers;
     float currentLayerDepth = 0.0;
-    // the amount to shift the texture coordinates per layer (from vector P)
-    float2 P = viewDir.xy / viewDir.z * heightScale;
-    float2 deltaTexCoords = P / numLayers;
+
+    float2 offset         = viewDir.xy / viewDir.z * heightScale;
+    offset               += bias;
+    float2 deltaTexCoords = offset / numLayers;
 
     float2 currentTexCoords    = uv;
     float currentDepthMapValue = txHeight.SampleGrad(samLinear, currentTexCoords, dx, dy).r;
@@ -153,7 +155,7 @@ float2 CalculatePOM(float2 uv, float3 viewDir, float3 normal)
     float afterDepth  = currentDepthMapValue - currentLayerDepth;
     float beforeDepth = txHeight.SampleGrad(samLinear, currentTexCoords, dx, dy).r - currentLayerDepth + layerDepth;
 
-    float weight = afterDepth / (afterDepth - beforeDepth);
+    float weight          = afterDepth / (afterDepth - beforeDepth);
     float2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
 
     return finalTexCoords;
