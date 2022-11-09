@@ -156,9 +156,6 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 		dsvDesc.Texture2D.MipSlice = 0;
 		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
-
-		// Set back buffer as render targets
-		SetRenderAndDepthTargets(m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 	}
 
 	// Create viewport
@@ -220,18 +217,18 @@ void Direct3D::Shutdown()
 	COM_RELEASE(m_device);
 }
 
-void Direct3D::BeginFrame(const std::array<float, 4> clearColor)
+void Direct3D::Clear(const std::array<float, 4> clearColor)
 {
 	m_context->ClearRenderTargetView(m_renderTargetView.Get(), clearColor.data());
 	// NOTE: Stencil not being cleared
-	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0, 0);
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 }
 
-void Direct3D::BeginFrame(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv)
+void Direct3D::Clear(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv)
 {
 	m_context->ClearRenderTargetView(rtv, clearColor.data());
 	// NOTE: Stencil not being cleared
-	m_context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.0, 0);
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 }
 
 void Direct3D::EndFrame()
@@ -244,15 +241,14 @@ void Direct3D::EndFrame()
 
 
 
-
-void Direct3D::SetRenderAndDepthTargets()
+void Direct3D::SetBackBuffer()
 {
-	SetRenderAndDepthTargets(m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+	m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 }
 
-void Direct3D::SetRenderAndDepthTargets(ID3D11RenderTargetView* const* renderTarget, ID3D11DepthStencilView* depthStencil)
+void Direct3D::SetRenderTarget(const ComPtr<ID3D11RenderTargetView>& rtv)
 {
-	m_context->OMSetRenderTargets(1, renderTarget, depthStencil);
+	m_context->OMSetRenderTargets(1, rtv.GetAddressOf(), m_depthStencilView.Get());
 }
 
 void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)

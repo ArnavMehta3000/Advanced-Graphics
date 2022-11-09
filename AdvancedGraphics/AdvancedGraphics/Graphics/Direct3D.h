@@ -10,8 +10,10 @@ public:
 	bool Init(HWND hwnd, bool isVsync, UINT msaa = 1);
 	void Shutdown();
 
-	void BeginFrame(const std::array<float, 4> clearColor);
-	void BeginFrame(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv);
+	// Clear back buffer
+	void Clear(const std::array<float, 4> clearColor);
+	// Clear given render target
+	void Clear(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv);
 	void EndFrame();
 
 	inline ID3D11Device*              GetDevice()       { return m_device.Get(); }
@@ -20,11 +22,12 @@ public:
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
 
-	// Sets the back buffer render target adn depth buffer
-	void SetRenderAndDepthTargets();
-	// Sets one render target and one depth target
-	void SetRenderAndDepthTargets(ID3D11RenderTargetView* const* renderTarget, ID3D11DepthStencilView* depthStencil);
-	
+	// Sets the back buffer render target
+	void SetBackBuffer();
+
+	// Set a given render target with the same depth buffer
+	void SetRenderTarget(const ComPtr<ID3D11RenderTargetView>& rtv);
+
 	/// <param name="cullBack">True - solid | False - Cull None</param>
 	void SetCullMode(bool cullBack) { m_context->RSSetState((cullBack) ? m_rasterSolid.Get() : m_rasterCullNone.Get()); }
 

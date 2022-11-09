@@ -11,8 +11,6 @@ RenderTexture::RenderTexture(UINT width, UINT height)
 	m_pixelShader(nullptr),
 	m_renderTargetTexture(nullptr),
 	m_renderTargetView(nullptr),
-	m_depthStencilTexture(nullptr),
-	m_depthStencilView(nullptr),
 	m_rtSRV(nullptr)
 {
 	// Create shaders
@@ -32,20 +30,11 @@ RenderTexture::~RenderTexture()
 	COM_RELEASE(m_indexBuffer);
 
 	COM_RELEASE(m_renderTargetTexture);
-	COM_RELEASE(m_depthStencilTexture);
 
 	COM_RELEASE(m_renderTargetView);
-	COM_RELEASE(m_depthStencilView);
 
 	COM_RELEASE(m_rtSRV);
 }
-
-void RenderTexture::Attach()
-{
-	D3D->SetRenderAndDepthTargets(m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
-	D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f }, m_renderTargetView.Get(), m_depthStencilView.Get());
-}
-
 
 void RenderTexture::InitMesh()
 {
@@ -98,30 +87,6 @@ void RenderTexture::CreateTexture(UINT width, UINT height)
 		rtvDesc.Texture2D.MipSlice = 0;
 		HR(D3D_DEVICE->CreateRenderTargetView(m_renderTargetTexture.Get(), &rtvDesc, m_renderTargetView.ReleaseAndGetAddressOf()));
 	}
-	
-	// Create depth stencil view
-	CREATE_ZERO(D3D11_TEXTURE2D_DESC, dstDesc);
-	{
-		dstDesc.Width              = width;
-		dstDesc.Height             = height;
-		dstDesc.MipLevels          = 1;
-		dstDesc.ArraySize          = 1;
-		dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		dstDesc.SampleDesc.Count   = 1;
-		dstDesc.SampleDesc.Quality = 0;
-		dstDesc.Usage              = D3D11_USAGE_DEFAULT;
-		dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
-		dstDesc.CPUAccessFlags     = 0;
-		dstDesc.MiscFlags          = 0;
-		HR(D3D_DEVICE->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
-
-		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
-		dsvDesc.Format             = dstDesc.Format;
-		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-		dsvDesc.Texture2D.MipSlice = 0;
-		HR(D3D_DEVICE->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
-	}
-
 	// Create render target's shader resource view
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, srvDesc);
 	{
@@ -136,12 +101,12 @@ void RenderTexture::CreateTexture(UINT width, UINT height)
 
 void RenderTexture::Set()
 {
+	// Set shaders
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
-	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
 	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
 
+	// Set buffers
 	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &m_stride, &m_offset);
 	D3D_CONTEXT->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
