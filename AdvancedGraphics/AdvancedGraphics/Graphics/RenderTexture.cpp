@@ -136,10 +136,6 @@ void RenderTexture::CreateTexture(UINT width, UINT height)
 
 void RenderTexture::Set()
 {
-}
-
-void RenderTexture::Draw()
-{
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -152,6 +148,10 @@ void RenderTexture::Draw()
 	// Set pixel shader texture and sampler
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
 	D3D_CONTEXT->PSSetShaderResources(0, 1, m_rtSRV.GetAddressOf());
+}
 
+void RenderTexture::Draw()
+{
+	Set();
 	D3D_CONTEXT->DrawIndexed(m_indexCount, 0, 0);
 }

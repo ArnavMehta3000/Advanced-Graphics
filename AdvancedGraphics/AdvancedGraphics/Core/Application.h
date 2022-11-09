@@ -6,11 +6,7 @@
 #include "Core/Camera.h"
 #include "Graphics/RenderTexture.h"
 
-
-#define ENABLE_IMGUI 1
-
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
-
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
 
 class Application

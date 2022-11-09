@@ -3,6 +3,8 @@
 #include "Core/Core.h"
 #include "Graphics/Primitives.h"
 
+#define ENABLE_IMGUI 0
+
 
 // Include imgui headers
 #if ENABLE_IMGUI
@@ -123,24 +125,41 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 
-		// Clear back buffer
+		//// Clear back buffer
+		//OnUpdate(m_appTimer);
+
+		//// Set this to be the render target, then clear it
+		//m_renderTexture->Attach();
+		//// Render the scene to this render target
+
+		//// Set render target to the back buffer and clear it
+		//D3D->SetRenderAndDepthTargets();
+		//D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
+		//OnRender();  // Adding this makes the screen black
+		//m_renderTexture->Attach();
+		//m_renderTexture->Draw();
+
+		// Clear both the render/depth targets
+		D3D->BeginFrame({ 1.0f, 0.0f, 0.0f, 1.0f });  // Clears back buffer render target and depth buffer
+		D3D->BeginFrame({ 0.0f, 0.0f, 1.0f, 1.0f }, m_renderTexture->GetRenderTargetView().Get(), m_renderTexture->GetDepthStencilView().Get());
+		
+		// Update the scene
 		OnUpdate(m_appTimer);
 
-		// Set this to be the render target, then clear it
-		m_renderTexture->Attach();
-		// Render the scene to this render target
-
-		// Set render target to the back buffer and clear it
-		D3D->SetRenderAndDepthTargets();
-		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
-		OnRender();  // Adding this makes the screen black
-		m_renderTexture->Attach();
-		m_renderTexture->Draw();
-
-
+		// Attach render target to screen
+		D3D->SetRenderAndDepthTargets(m_renderTexture->GetRenderTargetView().GetAddressOf(), m_renderTexture->GetDepthStencilView().Get());
+		
+		// Render the scene and UI
+		OnRender();
 #if ENABLE_IMGUI
 		OnGui();
-#endif // ENABLE_IMGUI
+#endif 
+		// Attach the back buffer to the pipeline
+		D3D->SetRenderAndDepthTargets();
+
+		// Set FS Quad pipeline objects and then draw it
+		m_renderTexture->Draw();
+
 
 		D3D->EndFrame();
 	}

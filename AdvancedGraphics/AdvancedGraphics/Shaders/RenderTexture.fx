@@ -1,6 +1,6 @@
 // HLSL code for rendering to texture
 
-Texture2D tex          : register(t2);
+Texture2D tex          : register(t0);
 SamplerState samLinear : register(s0);
 
 struct RT_VS_INPUT

@@ -10,14 +10,19 @@ public:
 	// Sets the textures render target and depth stencils
 	void Attach();
 	// Draws the full screen quad
-	void Set();
+	
 	void Draw();
 
-	ID3D11RenderTargetView* GetRenderTargetView() { return m_renderTargetView.Get(); }
-	ID3D11ShaderResourceView* GetRTShaderResourceView() { return m_rtSRV.Get(); }
+	const ComPtr<ID3D11RenderTargetView>&   GetRenderTargetView()     { return m_renderTargetView; }
+	const ComPtr<ID3D11DepthStencilView>&   GetDepthStencilView()     { return m_depthStencilView; }
+	const ComPtr<ID3D11ShaderResourceView>& GetRTShaderResourceView() { return m_rtSRV; }
+	const ComPtr<ID3D11Texture2D>&          GetRenderTexture()        { return m_renderTargetTexture; }
+	const ComPtr<ID3D11Texture2D>&          GetDepthTexture()         { return m_depthStencilTexture; }
+
 
 
 private:
+	void Set();
 	void InitMesh();
 	void CreateTexture(UINT width, UINT height);
 
