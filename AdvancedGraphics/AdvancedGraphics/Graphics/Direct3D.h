@@ -7,10 +7,11 @@ public:
 	static void Kill();  // Used to delete the singleton instance
 	static Direct3D* GetInstance();
 
-	bool Init(HWND hwnd, bool isVsync);
+	bool Init(HWND hwnd, bool isVsync, UINT msaa = 1);
 	void Shutdown();
 
 	void BeginFrame(const std::array<float, 4> clearColor);
+	void BeginFrame(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv);
 	void EndFrame();
 
 	inline ID3D11Device*              GetDevice()       { return m_device.Get(); }
@@ -18,6 +19,11 @@ public:
 	inline ComPtr<ID3D11SamplerState> GetSamplerState() { return m_samplerAnisotropicWrap; }
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
+
+	// Sets the back buffer render target adn depth buffer
+	void SetRenderAndDepthTargets();
+	// Sets one render target and one depth target
+	void SetRenderAndDepthTargets(ID3D11RenderTargetView* const* renderTarget, ID3D11DepthStencilView* depthStencil);
 	
 	/// <param name="cullBack">True - solid | False - Cull None</param>
 	void SetCullMode(bool cullBack) { m_context->RSSetState((cullBack) ? m_rasterSolid.Get() : m_rasterCullNone.Get()); }

@@ -42,10 +42,10 @@ private:
 	Timer                m_appTimer;
 	Window*              m_window;
 
+	RenderTexture*       m_renderTexture;
+
 	VertexShader*        m_vertexShader;
 	PixelShader*         m_pixelShader;
-
-	
 
 	ComPtr<ID3D11Buffer> m_constantBuffer;
 	ComPtr<ID3D11Buffer> m_lightCBuffer;

@@ -20,6 +20,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_pixelShader(nullptr),
 	m_gameObject(nullptr),
 	m_goLight(nullptr),
+	m_renderTexture(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
 	m_lightDiffuse(Colors::White),
@@ -42,20 +43,25 @@ Application::~Application()
 
 	SAFE_DELETE(m_goLight);
 	SAFE_DELETE(m_gameObject)
+
 	SAFE_DELETE(m_vertexShader);
 	SAFE_DELETE(m_pixelShader);
+
 	SAFE_DELETE(m_window);
+
+	SAFE_DELETE(m_renderTexture);
 }
 
 
 
 bool Application::Init()
 {
-	if (!D3D->Init(m_window->GetHandle(), false))
+	if (!D3D->Init(m_window->GetHandle(), false, 4))
 	{
 		LOG("Failed to initialize Direct3D");
 		return false;
 	}
+	D3D;
 	
 #if ENABLE_IMGUI
 	IMGUI_CHECKVERSION();
@@ -72,8 +78,6 @@ bool Application::Init()
 	D3D->CreateVertexShader(m_vertexShader, DEFAULT_SHADER);
 	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
 
-	RenderTexture rt(1280, 720);
-
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
 	m_gameObject->InitMesh("Assets\\Cube.obj");
@@ -86,19 +90,13 @@ bool Application::Init()
 	m_goLight->m_scale = sm::Vector3(0.5f);
 
 
+	m_renderTexture = new RenderTexture(m_window->GetClientWidth(), m_window->GetClientHeight());
+
 
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
 	D3D->CreateConstantBuffer(m_lightCBuffer, sizeof(LightProperties));
 
-	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
-	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
-
-	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
-	D3D_CONTEXT->VSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
-
-	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
-		
-	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
+	
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D->SetWireframe(false);
@@ -114,9 +112,6 @@ void Application::CreateRenderTarget()
 {
 	CREATE_ZERO(D3D11_RENDER_TARGET_VIEW_DESC, rtvDesc);
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, srvDesc);
-	
-	
-
 }
 
 void Application::Run()
@@ -128,9 +123,21 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 
-		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
+		// Clear back buffer
 		OnUpdate(m_appTimer);
-		OnRender();
+
+		// Set this to be the render target, then clear it
+		m_renderTexture->Attach();
+		// Render the scene to this render target
+
+		// Set render target to the back buffer and clear it
+		D3D->SetRenderAndDepthTargets();
+		D3D->BeginFrame({ 0.01f, 0.01f, 0.01f, 1.0f });
+		OnRender();  // Adding this makes the screen black
+		m_renderTexture->Attach();
+		m_renderTexture->Draw();
+
+
 #if ENABLE_IMGUI
 		OnGui();
 #endif // ENABLE_IMGUI
@@ -192,6 +199,17 @@ void Application::OnUpdate(double dt)
 
 void Application::OnRender()
 {
+	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
+	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
+
+	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
+	D3D_CONTEXT->VSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
+
+	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
+
+	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
+
+
 	CalculateLighting();
 
 	CREATE_ZERO(VSConstantBuffer, cb);
@@ -227,17 +245,21 @@ void Application::OnGui()
 		ImGui::SetWindowPos({ 0,0 }, ImGuiCond_Always);
 		ImGui::SetWindowSize({ 350, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
 
+		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::DragFloat3("Object Position", &m_gameObject->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+		}
+		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
-
-			ImGui::Spacing();
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
 			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f, 0.00f, 100.0f);
 
 		}
-		if (ImGui::CollapsingHeader("Parallax Mapping", ImGuiTreeNodeFlags_DefaultOpen))
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Parallax Mapping"))
 		{
 			ImGui::DragFloat("Min Layers", & m_parallaxData.x, 1, 5.0f, 50.0f);
 			ImGui::DragFloat("Max Layers", & m_parallaxData.y, 1, 20.0f, 150.0f);

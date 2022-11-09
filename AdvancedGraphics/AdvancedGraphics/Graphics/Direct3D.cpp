@@ -20,7 +20,7 @@ Direct3D* Direct3D::GetInstance()
 	return s_instance;
 }
 
-bool Direct3D::Init(HWND hwnd, bool isVsync)
+bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 {
 	m_hWnd = hwnd;
 	m_isVsync = isVsync;
@@ -98,7 +98,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync)
 		}
 		swapChainDesc.BufferUsage                            = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 		swapChainDesc.OutputWindow                           = hwnd;
-		swapChainDesc.SampleDesc.Count                       = 1;  // Anti aliasing here
+		swapChainDesc.SampleDesc.Count                       = msaa;  // Anti aliasing here
 		swapChainDesc.SampleDesc.Quality                     = 0;
 		swapChainDesc.Windowed                               = TRUE;
 		swapChainDesc.BufferDesc.ScanlineOrdering            = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -129,7 +129,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync)
 		COM_RELEASE(factory);
 	}
 
-	// Create render target view
+	// Create render target view using back buffer as texture resource
 	ComPtr<ID3D11Texture2D> backBufferPtr;
 	HR(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBufferPtr.ReleaseAndGetAddressOf())));
 	HR(m_device->CreateRenderTargetView(backBufferPtr.Get(), nullptr, m_renderTargetView.ReleaseAndGetAddressOf()));
@@ -143,7 +143,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync)
 		dstDesc.MipLevels          = 1;
 		dstDesc.ArraySize          = 1;
 		dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		dstDesc.SampleDesc.Count   = 1;
+		dstDesc.SampleDesc.Count   = msaa;  // Anti aliasing here
 		dstDesc.SampleDesc.Quality = 0;
 		dstDesc.Usage              = D3D11_USAGE_DEFAULT;
 		dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
@@ -153,11 +153,12 @@ bool Direct3D::Init(HWND hwnd, bool isVsync)
 
 		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
 		dsvDesc.Format             = dstDesc.Format;
-		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 		dsvDesc.Texture2D.MipSlice = 0;
 		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
-		m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+		// Set back buffer as render targets
+		SetRenderAndDepthTargets(m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 	}
 
 	// Create viewport
@@ -226,6 +227,13 @@ void Direct3D::BeginFrame(const std::array<float, 4> clearColor)
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0, 0);
 }
 
+void Direct3D::BeginFrame(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv)
+{
+	m_context->ClearRenderTargetView(rtv, clearColor.data());
+	// NOTE: Stencil not being cleared
+	m_context->ClearDepthStencilView(dsv, D3D11_CLEAR_DEPTH, 1.0, 0);
+}
+
 void Direct3D::EndFrame()
 {
 	if (m_isVsync)
@@ -236,6 +244,16 @@ void Direct3D::EndFrame()
 
 
 
+
+void Direct3D::SetRenderAndDepthTargets()
+{
+	SetRenderAndDepthTargets(m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+}
+
+void Direct3D::SetRenderAndDepthTargets(ID3D11RenderTargetView* const* renderTarget, ID3D11DepthStencilView* depthStencil)
+{
+	m_context->OMSetRenderTargets(1, renderTarget, depthStencil);
+}
 
 void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
 {
