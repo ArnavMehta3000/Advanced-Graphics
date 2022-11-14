@@ -99,6 +99,18 @@ void RenderTexture::CreateTexture(UINT width, UINT height)
 
 }
 
+void RenderTexture::Begin()
+{
+}
+
+void RenderTexture::End()
+{
+}
+
+void RenderTexture::Clear()
+{
+}
+
 void RenderTexture::Set()
 {
 	// Set shaders

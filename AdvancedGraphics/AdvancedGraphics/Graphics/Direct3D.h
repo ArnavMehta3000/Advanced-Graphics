@@ -11,7 +11,7 @@ public:
 	void Shutdown();
 
 	// Clear back buffer
-	void Clear(const std::array<float, 4> clearColor);
+	void ClearBackBuffer(const std::array<float, 4> clearColor);
 	// Clear given render target
 	void Clear(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv);
 	void EndFrame();

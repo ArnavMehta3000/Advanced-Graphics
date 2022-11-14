@@ -13,7 +13,9 @@ public:
 	const ComPtr<ID3D11ShaderResourceView>& GetRTShaderResourceView() { return m_rtSRV; }
 	const ComPtr<ID3D11Texture2D>&          GetRenderTexture()        { return m_renderTargetTexture; }
 
-
+	void Begin();
+	void End();
+	void Clear();
 
 private:
 	void Set();
@@ -25,9 +27,7 @@ private:
 	ComPtr<ID3D11Buffer>           m_indexBuffer;
 
 	ComPtr<ID3D11Texture2D>        m_renderTargetTexture;
-
 	ComPtr<ID3D11RenderTargetView> m_renderTargetView;
-
 	ComPtr<ID3D11ShaderResourceView> m_rtSRV;
 
 	VertexShader* m_vertexShader;

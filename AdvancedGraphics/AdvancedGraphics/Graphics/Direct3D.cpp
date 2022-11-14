@@ -217,7 +217,7 @@ void Direct3D::Shutdown()
 	COM_RELEASE(m_device);
 }
 
-void Direct3D::Clear(const std::array<float, 4> clearColor)
+void Direct3D::ClearBackBuffer(const std::array<float, 4> clearColor)
 {
 	m_context->ClearRenderTargetView(m_renderTargetView.Get(), clearColor.data());
 	// NOTE: Stencil not being cleared

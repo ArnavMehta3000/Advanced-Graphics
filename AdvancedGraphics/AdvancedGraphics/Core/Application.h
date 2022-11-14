@@ -29,10 +29,7 @@ private:
 
 	void OnUpdate(double dt);
 	void OnRender();
-
-#if ENABLE_IMGUI
 	void OnGui();
-#endif // ENABLE_IMGUI
 
 private:
 	Timer                m_appTimer;
