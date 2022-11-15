@@ -20,6 +20,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_gameObject(nullptr),
 	m_goLight(nullptr),
 	m_renderTexture(nullptr),
+	m_renderTarget(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
 	m_lightDiffuse(Colors::White),
