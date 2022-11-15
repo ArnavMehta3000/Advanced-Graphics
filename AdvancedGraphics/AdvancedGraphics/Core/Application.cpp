@@ -49,7 +49,7 @@ Application::~Application()
 
 	SAFE_DELETE(m_window);
 
-	SAFE_DELETE(m_renderTexture);
+	SAFE_DELETE(m_renderTarget);
 }
 
 
@@ -63,7 +63,7 @@ bool Application::Init()
 	}
 	D3D;
 	
-#if ENABLE_IMGUI
+	// Set up imgui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGui::GetIO();
