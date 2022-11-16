@@ -76,7 +76,7 @@ void RenderTarget::CreateTexture(UINT width, UINT height)
 		texDesc.Format             = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		texDesc.SampleDesc.Count   = 1;
 		texDesc.Usage              = D3D11_USAGE_DEFAULT;
-		texDesc.BindFlags          = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		texDesc.BindFlags          = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
 		texDesc.CPUAccessFlags     = 0;
 		texDesc.MiscFlags          = 0;
 		HR(D3D_DEVICE->CreateTexture2D(&texDesc, NULL, m_renderTargetTexture.ReleaseAndGetAddressOf()));

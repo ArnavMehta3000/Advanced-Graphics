@@ -237,17 +237,8 @@ void Direct3D::BindBackBuffer()
 	float color[] = { 0.01f, 0.01f, 0.01f, 1.0f };
 	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), color);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
+
 	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), m_depthStencilView.Get());
-}
-
-void Direct3D::UnBindAllRenderTargets()
-{
-	ID3D11RenderTargetView* nullViews[] = { nullptr };
-	m_context->OMSetRenderTargets(_countof(nullViews), nullViews, nullptr);
-
-	// Clear PS shader resource views
-	ID3D11ShaderResourceView* srv[] = { NULL };
-	m_context->PSSetShaderResources(0, _countof(srv), srv);
 }
 
 void Direct3D::BindRenderTarget(const RenderTarget* rt)
@@ -256,7 +247,18 @@ void Direct3D::BindRenderTarget(const RenderTarget* rt)
 	float color[] = { 0.01f, 1.01f, 0.01f, 1.0f };
 	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), color);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
-	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), nullptr);
+
+	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+}
+
+void Direct3D::UnBindAllRenderTargets()
+{
+	ID3D11RenderTargetView* nullRTV[] = { nullptr };
+	m_context->OMSetRenderTargets(_countof(nullRTV), nullRTV, nullptr);
+
+	// Clear PS shader resource views
+	ID3D11ShaderResourceView* srv[] = { nullptr, nullptr, nullptr };
+	m_context->PSSetShaderResources(0, _countof(srv), srv);
 }
 
 
