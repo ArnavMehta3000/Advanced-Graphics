@@ -18,9 +18,13 @@ public:
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
 
+	// Set back buffer as render target
 	void BindBackBuffer();
+	// Unbind all render targets and shader resources
 	void UnBindAllRenderTargets();
+	// Bind render given render target
 	void BindRenderTarget(const RenderTarget* rt);
+
 	void DrawFSQuad(const RenderTarget* rt);
 
 	/// <param name="cullBack">True - solid | False - Cull None</param>

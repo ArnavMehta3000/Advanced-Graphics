@@ -259,6 +259,7 @@ void Direct3D::BindRenderTarget(const RenderTarget* rt)
 	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), nullptr);
 }
 
+
 void Direct3D::DrawFSQuad(const RenderTarget* rt)
 {
 	// Set shader data
