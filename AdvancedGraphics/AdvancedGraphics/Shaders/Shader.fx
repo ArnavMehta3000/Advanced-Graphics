@@ -249,7 +249,7 @@ PS_IN VS(VS_IN input)
 // ---------------
 //  PIXEL SHADER
 // ---------------
-float4 PS(PS_IN input) : SV_TARGET
+float4 PS(PS_IN input) : SV_TARGET0
 {
     LightingResult pointLight;
     float4 finalColor = (float)0;

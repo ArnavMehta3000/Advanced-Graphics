@@ -25,7 +25,6 @@ public:
 	
 private:
 	void CalculateLighting();
-	void CreateRenderTarget();
 
 	void OnUpdate(double dt);
 	void OnRender();
@@ -35,7 +34,7 @@ private:
 	Timer                m_appTimer;
 	Window*              m_window;
 
-	RenderTexture*       m_renderTexture;
+	RenderTarget*       m_renderTarget;
 
 	VertexShader*        m_vertexShader;
 	PixelShader*         m_pixelShader;

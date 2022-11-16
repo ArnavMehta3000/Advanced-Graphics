@@ -19,7 +19,6 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_pixelShader(nullptr),
 	m_gameObject(nullptr),
 	m_goLight(nullptr),
-	m_renderTexture(nullptr),
 	m_renderTarget(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
@@ -71,9 +70,6 @@ bool Application::Init()
 	ImGui_ImplDX11_Init(D3D_DEVICE, D3D_CONTEXT);
 	ImGui::StyleColorsDark();
 
-#endif // ENABLE_IMGUI
-
-
 	// Create shaders
 	D3D->CreateVertexShader(m_vertexShader, DEFAULT_SHADER);
 	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
@@ -82,17 +78,17 @@ bool Application::Init()
 	m_gameObject = new GameObject();
 	m_gameObject->InitMesh("Assets\\Cube.obj");
 	m_gameObject->SetTexture(L"Assets\\rock_diffuse2.dds", L"Assets\\rock_bump.dds", L"Assets\\rock_height.dds");
-	
+
 	// Visualizer for light position
 	m_goLight = new GameObject();
 	GO_CREATE_MESH(m_goLight, Primitives::Triangle);
 	m_goLight->SetTexture(L"Assets\\stone.dds");
 	m_goLight->m_scale = sm::Vector3(0.5f);
 
+	// Create render target
+	m_renderTarget = new RenderTarget(m_window->GetClientWidth(), m_window->GetClientHeight());
 
-	m_renderTexture = new RenderTexture(m_window->GetClientWidth(), m_window->GetClientHeight());
-
-
+	// Create constant buffers
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
 	D3D->CreateConstantBuffer(m_lightCBuffer, sizeof(LightProperties));
 
@@ -108,12 +104,6 @@ bool Application::Init()
 	return true;
 }
 
-void Application::CreateRenderTarget()
-{
-	CREATE_ZERO(D3D11_RENDER_TARGET_VIEW_DESC, rtvDesc);
-	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, srvDesc);
-}
-
 void Application::Run()
 {
 	m_appTimer.Reset();
@@ -123,7 +113,15 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 
+		OnUpdate(m_appTimer);
 		
+		D3D->BindRenderTarget(m_renderTarget);
+		OnRender();
+		D3D->UnBindAllRenderTargets();
+
+		D3D->BindBackBuffer();
+		D3D->DrawFSQuad(m_renderTarget);
+		OnGui();
 		D3D->EndFrame();
 	}
 }
@@ -181,6 +179,7 @@ void Application::OnUpdate(double dt)
 
 void Application::OnRender()
 {
+	// Set shaders for the objects
 	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
 
@@ -190,6 +189,8 @@ void Application::OnRender()
 	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
 
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
+
+
 
 
 	CalculateLighting();

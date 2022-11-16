@@ -33,10 +33,10 @@ RT_PS_INPUT VS(RT_VS_INPUT input)
 // ---------------
 //  PIXEL SHADER
 // ---------------
-float4 PS(RT_PS_INPUT input) : SV_TARGET
+float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
     float4 color = tex.Sample(samLinear, input.UV);
-    
     return color;
+    //float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
 // ---------------------------------------------------------------------

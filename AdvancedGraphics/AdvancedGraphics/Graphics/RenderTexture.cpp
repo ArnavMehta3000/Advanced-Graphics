@@ -3,7 +3,7 @@
 #include "Graphics/Direct3D.h"
 #include "Graphics/Primitives.h"
 
-RenderTexture::RenderTexture(UINT width, UINT height)
+RenderTarget::RenderTarget(UINT width, UINT height)
 	:
 	m_vertexBuffer(nullptr),
 	m_indexBuffer(nullptr),
@@ -21,7 +21,7 @@ RenderTexture::RenderTexture(UINT width, UINT height)
 	InitMesh();
 }
 
-RenderTexture::~RenderTexture()
+RenderTarget::~RenderTarget()
 {
 	SAFE_DELETE(m_vertexShader);
 	SAFE_DELETE(m_pixelShader);
@@ -36,7 +36,7 @@ RenderTexture::~RenderTexture()
 	COM_RELEASE(m_rtSRV);
 }
 
-void RenderTexture::InitMesh()
+void RenderTarget::InitMesh()
 {
 	// Create vertex buffer
 	CREATE_ZERO(D3D11_BUFFER_DESC, vbd);
@@ -64,7 +64,7 @@ void RenderTexture::InitMesh()
 	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_indexBuffer.ReleaseAndGetAddressOf()));
 }
 
-void RenderTexture::CreateTexture(UINT width, UINT height)
+void RenderTarget::CreateTexture(UINT width, UINT height)
 {
 	// Create render target view
 	CREATE_ZERO(D3D11_TEXTURE2D_DESC, texDesc);
@@ -82,10 +82,12 @@ void RenderTexture::CreateTexture(UINT width, UINT height)
 		HR(D3D_DEVICE->CreateTexture2D(&texDesc, NULL, m_renderTargetTexture.ReleaseAndGetAddressOf()));
 
 		CREATE_ZERO(D3D11_RENDER_TARGET_VIEW_DESC, rtvDesc);
-		rtvDesc.Format = texDesc.Format;
-		rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DMS;
-		rtvDesc.Texture2D.MipSlice = 0;
-		HR(D3D_DEVICE->CreateRenderTargetView(m_renderTargetTexture.Get(), &rtvDesc, m_renderTargetView.ReleaseAndGetAddressOf()));
+		{
+			rtvDesc.Format             = texDesc.Format;
+			rtvDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE2D;
+			rtvDesc.Texture2D.MipSlice = 0;
+			HR(D3D_DEVICE->CreateRenderTargetView(m_renderTargetTexture.Get(), &rtvDesc, m_renderTargetView.ReleaseAndGetAddressOf()));
+		}
 	}
 	// Create render target's shader resource view
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, srvDesc);
@@ -99,19 +101,7 @@ void RenderTexture::CreateTexture(UINT width, UINT height)
 
 }
 
-void RenderTexture::Begin()
-{
-}
-
-void RenderTexture::End()
-{
-}
-
-void RenderTexture::Clear()
-{
-}
-
-void RenderTexture::Set()
+void RenderTarget::Set()
 {
 	// Set shaders
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
@@ -125,10 +115,4 @@ void RenderTexture::Set()
 	// Set pixel shader texture and sampler
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
 	D3D_CONTEXT->PSSetShaderResources(0, 1, m_rtSRV.GetAddressOf());
-}
-
-void RenderTexture::Draw()
-{
-	Set();
-	D3D_CONTEXT->DrawIndexed(m_indexCount, 0, 0);
 }

@@ -1,5 +1,6 @@
 #include "Core/Structures.h"
 #include "Graphics/Shaders.h"
+#include "Graphics/RenderTexture.h"
 
 class Direct3D
 {
@@ -9,11 +10,6 @@ public:
 
 	bool Init(HWND hwnd, bool isVsync, UINT msaa = 1);
 	void Shutdown();
-
-	// Clear back buffer
-	void ClearBackBuffer(const std::array<float, 4> clearColor);
-	// Clear given render target
-	void Clear(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv);
 	void EndFrame();
 
 	inline ID3D11Device*              GetDevice()       { return m_device.Get(); }
@@ -22,11 +18,10 @@ public:
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
 
-	// Sets the back buffer render target
-	void SetBackBuffer();
-
-	// Set a given render target with the same depth buffer
-	void SetRenderTarget(const ComPtr<ID3D11RenderTargetView>& rtv);
+	void BindBackBuffer();
+	void UnBindAllRenderTargets();
+	void BindRenderTarget(const RenderTarget* rt);
+	void DrawFSQuad(const RenderTarget* rt);
 
 	/// <param name="cullBack">True - solid | False - Cull None</param>
 	void SetCullMode(bool cullBack) { m_context->RSSetState((cullBack) ? m_rasterSolid.Get() : m_rasterCullNone.Get()); }
@@ -44,7 +39,7 @@ private:
 	ComPtr<ID3D11Device>           m_device;
 	ComPtr<ID3D11DeviceContext>    m_context;
 	ComPtr<IDXGISwapChain>         m_swapChain;
-	ComPtr<ID3D11RenderTargetView> m_renderTargetView;
+	ComPtr<ID3D11RenderTargetView> m_backBufferRTV;
 
 	ComPtr<ID3D11Texture2D>        m_depthStencilTexture;
 	ComPtr<ID3D11DepthStencilView> m_depthStencilView;

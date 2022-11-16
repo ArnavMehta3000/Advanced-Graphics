@@ -98,7 +98,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 		}
 		swapChainDesc.BufferUsage                            = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 		swapChainDesc.OutputWindow                           = hwnd;
-		swapChainDesc.SampleDesc.Count                       = msaa;  // Anti aliasing here
+		swapChainDesc.SampleDesc.Count                       = 1;  // Anti aliasing here
 		swapChainDesc.SampleDesc.Quality                     = 0;
 		swapChainDesc.Windowed                               = TRUE;
 		swapChainDesc.BufferDesc.ScanlineOrdering            = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
@@ -108,13 +108,18 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 
 		auto driverType = D3D_DRIVER_TYPE_HARDWARE;
 		auto featureLevel = D3D_FEATURE_LEVEL_11_1;
+		UINT flags = 0;
+#ifdef _DEBUG
+		flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif // _DEBUG
+
 
 		// Create device / swapchain / immediate context
 		HR(D3D11CreateDeviceAndSwapChain(
 			nullptr,
 			driverType,
 			NULL,
-			0,
+			flags,
 			&featureLevel, 1,
 			D3D11_SDK_VERSION,
 			&swapChainDesc,
@@ -132,7 +137,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 	// Create render target view using back buffer as texture resource
 	ComPtr<ID3D11Texture2D> backBufferPtr;
 	HR(m_swapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBufferPtr.ReleaseAndGetAddressOf())));
-	HR(m_device->CreateRenderTargetView(backBufferPtr.Get(), nullptr, m_renderTargetView.ReleaseAndGetAddressOf()));
+	HR(m_device->CreateRenderTargetView(backBufferPtr.Get(), nullptr, m_backBufferRTV.ReleaseAndGetAddressOf()));
 	COM_RELEASE(backBufferPtr);
 
 	// Create depth stencil texture
@@ -143,7 +148,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 		dstDesc.MipLevels          = 1;
 		dstDesc.ArraySize          = 1;
 		dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		dstDesc.SampleDesc.Count   = msaa;  // Anti aliasing here
+		dstDesc.SampleDesc.Count   = 1;  // Anti aliasing here
 		dstDesc.SampleDesc.Quality = 0;
 		dstDesc.Usage              = D3D11_USAGE_DEFAULT;
 		dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
@@ -153,7 +158,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 
 		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
 		dsvDesc.Format             = dstDesc.Format;
-		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Texture2D.MipSlice = 0;
 		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 	}
@@ -211,24 +216,10 @@ void Direct3D::Shutdown()
 	COM_RELEASE(m_rasterWireframe);
 	COM_RELEASE(m_depthStencilTexture);
 	COM_RELEASE(m_depthStencilView);
-	COM_RELEASE(m_renderTargetView);
+	COM_RELEASE(m_backBufferRTV);
 	COM_RELEASE(m_context);
 	COM_RELEASE(m_swapChain);
 	COM_RELEASE(m_device);
-}
-
-void Direct3D::ClearBackBuffer(const std::array<float, 4> clearColor)
-{
-	m_context->ClearRenderTargetView(m_renderTargetView.Get(), clearColor.data());
-	// NOTE: Stencil not being cleared
-	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
-}
-
-void Direct3D::Clear(const std::array<float, 4> clearColor, ID3D11RenderTargetView* rtv)
-{
-	m_context->ClearRenderTargetView(rtv, clearColor.data());
-	// NOTE: Stencil not being cleared
-	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 }
 
 void Direct3D::EndFrame()
@@ -241,14 +232,53 @@ void Direct3D::EndFrame()
 
 
 
-void Direct3D::SetBackBuffer()
+void Direct3D::BindBackBuffer()
 {
-	m_context->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
+	float color[] = { 0.01f, 0.01f, 0.01f, 1.0f };
+	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), color);
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
+	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), m_depthStencilView.Get());
 }
 
-void Direct3D::SetRenderTarget(const ComPtr<ID3D11RenderTargetView>& rtv)
+void Direct3D::UnBindAllRenderTargets()
 {
-	m_context->OMSetRenderTargets(1, rtv.GetAddressOf(), m_depthStencilView.Get());
+	ID3D11RenderTargetView* nullViews[] = { nullptr };
+	m_context->OMSetRenderTargets(_countof(nullViews), nullViews, nullptr);
+
+	// Clear PS shader resource views
+	ID3D11ShaderResourceView* srv[] = { NULL };
+	m_context->PSSetShaderResources(0, _countof(srv), srv);
+}
+
+void Direct3D::BindRenderTarget(const RenderTarget* rt)
+{
+	// Clear buffer before binding
+	float color[] = { 0.01f, 1.01f, 0.01f, 1.0f };
+	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), color);
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
+	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), nullptr);
+}
+
+void Direct3D::DrawFSQuad(const RenderTarget* rt)
+{
+	// Set shader data
+	m_context->VSSetShader(rt->m_vertexShader->Shader.Get(), nullptr, 0);
+	m_context->PSSetShader(rt->m_pixelShader->Shader.Get(), nullptr, 0);
+
+	// Set texture
+	m_context->PSSetShaderResources(0, 1, rt->m_rtSRV.GetAddressOf());
+
+	// Set sampler
+	m_context->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
+	
+	// Set buffers
+	m_context->IASetVertexBuffers(0, 1,rt-> m_vertexBuffer.GetAddressOf(), &rt->m_stride, &rt->m_offset);
+	m_context->IASetIndexBuffer(rt->m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+	
+	m_context->IASetInputLayout(rt->m_vertexShader->InputLayout.Get());
+
+	// Draw the quad
+	m_context->DrawIndexed(rt->m_indexCount, 0, 0);
 }
 
 void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
