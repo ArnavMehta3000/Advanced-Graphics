@@ -243,7 +243,7 @@ void Direct3D::BindBackBuffer()
 void Direct3D::BindRenderTarget(const RenderTarget* rt)
 {
 	// Clear buffer before binding
-	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::DarkGray);
+	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::SlateGray);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());

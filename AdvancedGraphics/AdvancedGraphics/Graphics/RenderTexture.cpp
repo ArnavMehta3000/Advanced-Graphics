@@ -104,19 +104,3 @@ void RenderTarget::CreateTexture(UINT width, UINT height)
 	}
 
 }
-
-void RenderTarget::Set()
-{
-	// Set shaders
-	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
-	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
-	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
-
-	// Set buffers
-	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &m_stride, &m_offset);
-	D3D_CONTEXT->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-
-	// Set pixel shader texture and sampler
-	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
-	D3D_CONTEXT->PSSetShaderResources(0, 1, m_rtSRV.GetAddressOf());
-}

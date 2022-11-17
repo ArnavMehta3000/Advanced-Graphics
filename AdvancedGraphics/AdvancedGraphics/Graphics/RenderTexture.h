@@ -11,11 +11,6 @@ public:
 	const ComPtr<ID3D11ShaderResourceView>& GetSRV() const { return m_rtSRV; }
 
 private:
-	void Set();
-	void InitMesh();
-	void CreateTexture(UINT width, UINT height);
-
-private:
 	ComPtr<ID3D11Buffer>             m_vertexBuffer;
 	ComPtr<ID3D11Buffer>             m_indexBuffer;
 	ComPtr<ID3D11Texture2D>          m_renderTargetTexture;

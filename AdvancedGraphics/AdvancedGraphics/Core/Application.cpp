@@ -4,11 +4,15 @@
 #include "Graphics/Primitives.h"
 
 
+#define ENABLE_IMGUI 1
 
 // Include imgui headers
+#ifdef ENABLE_IMGUI
 #include <Imgui/imgui_impl_dx11.h>
 #include <Imgui/imgui_impl_win32.h>
-#include "Imgui/imgui.h"  
+#include "Imgui/imgui.h"    
+#endif // ENABLE_IMGUI
+
 
 
 
@@ -216,6 +220,9 @@ void Application::OnRender()
 
 void Application::OnGui()
 {
+	// Commented line 298 in inmgui_impl_dx11.cpp to stop the PSSETSHADERRESOURCE_HAZARD warnings
+
+#ifdef ENABLE_IMGUI
 	ImGui_ImplDX11_NewFrame();
 	ImGui_ImplWin32_NewFrame();
 	ImGui::NewFrame();
@@ -242,10 +249,10 @@ void Application::OnGui()
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Parallax Mapping"))
 		{
-			ImGui::DragFloat("Min Layers", & m_parallaxData.x, 1, 5.0f, 50.0f);
-			ImGui::DragFloat("Max Layers", & m_parallaxData.y, 1, 20.0f, 150.0f);
-			ImGui::DragFloat("Height Scale", & m_parallaxData.z, 0.01f, -5.0f, 5.0f);
-			ImGui::DragFloat("Shadow Factor", & m_parallaxData.w, 0.01f, 1.0f, 10.0f);
+			ImGui::DragFloat("Min Layers", &m_parallaxData.x, 1, 5.0f, 50.0f);
+			ImGui::DragFloat("Max Layers", &m_parallaxData.y, 1, 20.0f, 150.0f);
+			ImGui::DragFloat("Height Scale", &m_parallaxData.z, 0.01f, -5.0f, 5.0f);
+			ImGui::DragFloat("Shadow Factor", &m_parallaxData.w, 0.01f, 1.0f, 10.0f);
 			ImGui::Spacing();
 			ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
 		}
@@ -254,4 +261,6 @@ void Application::OnGui()
 
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+#endif // ENABLE_IMGUI
+
 }
