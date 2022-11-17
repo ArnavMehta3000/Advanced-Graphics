@@ -234,8 +234,7 @@ void Direct3D::EndFrame()
 
 void Direct3D::BindBackBuffer()
 {
-	float color[] = { 0.01f, 0.01f, 0.01f, 1.0f };
-	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), color);
+	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkGray);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), m_depthStencilView.Get());
@@ -244,8 +243,7 @@ void Direct3D::BindBackBuffer()
 void Direct3D::BindRenderTarget(const RenderTarget* rt)
 {
 	// Clear buffer before binding
-	float color[] = { 0.01f, 1.01f, 0.01f, 1.0f };
-	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), color);
+	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::DarkGray);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
@@ -269,7 +267,7 @@ void Direct3D::DrawFSQuad(const RenderTarget* rt)
 	m_context->PSSetShader(rt->m_pixelShader->Shader.Get(), nullptr, 0);
 
 	// Set texture
-	m_context->PSSetShaderResources(0, 1, rt->m_rtSRV.GetAddressOf());
+	m_context->PSSetShaderResources(0, 1, rt->GetSRV().GetAddressOf());
 
 	// Set sampler
 	m_context->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());

@@ -8,6 +8,8 @@ public:
 	RenderTarget(UINT width, UINT height);
 	~RenderTarget();
 
+	const ComPtr<ID3D11ShaderResourceView>& GetSRV() const { return m_rtSRV; }
+
 private:
 	void Set();
 	void InitMesh();

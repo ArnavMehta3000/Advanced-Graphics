@@ -6,13 +6,13 @@ SamplerState samLinear : register(s0);
 struct RT_VS_INPUT
 {
     float4 Position : SV_POSITION;
-    float2 UV       : TEXCOORD0;
+    float2 UV       : UV;
 };
 
 struct RT_PS_INPUT
 {
     float4 Position : SV_POSITION;
-    float2 UV       : TEXCOORD0;
+    float2 UV       : UV;
 };
 
 
@@ -37,6 +37,6 @@ float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
     float4 color = tex.Sample(samLinear, input.UV);
     return color;
-    //float4(1.0f, 1.0f, 1.0f, 1.0f);
+    //return float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 // ---------------------------------------------------------------------

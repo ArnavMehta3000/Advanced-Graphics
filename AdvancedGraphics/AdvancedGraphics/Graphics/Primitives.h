@@ -73,12 +73,12 @@ namespace Primitives
 	class FSQuad
 	{
 	public:
-		const static inline SimpleVertex Vertices[] =
+		const static inline FSQuadVertex Vertices[] =
 		{
-			{ XMFLOAT3(-1.0f, -1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 1.0f) },
-			{ XMFLOAT3(-1.0f,  1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(0.0f, 0.0f) },
-			{ XMFLOAT3( 1.0f,  1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 0.0f) },
-			{ XMFLOAT3( 1.0f, -1.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT2(1.0f, 1.0f) },
+			{ XMFLOAT4(-1.0f, -1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 1.0f) },
+			{ XMFLOAT4(-1.0f,  1.0f, 0.0f, 1.0f), XMFLOAT2(0.0f, 0.0f) },
+			{ XMFLOAT4( 1.0f,  1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
+			{ XMFLOAT4( 1.0f, -1.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 1.0f) },
 		};
 
 		const static inline WORD Indices[] =
@@ -87,9 +87,9 @@ namespace Primitives
 			0, 2, 3
 		};
 
-		const static inline UINT VerticesTypeSize  = sizeof(SimpleVertex);
+		const static inline UINT VerticesTypeSize  = sizeof(FSQuadVertex);
 		const static inline UINT VerticesCount     = ARRAYSIZE(Vertices);
-		const static inline UINT VerticesByteWidth = sizeof(SimpleVertex) * ARRAYSIZE(Vertices);
+		const static inline UINT VerticesByteWidth = sizeof(FSQuadVertex) * ARRAYSIZE(Vertices);
 
 		const static inline UINT IndicesTypeSize  = sizeof(WORD);
 		const static inline UINT IndicesCount     = ARRAYSIZE(Indices);

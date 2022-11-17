@@ -44,14 +44,17 @@ void RenderTarget::InitMesh()
 	vbd.ByteWidth          = Primitives::FSQuad::VerticesByteWidth;
 	vbd.BindFlags          = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags     = 0;
+
 	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, vertexInitData);
 	vertexInitData.pSysMem = Primitives::FSQuad::Vertices;
 	HR(D3D_DEVICE->CreateBuffer(&vbd, &vertexInitData, m_vertexBuffer.ReleaseAndGetAddressOf()));
+
 
 	// Save vertex/index  buffer data
 	m_stride = Primitives::FSQuad::VerticesTypeSize;
 	m_offset = 0;
 	m_indexCount = Primitives::FSQuad::IndicesCount;
+
 
 	// Create index buffer
 	CREATE_ZERO(D3D11_BUFFER_DESC, ibd);
@@ -59,6 +62,7 @@ void RenderTarget::InitMesh()
 	ibd.ByteWidth         = Primitives::FSQuad::IndicesByteWidth;
 	ibd.BindFlags         = D3D11_BIND_INDEX_BUFFER;
 	ibd.CPUAccessFlags    = 0;
+
 	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, indexInitData);
 	indexInitData.pSysMem = Primitives::FSQuad::Indices;
 	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_indexBuffer.ReleaseAndGetAddressOf()));
@@ -76,7 +80,7 @@ void RenderTarget::CreateTexture(UINT width, UINT height)
 		texDesc.Format             = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		texDesc.SampleDesc.Count   = 1;
 		texDesc.Usage              = D3D11_USAGE_DEFAULT;
-		texDesc.BindFlags          = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS;
+		texDesc.BindFlags          = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 		texDesc.CPUAccessFlags     = 0;
 		texDesc.MiscFlags          = 0;
 		HR(D3D_DEVICE->CreateTexture2D(&texDesc, NULL, m_renderTargetTexture.ReleaseAndGetAddressOf()));

@@ -8,6 +8,12 @@ struct SimpleVertex
 	sm::Vector3 Binormal;
 };
 
+struct FSQuadVertex
+{
+	XMFLOAT4 Pos;
+	XMFLOAT2 TexCoord;
+};
+
 // Buffer of data used to set the WVP matrices in the vertex shader
 struct VSConstantBuffer
 {

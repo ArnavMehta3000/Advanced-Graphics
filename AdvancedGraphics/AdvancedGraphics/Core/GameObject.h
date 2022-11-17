@@ -18,6 +18,7 @@ public:
 
 	const sm::Matrix& GetWorldTransform() { return m_worldTransform; }
 
+	ComPtr<ID3D11ShaderResourceView> GetDiffuseSRV() { return m_textureDiffRV.Get(); }
 
 	void Set();
 	void Update(double dt);
