@@ -232,7 +232,7 @@ void Application::OnGui()
 	{
 		ImGui::Begin("Editor");
 		ImGui::SetWindowPos({ 0,0 }, ImGuiCond_Always);
-		ImGui::SetWindowSize({ imguiWidth, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Always);
+		ImGui::SetWindowSize({ imguiWidth, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -260,7 +260,8 @@ void Application::OnGui()
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Post Processing"))
 		{
-			ImVec2 imageSize = ImVec2(imguiWidth, 197);
+			ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
+			ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
 			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}
