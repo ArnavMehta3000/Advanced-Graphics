@@ -16,6 +16,8 @@ public:
 	inline ID3D11DeviceContext*       GetContext()      { return m_context.Get(); }
 	inline ComPtr<ID3D11SamplerState> GetSamplerState() { return m_samplerAnisotropicWrap; }
 
+	ComPtr<ID3D11ShaderResourceView>& GetDepthSRV() { return m_depthSRV; }
+
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
 
 	// Set back buffer as render target
@@ -40,19 +42,20 @@ private:
 
 	static Direct3D* s_instance;
 
-	ComPtr<ID3D11Device>           m_device;
-	ComPtr<ID3D11DeviceContext>    m_context;
-	ComPtr<IDXGISwapChain>         m_swapChain;
-	ComPtr<ID3D11RenderTargetView> m_backBufferRTV;
+	ComPtr<ID3D11Device>             m_device;
+	ComPtr<ID3D11DeviceContext>      m_context;
+	ComPtr<IDXGISwapChain>           m_swapChain;
+	ComPtr<ID3D11RenderTargetView>   m_backBufferRTV;
 
-	ComPtr<ID3D11Texture2D>        m_depthStencilTexture;
-	ComPtr<ID3D11DepthStencilView> m_depthStencilView;
+	ComPtr<ID3D11Texture2D>          m_depthStencilTexture;
+	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
+	ComPtr<ID3D11ShaderResourceView> m_depthSRV;
 
-	ComPtr<ID3D11SamplerState>     m_samplerAnisotropicWrap;
+	ComPtr<ID3D11SamplerState>       m_samplerAnisotropicWrap;
 
-	ComPtr<ID3D11RasterizerState>  m_rasterWireframe;
-	ComPtr<ID3D11RasterizerState>  m_rasterSolid;
-	ComPtr<ID3D11RasterizerState>  m_rasterCullNone;
+	ComPtr<ID3D11RasterizerState>    m_rasterWireframe;
+	ComPtr<ID3D11RasterizerState>    m_rasterSolid;
+	ComPtr<ID3D11RasterizerState>    m_rasterCullNone;
 
 
 	HWND m_hWnd;

@@ -261,7 +261,7 @@ void Application::OnGui()
 		if (ImGui::CollapsingHeader("Post Processing"))
 		{
 			ImVec2 imageSize = ImVec2(imguiWidth, 197);
-			ImGui::Text("Raw");
+			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}
 		ImGui::End();

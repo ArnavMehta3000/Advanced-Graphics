@@ -147,20 +147,27 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 		dstDesc.Height             = height;
 		dstDesc.MipLevels          = 1;
 		dstDesc.ArraySize          = 1;
-		dstDesc.Format             = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		dstDesc.Format             = DXGI_FORMAT_R32G8X24_TYPELESS;
 		dstDesc.SampleDesc.Count   = 1;  // Anti aliasing here
 		dstDesc.SampleDesc.Quality = 0;
 		dstDesc.Usage              = D3D11_USAGE_DEFAULT;
-		dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL;
+		dstDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 		dstDesc.CPUAccessFlags     = 0;
 		dstDesc.MiscFlags          = 0;
 		HR(m_device->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
 
 		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
-		dsvDesc.Format             = dstDesc.Format;
+		dsvDesc.Format             = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
 		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Texture2D.MipSlice = 0;
 		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
+
+		CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, depthSRVDesc);
+		depthSRVDesc.Format                    = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+		depthSRVDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+		depthSRVDesc.Texture2D.MostDetailedMip = 0;
+		depthSRVDesc.Texture2D.MipLevels       = 1;
+		HR(D3D_DEVICE->CreateShaderResourceView(m_depthStencilTexture.Get(), &depthSRVDesc, m_depthSRV.ReleaseAndGetAddressOf()));
 	}
 
 	// Create viewport
@@ -237,7 +244,7 @@ void Direct3D::BindBackBuffer()
 	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkGray);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
-	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), m_depthStencilView.Get());
+	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
 }
 
 void Direct3D::BindRenderTarget(const RenderTarget* rt)

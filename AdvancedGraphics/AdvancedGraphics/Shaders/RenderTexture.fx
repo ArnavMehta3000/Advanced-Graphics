@@ -25,10 +25,12 @@ float4 Blur(float2 uv)
     return color;
 }
 
-float4 Invert(float2 uv)
+float4 Grayscale(float2 uv)
 {
     float4 color = renderTarget.Sample(samLinear, uv);
-    return color;
+    float avg = (color.x + color.y + color.z) / 3.0f;
+
+    return float4(avg, avg, avg, 1.0f);
 }
 
 float4 Vignette(float2 uv)
@@ -64,8 +66,8 @@ RT_PS_INPUT VS(RT_VS_INPUT input)
 // ---------------
 float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
-    float4 color = Invert(input.UV);
-    return color;
+    float4 color = renderTarget.Sample(samLinear, input.UV);
+    return Grayscale(input.UV);
     //return float4(1.0f, 0.0f, 0.0f, 1.0f);
 }
 // ---------------------------------------------------------------------
