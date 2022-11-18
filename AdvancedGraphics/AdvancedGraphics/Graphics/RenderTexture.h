@@ -10,6 +10,12 @@ public:
 
 	const ComPtr<ID3D11ShaderResourceView>& GetSRV() const { return m_rtSRV; }
 
+	float GetWidth()  const noexcept { return m_width; }
+	float GetHeight() const noexcept { return m_height; }
+
+	void InitMesh();
+	void CreateTexture(UINT width, UINT height);
+
 private:
 	ComPtr<ID3D11Buffer>             m_vertexBuffer;
 	ComPtr<ID3D11Buffer>             m_indexBuffer;
@@ -19,6 +25,8 @@ private:
 
 	VertexShader* m_vertexShader;
 	PixelShader* m_pixelShader;
+
+	float m_width, m_height;
 
 	UINT m_indexCount = 0;
 	UINT m_stride;

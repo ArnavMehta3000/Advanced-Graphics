@@ -1,6 +1,6 @@
 // HLSL code for rendering to texture
 
-Texture2D tex          : register(t0);
+Texture2D<float4> renderTarget : register(t0);
 SamplerState samLinear : register(s0);
 
 struct RT_VS_INPUT
@@ -15,6 +15,35 @@ struct RT_PS_INPUT
     float2 UV       : UV;
 };
 
+// -----------
+//  FUNCTIONS
+// -----------
+float4 Blur(float2 uv)
+{
+    const float4 color = renderTarget.Sample(samLinear, uv);
+    
+    return color;
+}
+
+float4 Invert(float2 uv)
+{
+    float4 color = renderTarget.Sample(samLinear, uv);
+    return color;
+}
+
+float4 Vignette(float2 uv)
+{
+    const float2 resolution = float2(1280, 720);
+    const float4 color = renderTarget.Sample(samLinear, uv);
+    
+    float2 texCoord = uv.xy / resolution.xy;
+    texCoord *= 1.0f - texCoord.xy;
+    
+    float vignette = texCoord.x * texCoord.y * 15.0f;
+    vignette = pow(vignette, 0.5f);
+    return float4(color * vignette);
+}
+// ---------------------------------------------------------------------
 
 // ----------------
 //  VERTEX SHADER
@@ -35,7 +64,7 @@ RT_PS_INPUT VS(RT_VS_INPUT input)
 // ---------------
 float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
-    float4 color = tex.Sample(samLinear, input.UV);
+    float4 color = Invert(input.UV);
     return color;
     //return float4(1.0f, 0.0f, 0.0f, 1.0f);
 }

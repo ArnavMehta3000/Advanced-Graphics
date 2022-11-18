@@ -46,6 +46,8 @@ private:
 	GameObject*          m_goLight;
 	Camera               m_camera;
 
+	float m_imageScale = 1.0f;
+
 	sm::Vector3          m_lightPosition;
 	sm::Vector3          m_lightDiffuse;
 	sm::Vector3          m_lightSpecular;

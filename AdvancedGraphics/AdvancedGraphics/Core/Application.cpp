@@ -122,7 +122,6 @@ void Application::Run()
 		D3D->BindRenderTarget(m_renderTarget);
 		OnRender();
 		D3D->UnBindAllRenderTargets();
-
 		D3D->BindBackBuffer();
 		D3D->DrawFSQuad(m_renderTarget);
 		OnGui();
@@ -228,10 +227,12 @@ void Application::OnGui()
 	ImGui::NewFrame();
 
 	// UI render here
+	const float imguiWidth = 350.0f;
+	const float wind32AspectRatio = static_cast<float>(m_window->GetClientWidth()) / static_cast<float>(m_window->GetClientHeight());
 	{
 		ImGui::Begin("Editor");
 		ImGui::SetWindowPos({ 0,0 }, ImGuiCond_Always);
-		ImGui::SetWindowSize({ 350, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
+		ImGui::SetWindowSize({ imguiWidth, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Always);
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -255,6 +256,13 @@ void Application::OnGui()
 			ImGui::DragFloat("Shadow Factor", &m_parallaxData.w, 0.01f, 1.0f, 10.0f);
 			ImGui::Spacing();
 			ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
+		}
+		ImGui::Spacing();
+		if (ImGui::CollapsingHeader("Post Processing"))
+		{
+			ImVec2 imageSize = ImVec2(imguiWidth, 197);
+			ImGui::Text("Raw");
+			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}
 		ImGui::End();
 	}
