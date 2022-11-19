@@ -80,7 +80,7 @@ bool Application::Init()
 
 	// Create and set game objects properties
 	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\Cube.obj");
+	m_gameObject->InitMesh("Assets\\Plane.obj");
 	m_gameObject->SetTexture(L"Assets\\rock_diffuse2.dds", L"Assets\\rock_bump.dds", L"Assets\\rock_height.dds");
 
 	// Visualizer for light position
