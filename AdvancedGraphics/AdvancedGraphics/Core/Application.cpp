@@ -78,16 +78,36 @@ bool Application::Init()
 	D3D->CreateVertexShader(m_vertexShader, DEFAULT_SHADER);
 	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
 
-	// Create and set game objects properties
-	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\Plane.obj");
-	m_gameObject->SetTexture(L"Assets\\rock_diffuse2.dds", L"Assets\\rock_bump.dds", L"Assets\\rock_height.dds");
+
+	CREATE_ZERO(GODesc, desc);
+	desc.MeshFile         = "Assets\\Plane.obj";
+	desc.DiffuseTexture   = L"Assets\\rock_diffuse2.dds";
+	desc.NormalMap        = L"Assets\\rock_bump.dds";
+	desc.HeightMap        = L"Assets\\rock_height.dds";
+	desc.PrimitiveType    = Primitives::Type::NONE;
+	desc.IsPrimitive      = false;
+	desc.HasMesh          = true;
+	desc.HasDiffuse       = true;
+	desc.HasNormal        = true;
+	desc.HasHeight        = true;
+	desc.IsEmmissive      = false;
+	m_gameObject          = new GameObject(desc);
+	m_gameObject->m_scale = sm::Vector3(2.0f);
+
+
 
 	// Visualizer for light position
-	m_goLight = new GameObject();
-	GO_CREATE_MESH(m_goLight, Primitives::Triangle);
+	desc.MeshFile       = "Assets\\SmoothCube.obj";
+	desc.DiffuseTexture = L"Assets\\stone.dds";
+	desc.HasDiffuse     = true;
+	desc.HasNormal      = false;
+	desc.HasHeight      = false;
+	desc.IsEmmissive = true;
+	desc.EmmissiveColor = sm::Vector3(10, 10, 10);
+	
+	m_goLight           = new GameObject(desc);
 	m_goLight->SetTexture(L"Assets\\stone.dds");
-	m_goLight->m_scale = sm::Vector3(0.5f);
+	m_goLight->m_scale  = sm::Vector3(0.25f);
 
 	// Create render target
 	m_renderTarget = new RenderTarget(m_window->GetClientWidth(), m_window->GetClientHeight());

@@ -12,8 +12,8 @@ RenderTarget::RenderTarget(UINT width, UINT height)
 	m_renderTargetTexture(nullptr),
 	m_renderTargetView(nullptr),
 	m_rtSRV(nullptr),
-	m_width(width),
-	m_height(height)
+	m_width(static_cast<float>(width)),
+	m_height(static_cast<float>(height))
 {
 	// Create shaders
 	D3D->CreateVertexShader(m_vertexShader, L"Shaders/RenderTexture.fx");

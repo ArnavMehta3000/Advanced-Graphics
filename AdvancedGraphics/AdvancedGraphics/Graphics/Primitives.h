@@ -3,6 +3,14 @@
 
 namespace Primitives
 {
+	enum class Type
+	{
+		NONE = 0,
+		TRIANGLE,
+		CUBE,
+		FSQUAD
+	};
+
 	class Triangle
 	{
 	public:
