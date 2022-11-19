@@ -45,6 +45,34 @@ float4 Vignette(float2 uv)
     vignette = pow(vignette, 0.5f);
     return float4(color * vignette);
 }
+
+float4 Sharpen(float2 uv)
+{
+    const float offsetX = 1.0f / 1280.0f; // img width
+    const float offsetY = 1.0f / 720.0f; // img height
+    
+    float2 offsets[9] =
+    {
+        float2(-offsetX, offsetY), float2(0.0f, offsetY), float2(offsetX, offsetY),
+        float2(-offsetX, 0.0f), float2(0.0f, 0.0f), float2(offsetX, 0.0f),
+        float2(-offsetX, -offsetY), float2(0.0f, -offsetY), float2(offsetX, -offsetY),
+    };
+
+    // Edge detection kernel
+    float kernel[9] =
+    {
+        1, 1, 1,
+        1, -8, 1,
+        1, 1, 1
+    };
+    
+    float4 color = float4(0, 0, 0, 0);
+    [unroll(9)]
+    for (int i = 0; i < 9; i++)
+        color += renderTarget.Sample(samLinear, uv + offsets[i]) * kernel[i];
+
+    return color;
+}
 // ---------------------------------------------------------------------
 
 // ----------------
@@ -66,30 +94,8 @@ RT_PS_INPUT VS(RT_VS_INPUT input)
 // ---------------
 float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
-    
-    const float offsetX = 1.0f / 1280.0f;  // img width
-    const float offsetY = 1.0f / 720.0f;  // img height
-    
-    float2 offsets[9] =
-    {
-        float2(-offsetX, offsetY),  float2(0.0f, offsetY),  float2(offsetX, offsetY),
-        float2(-offsetX, 0.0f),     float2(0.0f, 0.0f),     float2(offsetX, 0.0f),
-        float2(-offsetX, -offsetY), float2(0.0f, -offsetY), float2(offsetX, -offsetY),        
-    };
-
-    // Edge detection kernel
-    float kernel[9] =
-    {
-        1, 1, 1,
-        1, -8, 1,
-        1, 1, 1
-    };
-    
-    float4 color = float4(0, 0, 0, 0);
-    [unroll(9)]
-    for (int i = 0; i < 9; i++)
-        color += renderTarget.Sample(samLinear, input.UV + offsets[i]) * kernel[i];
-
+    float4 color = Grayscale(input.UV);
+    color += Sharpen(input.UV);
     return color;
 }
 // ---------------------------------------------------------------------
