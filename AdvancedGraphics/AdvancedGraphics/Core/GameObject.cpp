@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "GameObject.h"
-#include "Graphics/Primitives.h"
 #include "Graphics/Direct3D.h"
 #include "Utils/DDSTextureLoader.h"
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -22,6 +21,62 @@ GameObject::GameObject()
 	// Create material constant buffer
 	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_material.Material.Specular      = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.SpecularPower = 32.0f;
+
+	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
+}
+
+GameObject::GameObject(const GODesc& desc)
+	:
+	m_stride(0),
+	m_position(0.0f),
+	m_rotation(0.0f),
+	m_scale(1.0f),
+	m_isObj(false),
+	m_mesh(nullptr),
+	m_textureDiffRV(nullptr),
+	m_textureNormRV(nullptr),
+	m_textureHeightRV(nullptr)
+{
+	using namespace Primitives;
+	// Init mesh
+	if (desc.HasMesh)
+	{
+		// Object is predefined primitive
+		if (desc.IsPrimitive)
+		{
+			switch (desc.PrimitiveType)
+			{
+			case Type::TRIANGLE:
+				GO_CREATE_MESH(this, Triangle);
+				break;
+
+			case Type::CUBE:
+				GO_CREATE_MESH(this, Cube);
+				break;
+
+			case Type::FSQUAD:
+				GO_CREATE_MESH(this, FSQuad);
+				break;
+			}
+		}
+		else  // Object is .obj file
+		{
+			InitMesh(desc.MeshFile);
+		}
+
+		// Set textures
+		if (desc.HasDiffuse && desc.HasNormal && desc.HasHeight)
+			SetTexture(desc.DiffuseTexture, desc.NormalMap, desc.HeightMap);
+		else if (desc.HasDiffuse && desc.HasNormal)
+			SetTexture(desc.DiffuseTexture, desc.NormalMap);
+		else if (desc.HasDiffuse)
+			SetTexture(desc.DiffuseTexture);
+	}
+
+	// Create material constant buffer
+	m_material.Material.Diffuse = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.Specular = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_material.Material.SpecularPower = 32.0f;
 
 	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));

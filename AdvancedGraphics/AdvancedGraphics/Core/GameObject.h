@@ -1,12 +1,31 @@
 #pragma once
 #include "Graphics/Mesh.h"
+#include "Graphics/Primitives.h"
 
+struct GODesc
+{
+	const CHAR* MeshFile;
+	const WCHAR* DiffuseTexture;
+	const WCHAR* NormalMap;
+	const WCHAR* HeightMap;
+
+	Primitives::Type PrimitiveType;
+	bool IsPrimitive;
+	bool HasMesh;
+
+	bool HasDiffuse;
+	bool HasNormal;
+	bool HasHeight;
+	bool IsEmmissive;
+	sm::Vector3 EmmissiveColor;
+};
 
 
 class GameObject
 {
 public:
 	GameObject();
+	GameObject(const GODesc& desc);
 	~GameObject();
 
 	void InitMesh(const char* objFile);

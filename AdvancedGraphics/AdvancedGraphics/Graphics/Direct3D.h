@@ -37,6 +37,9 @@ public:
 
 	void CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccess = 0);
 
+public:
+	sm::Vector4 m_clearColor;
+
 private:
 	Direct3D();
 

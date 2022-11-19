@@ -31,20 +31,19 @@ private:
 	void OnGui();
 
 private:
-	Timer                m_appTimer;
-	Window*              m_window;
+	Timer                    m_appTimer;
+	Window*                  m_window;
 
-	RenderTarget*       m_renderTarget;
+	RenderTarget*            m_renderTarget;
 
-	VertexShader*        m_vertexShader;
-	PixelShader*         m_pixelShader;
+	VertexShader*            m_vertexShader;
+	PixelShader*             m_pixelShader;
 
-	ComPtr<ID3D11Buffer> m_constantBuffer;
-	ComPtr<ID3D11Buffer> m_lightCBuffer;
+	ComPtr<ID3D11Buffer>     m_constantBuffer;
+	ComPtr<ID3D11Buffer>     m_lightCBuffer;
 
-	GameObject*          m_gameObject;
-	GameObject*          m_goLight;
-	Camera               m_camera;
+	std::vector<GameObject*> m_gameObjects;
+	Camera                   m_camera;
 
 	float m_imageScale = 1.0f;
 

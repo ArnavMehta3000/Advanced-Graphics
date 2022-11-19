@@ -21,8 +21,6 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_window(nullptr),
 	m_vertexShader(nullptr),
 	m_pixelShader(nullptr),
-	m_gameObject(nullptr),
-	m_goLight(nullptr),
 	m_renderTarget(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
@@ -44,8 +42,8 @@ Application::~Application()
 {
 	COM_RELEASE(m_constantBuffer);
 
-	SAFE_DELETE(m_goLight);
-	SAFE_DELETE(m_gameObject)
+	for (auto& go : m_gameObjects)
+		SAFE_DELETE(go);
 
 	SAFE_DELETE(m_vertexShader);
 	SAFE_DELETE(m_pixelShader);
@@ -78,16 +76,34 @@ bool Application::Init()
 	D3D->CreateVertexShader(m_vertexShader, DEFAULT_SHADER);
 	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
 
-	// Create and set game objects properties
-	m_gameObject = new GameObject();
-	m_gameObject->InitMesh("Assets\\Cube.obj");
-	m_gameObject->SetTexture(L"Assets\\rock_diffuse2.dds", L"Assets\\rock_bump.dds", L"Assets\\rock_height.dds");
+
+	CREATE_ZERO(GODesc, desc);
+	desc.MeshFile             = "Assets\\Plane.obj";
+	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
+	desc.NormalMap            = L"Assets\\rock_bump.dds";
+	desc.HeightMap            = L"Assets\\rock_height.dds";
+	desc.PrimitiveType        = Primitives::Type::NONE;
+	desc.IsPrimitive          = false;
+	desc.HasMesh              = true;
+	desc.HasDiffuse           = true;
+	desc.HasNormal            = true;
+	desc.HasHeight            = true;
+	desc.IsEmmissive          = false;
+	m_gameObjects.push_back(new GameObject(desc));
+	m_gameObjects[0]->m_scale = sm::Vector3(2.0f);
+
+
 
 	// Visualizer for light position
-	m_goLight = new GameObject();
-	GO_CREATE_MESH(m_goLight, Primitives::Triangle);
-	m_goLight->SetTexture(L"Assets\\stone.dds");
-	m_goLight->m_scale = sm::Vector3(0.5f);
+	desc.MeshFile             = "Assets\\SmoothCube.obj";
+	desc.DiffuseTexture       = L"Assets\\stone.dds";
+	desc.HasDiffuse           = true;
+	desc.HasNormal            = false;
+	desc.HasHeight            = false;
+	desc.IsEmmissive          = true;
+	desc.EmmissiveColor       = sm::Vector3(10, 10, 10);
+	m_gameObjects.push_back(new GameObject(desc));
+	m_gameObjects[1]->m_scale = sm::Vector3(0.25f);
 
 	// Create render target
 	m_renderTarget = new RenderTarget(m_window->GetClientWidth(), m_window->GetClientHeight());
@@ -100,6 +116,8 @@ bool Application::Init()
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D->SetWireframe(false);
+	D3D->SetCullMode(false);
+
 
 	LOG("----- APPLICATION INITIALIZATION FINISHED -----");
 	LOG("----- CONSOLE FREED (SAFE TO CLOSE) -----");
@@ -116,7 +134,7 @@ void Application::Run()
 	while (m_window->ProcessMessages())
 	{
 		m_appTimer.Tick();
-
+		SetWindowTextA(m_window->GetHandle(), ("FPS: " + std::to_string(1.0f / m_appTimer)).c_str());
 		OnUpdate(m_appTimer);
 		
 		D3D->BindRenderTarget(m_renderTarget);
@@ -160,24 +178,25 @@ void Application::CalculateLighting()
 
 void Application::OnUpdate(double dt)
 {
-	m_goLight->m_position = m_lightPosition;
+	m_gameObjects[1]->m_position = m_lightPosition;
+
 	if (KEYBOARD.X)
-		m_gameObject->m_rotation.x += (float)dt;
+		m_gameObjects[0]->m_rotation.x += (float)dt;
 	if (KEYBOARD.Y)
-		m_gameObject->m_rotation.y += (float)dt;
+		m_gameObjects[0]->m_rotation.y += (float)dt;
 	if (KEYBOARD.Z)
-		m_gameObject->m_rotation.z += (float)dt;
+		m_gameObjects[0]->m_rotation.z += (float)dt;
 
 	if (KEYBOARD.G)
-		m_gameObject->m_position.x += (float)dt;
+		m_gameObjects[0]->m_position.x += (float)dt;
 	if (KEYBOARD.H)
-		m_gameObject->m_position.x -= (float)dt;
+		m_gameObjects[0]->m_position.x -= (float)dt;
 
 	
 	m_camera.Update(dt, KEYBOARD, MOUSE);
 
-	m_gameObject->Update(dt);
-	m_goLight->Update(dt);	
+	for (auto& go : m_gameObjects)
+		go->Update(m_appTimer);
 }
 
 void Application::OnRender()
@@ -193,28 +212,19 @@ void Application::OnRender()
 
 	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
 
-
-
-
 	CalculateLighting();
 
+
 	CREATE_ZERO(VSConstantBuffer, cb);
-	cb.View = m_camera.GetView().Transpose();
+	cb.View       = m_camera.GetView().Transpose();
 	cb.Projection = m_camera.GetProjection().Transpose();
 
-
-	cb.World = m_goLight->GetWorldTransform().Transpose();
-	D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
-	
-	D3D->SetCullMode(false);
-	m_goLight->Draw();
-
-	// Update constant bufffers
-	cb.World = m_gameObject->GetWorldTransform().Transpose();
-	D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
-
-	D3D->SetCullMode(true);
-	m_gameObject->Draw();
+	for (auto& go : m_gameObjects)
+	{
+		cb.World = go->GetWorldTransform().Transpose();
+		D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
+		go->Draw();
+	}
 }
 
 void Application::OnGui()
@@ -236,7 +246,7 @@ void Application::OnGui()
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::DragFloat3("Object Position", &m_gameObject->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+			ImGui::DragFloat3("Object Position", &m_gameObjects[0]->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
 		}
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
