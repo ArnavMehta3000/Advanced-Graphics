@@ -141,6 +141,7 @@ void Application::Run()
 		OnUpdate(m_appTimer);
 		
 		D3D->BindRenderTarget(m_renderTarget);
+		D3D->BindGBuffer();
 		OnRender();
 		D3D->UnBindAllRenderTargets();
 		D3D->BindBackBuffer();
@@ -277,6 +278,13 @@ void Application::OnGui()
 			ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
 			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
+
+			ImGui::Text("Scene Diffuse");
+			ImGui::Image((void*)D3D->m_srvArray[0].Get(), imageSize);
+			ImGui::Text("Scene Normals");
+			ImGui::Image((void*)D3D->m_srvArray[1].Get(), imageSize);
+			ImGui::Text("Scene World Position");
+			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
 		}
 		ImGui::End();
 	}
