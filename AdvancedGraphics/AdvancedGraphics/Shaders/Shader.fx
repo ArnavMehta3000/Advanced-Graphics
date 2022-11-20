@@ -29,6 +29,7 @@ struct PS_IN
     float3 PositionT       : POSITIONT;
     float2 UV              : TEXCOORD0;
     float3 NormalT         : NORMALT;
+    float3 NormalW         : NORMALW;
     float3 LightDirT       : TLIGHTDIR;
     float3 EyeDirT         : TEYEDIR;
     float3 EyePosT         : EYEPOSITIONT;
@@ -39,6 +40,7 @@ struct PS_OUT
     float4 Diffuse  : SV_Target0; 
     float4 Normal   : SV_Target1; 
     float4 Position : SV_Target2;
+    float  Depth    : SV_Target3;
 };
 // ---------------------------------------------------------------------
 
@@ -236,6 +238,7 @@ PS_IN VS(VS_IN input)
     float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
     float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
     float3 normal   = normalize(mul(float4(input.Normal, 0), World).xyz);
+    output.NormalW = normal;
     
     
     // Get tangent space vectors
@@ -281,7 +284,8 @@ PS_OUT DeffPS(PS_IN input)
     output.Diffuse = diffuse;
     output.Normal = normals;
     output.Position = input.PositionW;
-    
+    float depth = mul(input.Position, View).z;
+    output.Depth = depth / 100.0f;  //Far clip plane
     
     return output;
 }
