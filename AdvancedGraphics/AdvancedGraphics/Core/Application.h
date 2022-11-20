@@ -8,6 +8,7 @@
 
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
+#define BUFFER_COUNT 3
 
 class Application
 {
@@ -31,26 +32,27 @@ private:
 	void OnGui();
 
 private:
-	Timer                    m_appTimer;
-	Window*                  m_window;
+	Timer                      m_appTimer;
+	Window*                    m_window;
 
-	RenderTarget*            m_renderTarget;
+	RenderTarget*              m_renderTarget;
+	std::vector<RenderTarget*> m_gBuffer;
 
-	VertexShader*            m_vertexShader;
-	PixelShader*             m_pixelShader;
+	VertexShader*              m_vertexShader;
+	PixelShader*               m_pixelShader;
 
-	ComPtr<ID3D11Buffer>     m_constantBuffer;
-	ComPtr<ID3D11Buffer>     m_lightCBuffer;
+	ComPtr<ID3D11Buffer>       m_constantBuffer;
+	ComPtr<ID3D11Buffer>       m_lightCBuffer;
 
-	std::vector<GameObject*> m_gameObjects;
-	Camera                   m_camera;
+	std::vector<GameObject*>   m_gameObjects;
+	Camera                     m_camera;
 
-	float m_imageScale = 1.0f;
+	float                      m_imageScale = 1.0f;
 
-	sm::Vector3          m_lightPosition;
-	sm::Vector3          m_lightDiffuse;
-	sm::Vector3          m_lightSpecular;
-	sm::Vector3          m_lightAttenuation;
-	sm::Vector4          m_parallaxData;
-	sm::Vector4          m_biasData;
+	sm::Vector3                m_lightPosition;
+	sm::Vector3                m_lightDiffuse;
+	sm::Vector3                m_lightSpecular;
+	sm::Vector3                m_lightAttenuation;
+	sm::Vector4                m_parallaxData;
+	sm::Vector4                m_biasData;
 };

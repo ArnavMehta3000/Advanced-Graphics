@@ -105,8 +105,11 @@ bool Application::Init()
 	m_gameObjects.push_back(new GameObject(desc));
 	m_gameObjects[1]->m_scale = sm::Vector3(0.25f);
 
-	// Create render target
+	// Create FS render target
 	m_renderTarget = new RenderTarget(m_window->GetClientWidth(), m_window->GetClientHeight());
+
+	// Init GBuffer
+
 
 	// Create constant buffers
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));

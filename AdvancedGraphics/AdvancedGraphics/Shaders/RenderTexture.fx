@@ -94,8 +94,7 @@ RT_PS_INPUT VS(RT_VS_INPUT input)
 // ---------------
 float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
-    float4 color = Grayscale(input.UV);
-    color += Sharpen(input.UV);
-    return color;
+    // Does not work
+    return Blur(input.UV);
 }
 // ---------------------------------------------------------------------
