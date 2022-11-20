@@ -56,7 +56,7 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 		__debugbreak();
 
 
-	ShowWindow(m_hWnd, SW_SHOW);
+	ShowWindow(m_hWnd, SW_SHOWMAXIMIZED);
 	SetFocus(m_hWnd);
 
 
