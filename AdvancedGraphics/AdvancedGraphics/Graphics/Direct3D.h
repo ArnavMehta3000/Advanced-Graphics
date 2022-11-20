@@ -2,6 +2,9 @@
 #include "Graphics/Shaders.h"
 #include "Graphics/RenderTexture.h"
 
+
+constexpr UINT G_BUFFER_COUNT = 3u;
+
 class Direct3D
 {
 public:
@@ -9,6 +12,7 @@ public:
 	static Direct3D* GetInstance();
 
 	bool Init(HWND hwnd, bool isVsync, UINT msaa = 1);
+	void InitGBuffer(UINT width, UINT height);
 	void Shutdown();
 	void EndFrame();
 
@@ -16,15 +20,12 @@ public:
 	inline ID3D11DeviceContext*       GetContext()      { return m_context.Get(); }
 	inline ComPtr<ID3D11SamplerState> GetSamplerState() { return m_samplerAnisotropicWrap; }
 
-	ComPtr<ID3D11ShaderResourceView>& GetDepthSRV() { return m_depthSRV; }
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
 
-	// Set back buffer as render target
+	void BindGBuffer();
 	void BindBackBuffer();
-	// Unbind all render targets and shader resources
 	void UnBindAllRenderTargets();
-	// Bind render given render target
 	void BindRenderTarget(const RenderTarget* rt);
 
 	void DrawFSQuad(const RenderTarget* rt);
@@ -50,17 +51,21 @@ private:
 	ComPtr<IDXGISwapChain>           m_swapChain;
 	ComPtr<ID3D11RenderTargetView>   m_backBufferRTV;
 
-	ComPtr<ID3D11Texture2D>          m_depthStencilTexture;
-	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
-	ComPtr<ID3D11ShaderResourceView> m_depthSRV;
-
 	ComPtr<ID3D11SamplerState>       m_samplerAnisotropicWrap;
+	ComPtr<ID3D11BlendState>         m_blendState;
 
 	ComPtr<ID3D11RasterizerState>    m_rasterWireframe;
 	ComPtr<ID3D11RasterizerState>    m_rasterSolid;
 	ComPtr<ID3D11RasterizerState>    m_rasterCullNone;
 
+public:
+	// GBuffer
+	ComPtr<ID3D11RenderTargetView>   m_rtvArray[G_BUFFER_COUNT];
+	ComPtr<ID3D11ShaderResourceView> m_srvArray[G_BUFFER_COUNT];
+	ComPtr<ID3D11Texture2D>          m_textureArray[G_BUFFER_COUNT];
+	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
 
+private:
 	HWND m_hWnd;
 	bool m_isVsync;
 
