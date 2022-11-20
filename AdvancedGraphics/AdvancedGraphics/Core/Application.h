@@ -8,7 +8,6 @@
 
 #define DEFAULT_SHADER L"Shaders/Shader.fx"
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
-#define BUFFER_COUNT 3
 
 class Application
 {

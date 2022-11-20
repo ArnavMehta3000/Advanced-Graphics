@@ -78,7 +78,7 @@ bool Application::Init()
 
 
 	CREATE_ZERO(GODesc, desc);
-	desc.MeshFile             = "Assets\\Plane.obj";
+	desc.MeshFile             = "Assets\\Cube.obj";
 	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
 	desc.NormalMap            = L"Assets\\rock_bump.dds";
 	desc.HeightMap            = L"Assets\\rock_height.dds";
@@ -86,7 +86,7 @@ bool Application::Init()
 	desc.IsPrimitive          = false;
 	desc.HasMesh              = true;
 	desc.HasDiffuse           = true;
-	desc.HasNormal            = true;
+	desc.HasNormal            = false;
 	desc.HasHeight            = true;
 	desc.IsEmmissive          = false;
 	m_gameObjects.push_back(new GameObject(desc));
@@ -141,6 +141,7 @@ void Application::Run()
 		OnUpdate(m_appTimer);
 		
 		D3D->BindRenderTarget(m_renderTarget);
+		D3D->BindGBuffer();
 		OnRender();
 		D3D->UnBindAllRenderTargets();
 		D3D->BindBackBuffer();
@@ -275,6 +276,19 @@ void Application::OnGui()
 		{
 			ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
 			ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
+
+			ImGui::Text("Scene Diffuse");
+			ImGui::Image((void*)D3D->m_srvArray[0].Get(), imageSize);
+			
+			ImGui::Text("Scene Normals");
+			ImGui::Image((void*)D3D->m_srvArray[1].Get(), imageSize);
+			
+			ImGui::Text("Scene World Position");
+			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
+
+			ImGui::Text("Scene Depth");
+			ImGui::Image((void*)D3D->m_srvArray[3].Get(), imageSize);
+			
 			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}

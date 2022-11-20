@@ -56,7 +56,7 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 		__debugbreak();
 
 
-	ShowWindow(m_hWnd, SW_SHOW);
+	ShowWindow(m_hWnd, SW_SHOWMAXIMIZED);
 	SetFocus(m_hWnd);
 
 
@@ -146,10 +146,6 @@ LRESULT Window::MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SYSKEYUP:
 		Keyboard::ProcessMessage(msg, wParam, lParam);
 		break;
-
-	case WM_MOUSEACTIVATE:
-		// When you click activate the window, we want Mouse to ignore it.
-		return MA_ACTIVATEANDEAT;
 
 	case WM_DESTROY:
 		PostQuitMessage(0);

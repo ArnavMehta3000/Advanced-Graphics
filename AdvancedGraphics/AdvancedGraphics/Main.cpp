@@ -8,7 +8,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 	UNREFERENCED_PARAMETER(lpCmdLine);
 	UNREFERENCED_PARAMETER(nCmdShow);
 
-	Application* app = new Application(hInstance, 1280, 720);
+	Application* app = new Application(hInstance, 1920, 1080);
 	
 	if (!app->Init()) 
 		LOG("Failed to create application");
