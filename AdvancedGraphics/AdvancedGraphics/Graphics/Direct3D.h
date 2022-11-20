@@ -3,7 +3,11 @@
 #include "Graphics/RenderTexture.h"
 
 
-constexpr UINT G_BUFFER_COUNT = 3u;
+constexpr UINT G_BUFFER_COUNT = 4u;
+// 0 - Diffuse
+// 1 - Normal
+// 2 - Position
+// 3 - Depth
 
 class Direct3D
 {

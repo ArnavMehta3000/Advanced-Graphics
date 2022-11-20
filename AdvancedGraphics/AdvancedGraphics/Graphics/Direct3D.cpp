@@ -286,7 +286,9 @@ void Direct3D::EndFrame()
 void Direct3D::BindGBuffer()
 {
 	// Get rtv array
-	ID3D11RenderTargetView* renderTargets[] = { m_rtvArray[0].Get(), m_rtvArray[1].Get() , m_rtvArray[2].Get() };
+	ID3D11RenderTargetView* renderTargets[] = { m_rtvArray[0].Get(), m_rtvArray[1].Get() , m_rtvArray[2].Get(), m_rtvArray[3].Get() };
+	
+	// Clear rtv and depth
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
 		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Black);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0.0f);
