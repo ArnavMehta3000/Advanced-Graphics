@@ -147,10 +147,6 @@ LRESULT Window::MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		Keyboard::ProcessMessage(msg, wParam, lParam);
 		break;
 
-	case WM_MOUSEACTIVATE:
-		// When you click activate the window, we want Mouse to ignore it.
-		return MA_ACTIVATEANDEAT;
-
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
