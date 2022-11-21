@@ -74,7 +74,7 @@ bool Application::Init()
 
 	// Create shaders
 	D3D->CreateVertexShader(m_vertexShader, L"Shaders/VS.hlsl");
-	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
+	D3D->CreatePixelShader(m_pixelShader, L"Shaders/GBufferPS.hlsl");
 
 
 	CREATE_ZERO(GODesc, desc);
@@ -286,9 +286,6 @@ void Application::OnGui()
 			ImGui::Text("Scene World Position");
 			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
 
-			ImGui::Text("Scene Depth");
-			ImGui::Image((void*)D3D->m_srvArray[3].Get(), imageSize);
-			
 			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}
