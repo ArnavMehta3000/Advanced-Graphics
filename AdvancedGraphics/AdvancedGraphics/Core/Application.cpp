@@ -78,7 +78,7 @@ bool Application::Init()
 
 
 	CREATE_ZERO(GODesc, desc);
-	desc.MeshFile             = "Assets\\Plane.obj";
+	desc.MeshFile             = "Assets\\Cube.obj";
 	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
 	desc.NormalMap            = L"Assets\\rock_bump.dds";
 	desc.HeightMap            = L"Assets\\rock_height.dds";
@@ -169,8 +169,9 @@ void Application::CalculateLighting()
 
 	auto& pos = m_camera.Position();
 	LightProperties lightProperties = LightProperties();
-	lightProperties.EyePosition     = sm::Vector4(pos.x, pos.y, pos.z, 1.0f);
+	lightProperties.EyePosition     = TO_VEC4(pos, 1.0f);
 	lightProperties.PointLight      = light;
+	lightProperties.GlobalAmbient   = TO_VEC4(m_ambientLight, 1.0f);
 
 	// Updat lighting constant buffer
 	D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
@@ -251,6 +252,7 @@ void Application::OnGui()
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
 		{
+			ImGui::ColorEdit3("Ambient Light", &m_ambientLight.x, ImGuiColorEditFlags_Float);
 			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
