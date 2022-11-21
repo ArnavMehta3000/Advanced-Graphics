@@ -52,6 +52,7 @@ private:
 
 	ComPtr<ID3D11Texture2D>          m_depthStencilTexture;
 	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
+	ComPtr<ID3D11DepthStencilState>  m_depthStencilState;
 	ComPtr<ID3D11ShaderResourceView> m_depthSRV;
 
 	ComPtr<ID3D11SamplerState>       m_samplerAnisotropicWrap;

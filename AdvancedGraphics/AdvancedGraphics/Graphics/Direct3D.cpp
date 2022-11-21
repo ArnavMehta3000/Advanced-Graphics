@@ -147,7 +147,7 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 		dstDesc.Height             = height;
 		dstDesc.MipLevels          = 1;
 		dstDesc.ArraySize          = 1;
-		dstDesc.Format             = DXGI_FORMAT_R32G8X24_TYPELESS;
+		dstDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
 		dstDesc.SampleDesc.Count   = 1;  // Anti aliasing here
 		dstDesc.SampleDesc.Quality = 0;
 		dstDesc.Usage              = D3D11_USAGE_DEFAULT;
@@ -157,17 +157,46 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 		HR(m_device->CreateTexture2D(&dstDesc, nullptr, m_depthStencilTexture.ReleaseAndGetAddressOf()));
 
 		CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, dsvDesc);
-		dsvDesc.Format             = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+		dsvDesc.Format             = DXGI_FORMAT_D32_FLOAT;
 		dsvDesc.ViewDimension      = D3D11_DSV_DIMENSION_TEXTURE2D;
 		dsvDesc.Texture2D.MipSlice = 0;
 		HR(m_device->CreateDepthStencilView(m_depthStencilTexture.Get(), &dsvDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
 		CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, depthSRVDesc);
-		depthSRVDesc.Format                    = DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+		depthSRVDesc.Format                    = DXGI_FORMAT_R32_FLOAT;
 		depthSRVDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
 		depthSRVDesc.Texture2D.MostDetailedMip = 0;
 		depthSRVDesc.Texture2D.MipLevels       = 1;
 		HR(D3D_DEVICE->CreateShaderResourceView(m_depthStencilTexture.Get(), &depthSRVDesc, m_depthSRV.ReleaseAndGetAddressOf()));
+	}
+
+	// Create depth stencil state
+	{
+		CREATE_ZERO(D3D11_DEPTH_STENCIL_DESC, dsDesc);
+		// Depth test parameters
+		dsDesc.DepthEnable                  = true;
+		dsDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ALL;
+		dsDesc.DepthFunc                    = D3D11_COMPARISON_LESS;
+
+		// Stencil test parameters
+		dsDesc.StencilEnable                = true;
+		dsDesc.StencilReadMask              = 0xFF;
+		dsDesc.StencilWriteMask             = 0xFF;
+
+		// Stencil operations if pixel is front-facing
+		dsDesc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
+		dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+		dsDesc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
+		dsDesc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
+
+		// Stencil operations if pixel is back-facing
+		dsDesc.BackFace.StencilFailOp       = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilDepthFailOp  = D3D11_STENCIL_OP_DECR;
+		dsDesc.BackFace.StencilPassOp       = D3D11_STENCIL_OP_KEEP;
+		dsDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
+
+		HR(m_device->CreateDepthStencilState(&dsDesc, m_depthStencilState.ReleaseAndGetAddressOf()));
+		m_context->OMSetDepthStencilState(m_depthStencilState.Get(), 1);
 	}
 
 	// Create viewport
@@ -241,7 +270,7 @@ void Direct3D::EndFrame()
 
 void Direct3D::BindBackBuffer()
 {
-	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkGray);
+	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::Black);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
@@ -251,7 +280,7 @@ void Direct3D::BindRenderTarget(const RenderTarget* rt)
 {
 	// Clear buffer before binding
 	float color[] = { 0.01f, 0.01f, 0.01f, 1.0f };
-	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), color);
+	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::LightSteelBlue);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
