@@ -86,7 +86,7 @@ bool Application::Init()
 	desc.IsPrimitive          = false;
 	desc.HasMesh              = true;
 	desc.HasDiffuse           = true;
-	desc.HasNormal            = true;
+	desc.HasNormal            = false;
 	desc.HasHeight            = true;
 	desc.IsEmmissive          = false;
 	m_gameObjects.push_back(new GameObject(desc));
@@ -105,8 +105,11 @@ bool Application::Init()
 	m_gameObjects.push_back(new GameObject(desc));
 	m_gameObjects[1]->m_scale = sm::Vector3(0.25f);
 
-	// Create render target
+	// Create FS render target
 	m_renderTarget = new RenderTarget(m_window->GetClientWidth(), m_window->GetClientHeight());
+
+	// Init GBuffer
+
 
 	// Create constant buffers
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
@@ -138,6 +141,7 @@ void Application::Run()
 		OnUpdate(m_appTimer);
 		
 		D3D->BindRenderTarget(m_renderTarget);
+		D3D->BindGBuffer();
 		OnRender();
 		D3D->UnBindAllRenderTargets();
 		D3D->BindBackBuffer();
@@ -274,6 +278,19 @@ void Application::OnGui()
 		{
 			ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
 			ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
+
+			ImGui::Text("Scene Diffuse");
+			ImGui::Image((void*)D3D->m_srvArray[0].Get(), imageSize);
+			
+			ImGui::Text("Scene Normals");
+			ImGui::Image((void*)D3D->m_srvArray[1].Get(), imageSize);
+			
+			ImGui::Text("Scene World Position");
+			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
+
+			ImGui::Text("Scene Depth");
+			ImGui::Image((void*)D3D->m_srvArray[3].Get(), imageSize);
+			
 			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}
