@@ -18,10 +18,9 @@ struct RT_PS_INPUT
 // -----------
 //  FUNCTIONS
 // -----------
-float4 Blur(float2 uv)
+float4 Original(float2 uv)
 {
-    const float4 color = renderTarget.Sample(samLinear, uv);
-    
+    const float4 color = renderTarget.Sample(samLinear, uv);    
     return color;
 }
 
@@ -94,8 +93,6 @@ RT_PS_INPUT VS(RT_VS_INPUT input)
 // ---------------
 float4 PS(RT_PS_INPUT input) : SV_TARGET0
 {
-    float4 color = Grayscale(input.UV);
-    color += Sharpen(input.UV);
-    return color;
+    return Original(input.UV);
 }
 // ---------------------------------------------------------------------
