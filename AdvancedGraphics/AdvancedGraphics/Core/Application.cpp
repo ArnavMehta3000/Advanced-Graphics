@@ -26,6 +26,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
 	m_lightDiffuse(Colors::White),
 	m_lightSpecular(Colors::White),
+	m_ambientLight(0.015f),
 	m_lightAttenuation(1.0f),
 	m_parallaxData(8.0f, 32.0f, 0.05f, 1.0f),
 	m_biasData(0.01f, 0.01f, 0.0f, 0.0f)
@@ -140,12 +141,12 @@ void Application::Run()
 		SetWindowTextA(m_window->GetHandle(), ("FPS: " + std::to_string(1.0f / m_appTimer)).c_str());
 		OnUpdate(m_appTimer);
 		
-		D3D->BindRenderTarget(m_renderTarget);
-		D3D->BindGBuffer();
-		OnRender();
+		//D3D->BindRenderTarget(m_renderTarget);
+		//D3D->BindGBuffer();
 		D3D->UnBindAllRenderTargets();
 		D3D->BindBackBuffer();
-		D3D->DrawFSQuad(m_renderTarget);
+		OnRender();
+		//D3D->DrawFSQuad(m_renderTarget);
 		OnGui();
 		D3D->EndFrame();
 	}

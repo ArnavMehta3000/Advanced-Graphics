@@ -294,28 +294,6 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
 		HR(m_device->CreateShaderResourceView(m_textureArray[i].Get(), &shaderResourceViewDesc, m_srvArray[i].ReleaseAndGetAddressOf()));
 
-
-
-
-	// Create depth stencil buffer
-	ComPtr<ID3D11Texture2D> depthStencilTexture = nullptr;
-	CREATE_ZERO(D3D11_TEXTURE2D_DESC, depthStencilBufferDesc);
-	depthStencilBufferDesc.Width                = width;
-	depthStencilBufferDesc.Height               = height;
-	depthStencilBufferDesc.MipLevels            = 1;
-	depthStencilBufferDesc.ArraySize            = 1;
-	depthStencilBufferDesc.Format               = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilBufferDesc.SampleDesc.Count     = 1;
-	depthStencilBufferDesc.Usage                = D3D11_USAGE_DEFAULT;
-	depthStencilBufferDesc.BindFlags            = D3D11_BIND_DEPTH_STENCIL;
-	HR(m_device->CreateTexture2D(&depthStencilBufferDesc, NULL, &depthStencilTexture));
-
-	CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, depthStencilViewDesc);
-	depthStencilViewDesc.Format        = depthStencilBufferDesc.Format;
-	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	HR(m_device->CreateDepthStencilView(depthStencilTexture.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
-	COM_RELEASE(depthStencilTexture);
-
 	LOG("Created G-Buffer");
 }
 

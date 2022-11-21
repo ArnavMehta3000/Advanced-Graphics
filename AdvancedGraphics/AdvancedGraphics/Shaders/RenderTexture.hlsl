@@ -34,15 +34,14 @@ float4 Grayscale(float2 uv)
 
 float4 Vignette(float2 uv)
 {
-    const float2 resolution = float2(1280, 720);
-    const float4 color = renderTarget.Sample(samLinear, uv);
+    float4 color = renderTarget.Sample(samLinear, uv);
+    //X:radius | y:softness
+    float2 radiusSoftness = float2(0.8f, 0.8f);  // take this as input from constant buffer
+    float len = distance(uv, float2(0.5f, 0.5f)) * 0.7f;
+    float vignette = smoothstep(radiusSoftness.x, radiusSoftness.x - radiusSoftness.y, len);
+    color.rgb *= vignette;
     
-    float2 texCoord = uv.xy / resolution.xy;
-    texCoord *= 1.0f - texCoord.xy;
-    
-    float vignette = texCoord.x * texCoord.y * 15.0f;
-    vignette = pow(vignette, 0.5f);
-    return float4(color * vignette);
+    return color;
 }
 
 float4 Sharpen(float2 uv)

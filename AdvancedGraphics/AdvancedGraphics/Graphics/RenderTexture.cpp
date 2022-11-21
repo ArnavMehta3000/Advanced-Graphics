@@ -16,8 +16,8 @@ RenderTarget::RenderTarget(UINT width, UINT height)
 	m_height(static_cast<float>(height))
 {
 	// Create shaders
-	D3D->CreateVertexShader(m_vertexShader, L"Shaders/RenderTexture.fx");
-	D3D->CreatePixelShader(m_pixelShader, L"Shaders/RenderTexture.fx");
+	D3D->CreateVertexShader(m_vertexShader, L"Shaders/RenderTexture.hlsl");
+	D3D->CreatePixelShader(m_pixelShader, L"Shaders/RenderTexture.hlsl");
 
 	CreateTexture(width, height);	
 	InitMesh();

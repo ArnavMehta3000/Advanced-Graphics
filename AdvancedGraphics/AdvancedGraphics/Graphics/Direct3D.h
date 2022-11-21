@@ -72,7 +72,6 @@ public:
 	ComPtr<ID3D11RenderTargetView>   m_rtvArray[G_BUFFER_COUNT];
 	ComPtr<ID3D11ShaderResourceView> m_srvArray[G_BUFFER_COUNT];
 	ComPtr<ID3D11Texture2D>          m_textureArray[G_BUFFER_COUNT];
-	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
 
 private:
 	HWND m_hWnd;

@@ -290,52 +290,52 @@ PS_OUT DeffPS(PS_IN input)
     return output;
 }
 
-PS_OUT PS(PS_IN input)
+float4 PS(PS_IN input) : SV_Target0
 {
     PS_OUT output = (PS_OUT) 0;
     
-    //LightingResult pointLight;
-    //float4 finalColor = (float)0;
-    //float4 texColor   = { 1.0f, 1.0f, 1.0f, 1.0f };
+    LightingResult pointLight;
+    float4 finalColor = (float) 0;
+    float4 texColor = { 1.0f, 1.0f, 1.0f, 1.0f };
     
-    //float2 texCoords = input.UV;
-    //float shadowFactor = 1.0f;
+    float2 texCoords = input.UV;
+    float shadowFactor = 1.0f;
     
-    //if (Material.UseHeight)
-    //{
-    //    // texCoords = SimpleParallaxMapping(input.UV, input.EyeDirT);
-    //    texCoords = CalculatePOM(input.UV, input.EyeDirT, input.NormalT);
-    //    shadowFactor = CalculatePOMSelfShadowFactor(texCoords, input.EyeDirT, input.NormalT);
+    if (Material.UseHeight)
+    {
+        // texCoords = SimpleParallaxMapping(input.UV, input.EyeDirT);
+        texCoords = CalculatePOM(input.UV, input.EyeDirT, input.NormalT);
+        shadowFactor = CalculatePOMSelfShadowFactor(texCoords, input.EyeDirT, input.NormalT);
 
-    //    // Discard pixel if uv is not in bounds
-    //    if (!IsUVInBounds(texCoords))
-    //        discard;
-    //}
+        // Discard pixel if uv is not in bounds
+        if (!IsUVInBounds(texCoords))
+            discard;
+    }
     
-    //if (Material.UseTexture)
-    //    texColor = txDiffuse.Sample(samLinear, texCoords);
+    if (Material.UseTexture)
+        texColor = txDiffuse.Sample(samLinear, texCoords);
 
-    //// This uses world space normal mapping
-    //if (Material.UseNormals)
-    //{
-    //// Uncompress the normals from the normal map (in tangent space)
-    //    float4 texNormal = txNormal.Sample(samLinear, texCoords);
-    //    float4 bumpNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
+    // This uses world space normal mapping
+    if (Material.UseNormals)
+    {
+    // Uncompress the normals from the normal map (in tangent space)
+        float4 texNormal = txNormal.Sample(samLinear, texCoords);
+        float4 bumpNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
     
-    //    pointLight = CalculatePointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, bumpNormalT.xyz);
-    //}
-    //else
-    //{
-    //    pointLight = CalculatePointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, input.NormalT.xyz);
-    //}
+        pointLight = CalculatePointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, bumpNormalT.xyz);
+    }
+    else
+    {
+        pointLight = CalculatePointLight(input.LightDirT, input.EyeDirT, input.PositionW.xyz, input.NormalT.xyz);
+    }
 
-    //float4 ambient  = GlobalAmbient;
-    //float4 diffuse  = Material.Diffuse * pointLight.Diffuse * shadowFactor;
-    //float4 specular = Material.Specular * pointLight.Specular * shadowFactor;
+    float4 ambient = GlobalAmbient;
+    float4 diffuse = Material.Diffuse * pointLight.Diffuse * shadowFactor;
+    float4 specular = Material.Specular * pointLight.Specular * shadowFactor;
     
-    //finalColor = texColor * (ambient + diffuse + specular);
+    finalColor = texColor * (ambient + diffuse + specular);
     
-    //return finalColor;
-    return DeffPS(input);
+    return finalColor;
+    //return DeffPS(input);
 }
 // ---------------------------------------------------------------------

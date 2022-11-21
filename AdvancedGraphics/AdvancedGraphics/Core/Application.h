@@ -6,7 +6,7 @@
 #include "Core/Camera.h"
 #include "Graphics/RenderTexture.h"
 
-#define DEFAULT_SHADER L"Shaders/Shader.fx"
+#define DEFAULT_SHADER L"Shaders/Shader.hlsl"
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
 
 class Application
@@ -48,6 +48,7 @@ private:
 
 	float                      m_imageScale = 1.0f;
 
+	sm::Vector3                m_ambientLight;
 	sm::Vector3                m_lightPosition;
 	sm::Vector3                m_lightDiffuse;
 	sm::Vector3                m_lightSpecular;
