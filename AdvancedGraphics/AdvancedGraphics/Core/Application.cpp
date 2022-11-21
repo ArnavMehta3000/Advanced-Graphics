@@ -73,7 +73,7 @@ bool Application::Init()
 	ImGui::StyleColorsDark();
 
 	// Create shaders
-	D3D->CreateVertexShader(m_vertexShader, DEFAULT_SHADER);
+	D3D->CreateVertexShader(m_vertexShader, L"Shaders/VS.hlsl");
 	D3D->CreatePixelShader(m_pixelShader, DEFAULT_SHADER);
 
 
