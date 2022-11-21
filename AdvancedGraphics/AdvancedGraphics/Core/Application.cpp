@@ -142,7 +142,7 @@ void Application::Run()
 		OnUpdate(m_appTimer);
 		
 		//D3D->BindRenderTarget(m_renderTarget);
-		//D3D->BindGBuffer();
+		D3D->BindGBuffer();
 		D3D->UnBindAllRenderTargets();
 		D3D->BindBackBuffer();
 		OnRender();
@@ -289,9 +289,6 @@ void Application::OnGui()
 			ImGui::Text("Scene World Position");
 			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
 
-			ImGui::Text("Scene Depth");
-			ImGui::Image((void*)D3D->m_srvArray[3].Get(), imageSize);
-			
 			ImGui::Text("Raw Scene");
 			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
 		}

@@ -3,7 +3,7 @@
 #include "Graphics/RenderTexture.h"
 
 
-constexpr UINT G_BUFFER_COUNT = 4u;
+constexpr UINT G_BUFFER_COUNT = 3u;
 // 0 - Diffuse
 // 1 - Normal
 // 2 - Position

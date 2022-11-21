@@ -270,29 +270,42 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 	textureDesc.Height           = height;
 	textureDesc.MipLevels        = 1;
 	textureDesc.ArraySize        = 1;
-	textureDesc.Format           = DXGI_FORMAT_R32G32B32A32_FLOAT;
 	textureDesc.SampleDesc.Count = 1;
 	textureDesc.Usage            = D3D11_USAGE_DEFAULT;
 	textureDesc.BindFlags        = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
-		HR(m_device->CreateTexture2D(&textureDesc, NULL, m_textureArray[i].ReleaseAndGetAddressOf()));
 
-
-	// Create render target array
 	CREATE_ZERO(D3D11_RENDER_TARGET_VIEW_DESC, renderTargetViewDesc);
-	renderTargetViewDesc.Format        = textureDesc.Format;
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
-		HR(m_device->CreateRenderTargetView(m_textureArray[i].Get(), &renderTargetViewDesc, m_rtvArray[i].ReleaseAndGetAddressOf()));
 
-
-	// Create shader resource views
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, shaderResourceViewDesc);
-	shaderResourceViewDesc.Format              = textureDesc.Format;
 	shaderResourceViewDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
-	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
-		HR(m_device->CreateShaderResourceView(m_textureArray[i].Get(), &shaderResourceViewDesc, m_srvArray[i].ReleaseAndGetAddressOf()));
+
+	
+	
+	// Create diffuse buffer
+	textureDesc.Format            = DXGI_FORMAT_R8G8B8A8_UNORM;
+	renderTargetViewDesc.Format   = textureDesc.Format;
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	HR(m_device->CreateTexture2D(&textureDesc, NULL, m_textureArray[0].ReleaseAndGetAddressOf()));
+	HR(m_device->CreateRenderTargetView(m_textureArray[0].Get(), &renderTargetViewDesc, m_rtvArray[0].ReleaseAndGetAddressOf()));
+	HR(m_device->CreateShaderResourceView(m_textureArray[0].Get(), &shaderResourceViewDesc, m_srvArray[0].ReleaseAndGetAddressOf()));
+
+	// Create normal buffer
+	textureDesc.Format            = DXGI_FORMAT_R16G16B16A16_FLOAT;
+	renderTargetViewDesc.Format   = textureDesc.Format;
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	HR(m_device->CreateTexture2D(&textureDesc, NULL, m_textureArray[1].ReleaseAndGetAddressOf()));
+	HR(m_device->CreateRenderTargetView(m_textureArray[1].Get(), &renderTargetViewDesc, m_rtvArray[1].ReleaseAndGetAddressOf()));
+	HR(m_device->CreateShaderResourceView(m_textureArray[1].Get(), &shaderResourceViewDesc, m_srvArray[1].ReleaseAndGetAddressOf()));
+
+	// Create position buffer
+	textureDesc.Format            = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	renderTargetViewDesc.Format   = textureDesc.Format;
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	HR(m_device->CreateTexture2D(&textureDesc, NULL, m_textureArray[2].ReleaseAndGetAddressOf()));
+	HR(m_device->CreateRenderTargetView(m_textureArray[2].Get(), &renderTargetViewDesc, m_rtvArray[2].ReleaseAndGetAddressOf()));
+	HR(m_device->CreateShaderResourceView(m_textureArray[2].Get(), &shaderResourceViewDesc, m_srvArray[2].ReleaseAndGetAddressOf()));
 
 	LOG("Created G-Buffer");
 }
@@ -322,12 +335,12 @@ void Direct3D::EndFrame()
 void Direct3D::BindGBuffer()
 {
 	// Get rtv array
-	ID3D11RenderTargetView* renderTargets[] = { m_rtvArray[0].Get(), m_rtvArray[1].Get() , m_rtvArray[2].Get(), m_rtvArray[3].Get() };
+	ID3D11RenderTargetView* renderTargets[] = { m_rtvArray[0].Get(), m_rtvArray[1].Get() , m_rtvArray[2].Get()};
 	
 	// Clear rtv and depth
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
 		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Black);
-	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0.0f);
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1u, 0u);
 
 	m_context->OMSetRenderTargets(_countof(renderTargets), renderTargets, m_depthStencilView.Get());
 }
