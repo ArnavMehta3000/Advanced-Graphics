@@ -23,3 +23,17 @@ struct LightingResult
     float4 Diffuse;
     float4 Specular;
 };
+
+struct VS_OUTPUT
+{
+    float4 Position : SV_POSITION;
+    float4 PositionW : POSITION;
+    float3 PositionT : POSITIONT;
+    float2 UV : TEXCOORD0;
+    float3 NormalT : NORMALT;
+    float3 NormalW : NORMALW;
+    float3 LightDirT : TLIGHTDIR;
+    float3 EyeDirT : TEYEDIR;
+    float3 EyePosT : EYEPOSITIONT;
+    float3x3 TBN : TBN;
+};
