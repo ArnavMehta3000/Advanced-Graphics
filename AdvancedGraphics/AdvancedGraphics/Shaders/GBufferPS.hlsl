@@ -10,18 +10,12 @@ cbuffer MaterialProperties : register(b1)
     _Material Material;
 };
 
-struct VS_OUTPUT
+cbuffer LightProperties : register(b2)
 {
-    float4 Position  : SV_POSITION;
-    float4 PositionW : POSITION;
-    float3 PositionT : POSITIONT;
-    float2 UV        : TEXCOORD0;
-    float3 NormalT   : NORMALT;
-    float3 NormalW   : NORMALW;
-    float3 LightDirT : TLIGHTDIR;
-    float3 EyeDirT   : TEYEDIR;
-    float3 EyePosT   : EYEPOSITIONT;
-};
+    float4 EyePosition;                // 16 bytes
+    float4 GlobalAmbient = (float4) 0; // 16 bytes
+    PointLight Light;                  // 48 bytes
+}; 
 
 struct PS_OUTPUT
 {
@@ -45,11 +39,12 @@ PS_OUTPUT PS(VS_OUTPUT input)
     if (Material.UseNormals)
     {
         float4 texNormal   = txNormal.Sample(samLinear, input.UV);
-        float4 bumpNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
-        output.Normal      = bumpNormalT;
+        float4 bumpNormal = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // Tangent space
+        output.Normal.xyz = mul(bumpNormal.xyz, transpose(input.TBN));
+        output.Normal.w = 1.0f;
     }
     else
-        output.Normal = float4(input.NormalT.xyz, 1.0f);
+        output.Normal = float4(input.NormalW.xyz, 1.0f);
         
     output.Position = input.PositionW;
     

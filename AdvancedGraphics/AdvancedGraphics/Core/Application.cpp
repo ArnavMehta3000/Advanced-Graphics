@@ -78,7 +78,7 @@ bool Application::Init()
 
 
 	CREATE_ZERO(GODesc, desc);
-	desc.MeshFile             = "Assets\\Cube.obj";
+	desc.MeshFile             = "Assets\\Sphere.obj";
 	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
 	desc.NormalMap            = L"Assets\\rock_bump.dds";
 	desc.HeightMap            = L"Assets\\rock_height.dds";
