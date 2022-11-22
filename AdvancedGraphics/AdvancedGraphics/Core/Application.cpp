@@ -86,7 +86,7 @@ bool Application::Init()
 	desc.IsPrimitive          = false;
 	desc.HasMesh              = true;
 	desc.HasDiffuse           = true;
-	desc.HasNormal            = false;
+	desc.HasNormal            = true;
 	desc.HasHeight            = true;
 	desc.IsEmmissive          = false;
 	m_gameObjects.push_back(new GameObject(desc));
