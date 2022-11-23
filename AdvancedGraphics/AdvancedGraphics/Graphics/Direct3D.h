@@ -7,7 +7,6 @@ constexpr UINT G_BUFFER_COUNT = 3u;
 // 0 - Diffuse
 // 1 - Normal
 // 2 - Position
-// 3 - Depth
 
 class Direct3D
 {
@@ -29,8 +28,10 @@ public:
 
 	void BindGBuffer();
 	void BindBackBuffer();
-	void UnBindAllRenderTargets();
+	void UnBindAll();
 	void BindRenderTarget(const RenderTarget* rt);
+
+	void DoLightingPass(const RenderTarget* rt);
 
 	void DrawFSQuad(const RenderTarget* rt);
 
@@ -68,6 +69,8 @@ public:
 	ComPtr<ID3D11ShaderResourceView> m_srvArray[G_BUFFER_COUNT];
 	ComPtr<ID3D11Texture2D>          m_textureArray[G_BUFFER_COUNT];
 	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
+
+	PixelShader* m_lightingPassPS;
 
 private:
 	HWND m_hWnd;

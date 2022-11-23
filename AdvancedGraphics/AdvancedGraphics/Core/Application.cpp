@@ -62,7 +62,6 @@ bool Application::Init()
 		LOG("Failed to initialize Direct3D");
 		return false;
 	}
-	D3D;
 	
 	// Set up imgui
 	IMGUI_CHECKVERSION();
@@ -108,8 +107,6 @@ bool Application::Init()
 	// Create FS render target
 	m_renderTarget = new RenderTarget(m_window->GetClientWidth(), m_window->GetClientHeight());
 
-	// Init GBuffer
-
 
 	// Create constant buffers
 	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
@@ -123,8 +120,6 @@ bool Application::Init()
 
 
 	LOG("----- APPLICATION INITIALIZATION FINISHED -----");
-	LOG("----- CONSOLE FREED (SAFE TO CLOSE) -----");
-	FreeConsole();
 	
 	return true;
 }
@@ -140,12 +135,14 @@ void Application::Run()
 		SetWindowTextA(m_window->GetHandle(), ("FPS: " + std::to_string(1.0f / m_appTimer)).c_str());
 		OnUpdate(m_appTimer);
 		
-		D3D->BindRenderTarget(m_renderTarget);
 		D3D->BindGBuffer();
 		OnRender();
-		D3D->UnBindAllRenderTargets();
-		D3D->BindBackBuffer();
+		D3D->DoLightingPass(m_renderTarget);
+
+		//D3D->BindRenderTarget(m_renderTarget);
 		D3D->DrawFSQuad(m_renderTarget);
+		D3D->BindBackBuffer();
+
 		OnGui();
 		D3D->EndFrame();
 	}

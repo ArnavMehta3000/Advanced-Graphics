@@ -1,0 +1,32 @@
+--- Bind GBuffer ---
+Clear render targets
+Clear depth stencil
+Set 3 render targets
+--------------------
+
+--- Render Scene ---
+
+--- Prep Lighting Pass---
+Unbind all render targets
+Unbind all shader resources
+Set lighting pass PS
+Set SRV's as texture sources
+Bind rtv[4] to slot 0 -> stores final image
+-------------------------
+
+--- Render Blank ---
+-> Calls the lighting pass ps
+--------------------
+
+--- FS Quad render ---
+Unbind all render targets
+Unbind all shader resources
+Bind render target mesh
+Set render texture PS
+Set rtv[4] as texture resource
+Bind back buffer
+draw quad
+Draw UI
+---------------------
+
+Present?
