@@ -223,7 +223,7 @@ void GameObject::SetTexture(const wchar_t* diffuse)
 
 void GameObject::Set()
 {
-	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
+	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_SAMPLER_LINEAR.GetAddressOf());
 	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_materialCBuffer.GetAddressOf());
 	
 	ID3D11ShaderResourceView* textureSrv[] = { m_textureDiffRV.Get(), m_textureNormRV.Get(), m_textureHeightRV.Get()};

@@ -72,12 +72,12 @@ bool Application::Init()
 	ImGui::StyleColorsDark();
 
 	// Create shaders
-	D3D->CreateVertexShader(m_vertexShader, L"Shaders/VS.hlsl");
-	D3D->CreatePixelShader(m_pixelShader, L"Shaders/GBufferPS.hlsl");
+	D3D->CreateVertexShader(m_vertexShader, L"Shaders/Deffered.hlsl");
+	D3D->CreatePixelShader(m_pixelShader, L"Shaders/Deffered.hlsl");
 
 
 	CREATE_ZERO(GODesc, desc);
-	desc.MeshFile             = "Assets\\Sphere.obj";
+	desc.MeshFile             = "Assets\\Plane.obj";
 	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
 	desc.NormalMap            = L"Assets\\rock_bump.dds";
 	desc.HeightMap            = L"Assets\\rock_height.dds";
@@ -94,7 +94,7 @@ bool Application::Init()
 
 
 	// Visualizer for light position
-	desc.MeshFile             = "Assets\\SmoothCube.obj";
+	desc.MeshFile             = "Assets\\Sphere.obj";
 	desc.DiffuseTexture       = L"Assets\\stone.dds";
 	desc.HasDiffuse           = true;
 	desc.HasNormal            = false;
@@ -116,7 +116,7 @@ bool Application::Init()
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D->SetWireframe(false);
-	D3D->SetCullMode(false);
+	D3D->SetCullMode(true);
 
 
 	LOG("----- APPLICATION INITIALIZATION FINISHED -----");
@@ -136,10 +136,10 @@ void Application::Run()
 		OnUpdate(m_appTimer);
 		
 		D3D->BindGBuffer();
+		//D3D->BindRenderTarget(m_renderTarget);
 		OnRender();
 		D3D->DoLightingPass(m_renderTarget);
-
-		//D3D->BindRenderTarget(m_renderTarget);
+		D3D->UnbindAllRenderTargets();
 		D3D->DrawFSQuad(m_renderTarget);
 		D3D->BindBackBuffer();
 
@@ -284,7 +284,7 @@ void Application::OnGui()
 			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
 
 			ImGui::Text("Raw Scene");
-			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
+			ImGui::Image((void*)D3D->m_depthStencilView.Get(), imageSize);
 		}
 		ImGui::End();
 	}
