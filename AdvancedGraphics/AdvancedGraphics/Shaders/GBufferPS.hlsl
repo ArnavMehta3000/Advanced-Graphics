@@ -38,10 +38,9 @@ PS_OUTPUT PS(VS_OUTPUT input)
     [branch]
     if (Material.UseNormals)
     {
-        float4 texNormal   = txNormal.Sample(samLinear, input.UV);
+        float4 texNormal  = txNormal.Sample(samLinear, input.UV);
         float4 bumpNormal = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);  // Tangent space
-        output.Normal.xyz = mul(bumpNormal.xyz, transpose(input.TBN));
-        output.Normal.w = 1.0f;
+        output.Normal     = float4(mul(bumpNormal.xyz, transpose(input.TBN)), 1.0f);
     }
     else
         output.Normal = float4(input.NormalW.xyz, 1.0f);
