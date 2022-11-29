@@ -19,16 +19,16 @@ public:
 	void Shutdown();
 	void EndFrame();
 
-	inline ID3D11Device*              GetDevice()       { return m_device.Get(); }
-	inline ID3D11DeviceContext*       GetContext()      { return m_context.Get(); }
-	inline ComPtr<ID3D11SamplerState> GetSamplerState() { return m_samplerAnisotropicWrap; }
+	inline ID3D11Device*              GetDevice()             { return m_device.Get(); }
+	inline ID3D11DeviceContext*       GetContext()            { return m_context.Get(); }
+	inline ComPtr<ID3D11SamplerState> GetSamplerStateLinear() { return m_samplerAnisotropicWrap; }
 
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
 
 	void BindGBuffer();
 	void BindBackBuffer();
-	void UnBindAll();
+	void UnbindAllRenderTargets();
 	void BindRenderTarget(const RenderTarget* rt);
 
 	void DoLightingPass(const RenderTarget* rt);
@@ -83,4 +83,4 @@ private:
 #define D3D	Direct3D::GetInstance()
 #define D3D_CONTEXT Direct3D::GetInstance()->GetContext()
 #define D3D_DEVICE Direct3D::GetInstance()->GetDevice()
-#define D3D_DEFAULT_SAMPLER Direct3D::GetInstance()->GetSamplerState()
+#define D3D_SAMPLER_LINEAR Direct3D::GetInstance()->GetSamplerStateLinear()

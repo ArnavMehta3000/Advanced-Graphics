@@ -307,7 +307,7 @@ void Direct3D::BindGBuffer()
 	// Clear rtv and depth
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
 		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Black);
-	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1u, 0u);
+	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(_countof(renderTargets), renderTargets, m_depthStencilView.Get());
 }
@@ -333,7 +333,7 @@ void Direct3D::BindRenderTarget(const RenderTarget* rt)
 void Direct3D::DoLightingPass(const RenderTarget* rt)
 {
 	// Unbind all render targets and shader resources
-	UnBindAll();
+	UnbindAllRenderTargets();
 
 	// Bind lighting pass pixel shader
 	m_context->PSSetShader(m_lightingPassPS->Shader.Get(), nullptr, 0);
@@ -355,7 +355,7 @@ void Direct3D::DoLightingPass(const RenderTarget* rt)
 
 }
 
-void Direct3D::UnBindAll()
+void Direct3D::UnbindAllRenderTargets()
 {
 	m_context->OMSetRenderTargets(0, nullptr, nullptr);
 
@@ -375,7 +375,7 @@ void Direct3D::DrawFSQuad(const RenderTarget* rt)
 	m_context->PSSetShaderResources(0, 1, rt->GetSRV().GetAddressOf());
 
 	// Set sampler
-	m_context->PSSetSamplers(0, 1, D3D_DEFAULT_SAMPLER.GetAddressOf());
+	m_context->PSSetSamplers(0, 1, D3D_SAMPLER_LINEAR.GetAddressOf());
 	
 	// Set buffers
 	m_context->IASetVertexBuffers(0, 1,rt-> m_vertexBuffer.GetAddressOf(), &rt->m_stride, &rt->m_offset);
