@@ -22,30 +22,16 @@ struct VSConstantBuffer
 	sm::Matrix Projection;
 };
 
-struct _Material
+struct SurfaceProperties
 {
-	_Material()
+	SurfaceProperties()
 		:
-		Diffuse(1.0f, 1.0f, 1.0f, 1.0f),
-		Specular(1.0f, 1.0f, 1.0f, 1.0f),
-		SpecularPower(128.0f),
-		UseTexture(false),
-		UseNormals(false),
-		UseHeight(false)
+		SpecularColor(1.0f),
+		SpecularPower(32.0f)
 	{}
 
-
-	sm::Vector4 Diffuse;
-	sm::Vector4 Specular;
-	float       SpecularPower;
-	int         UseTexture;
-	int         UseNormals;
-	int         UseHeight;
-};
-
-struct MaterialProperties
-{
-	_Material Material;
+	sm::Vector3 SpecularColor;
+	float SpecularPower;
 };
 
 enum class LightType

@@ -73,6 +73,8 @@ public:
 
 	PixelShader* m_lightingPassPS;
 
+	Shader m_deferredShader;
+
 private:
 	HWND m_hWnd;
 	bool m_isVsync;

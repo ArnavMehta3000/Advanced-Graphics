@@ -19,8 +19,6 @@
 Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	:
 	m_window(nullptr),
-	m_vertexShader(nullptr),
-	m_pixelShader(nullptr),
 	m_renderTarget(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
@@ -40,13 +38,10 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 
 Application::~Application()
 {
-	COM_RELEASE(m_constantBuffer);
+	COM_RELEASE(m_wvpCB);
 
 	for (auto& go : m_gameObjects)
 		SAFE_DELETE(go);
-
-	SAFE_DELETE(m_vertexShader);
-	SAFE_DELETE(m_pixelShader);
 
 	SAFE_DELETE(m_window);
 
@@ -71,9 +66,6 @@ bool Application::Init()
 	ImGui_ImplDX11_Init(D3D_DEVICE, D3D_CONTEXT);
 	ImGui::StyleColorsDark();
 
-	// Create shaders
-	D3D->CreateVertexShader(m_vertexShader, L"Shaders/Deferred.hlsl");
-	D3D->CreatePixelShader(m_pixelShader, L"Shaders/Deferred.hlsl");
 
 
 	CREATE_ZERO(GODesc, desc);
@@ -109,7 +101,7 @@ bool Application::Init()
 
 
 	// Create constant buffers
-	D3D->CreateConstantBuffer(m_constantBuffer, sizeof(VSConstantBuffer));
+	D3D->CreateConstantBuffer(m_wvpCB, sizeof(VSConstantBuffer));
 	D3D->CreateConstantBuffer(m_lightCBuffer, sizeof(LightProperties));
 
 	
@@ -173,8 +165,8 @@ void Application::CalculateLighting()
 	lightProperties.EyePosition     = sm::Vector4(pos.x, pos.y, pos.z, 1.0f);
 	lightProperties.PointLight      = light;
 
-	// Updat lighting constant buffer
-	D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
+	// TODO: Update lighting constant buffer
+	//D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
 }
 
 void Application::OnUpdate(double dt)
@@ -202,16 +194,8 @@ void Application::OnUpdate(double dt)
 
 void Application::OnRender()
 {
-	// Set shaders for the objects
-	D3D_CONTEXT->VSSetShader(m_vertexShader->Shader.Get(), nullptr, 0);
-	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_constantBuffer.GetAddressOf());
-
-	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
-	D3D_CONTEXT->VSSetConstantBuffers(2, 1, m_lightCBuffer.GetAddressOf());
-
-	D3D_CONTEXT->PSSetShader(m_pixelShader->Shader.Get(), nullptr, 0);
-
-	D3D_CONTEXT->IASetInputLayout(m_vertexShader->InputLayout.Get());
+	// At this stage, the GBuffer VS and PS are bound
+	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCB.GetAddressOf());
 
 	CalculateLighting();
 
@@ -222,8 +206,12 @@ void Application::OnRender()
 
 	for (auto& go : m_gameObjects)
 	{
+		// Set PS constant buffers
+		ID3D11Buffer* psCBs[] = { m_wvpCB.Get(), go->GetSurfacePropsCB().Get() };
+		D3D_CONTEXT->PSSetConstantBuffers(0, 2, psCBs);
+
 		cb.World = go->GetWorldTransform().Transpose();
-		D3D_CONTEXT->UpdateSubresource(m_constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
+		D3D_CONTEXT->UpdateSubresource(m_wvpCB.Get(), 0, nullptr, &cb, 0, 0);
 		go->Draw();
 	}
 }
@@ -284,7 +272,7 @@ void Application::OnGui()
 			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
 
 			ImGui::Text("Raw Scene");
-			ImGui::Image((void*)D3D->m_depthStencilView.Get(), imageSize);
+			ImGui::Image((void*)D3D->m_depthSRV.Get(), imageSize);
 		}
 		ImGui::End();
 	}

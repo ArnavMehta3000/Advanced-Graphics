@@ -259,7 +259,7 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 	depthStencilTexDesc.Height               = height;
 	depthStencilTexDesc.MipLevels            = 1;
 	depthStencilTexDesc.ArraySize            = 1;
-	depthStencilTexDesc.Format               = DXGI_FORMAT_R32_TYPELESS;
+	depthStencilTexDesc.Format               = DXGI_FORMAT_R24G8_TYPELESS;
 	depthStencilTexDesc.SampleDesc.Count     = 1;
 	depthStencilTexDesc.SampleDesc.Quality   = 0;
 	depthStencilTexDesc.Usage                = D3D11_USAGE_DEFAULT;
@@ -267,14 +267,13 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 	HR(m_device->CreateTexture2D(&depthStencilTexDesc, NULL, &depthStencilTexture));
 
 	CREATE_ZERO(D3D11_DEPTH_STENCIL_VIEW_DESC, depthStencilViewDesc);
-	depthStencilViewDesc.Format        = depthStencilBufferDesc.Format;
 	depthStencilViewDesc.Flags         = 0;
-	depthStencilViewDesc.Format        = DXGI_FORMAT_D32_FLOAT;
+	depthStencilViewDesc.Format        = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	HR(m_device->CreateDepthStencilView(depthStencilTexture.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
 
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, depthSRV);
-	depthSRV.Format              = DXGI_FORMAT_R32_FLOAT;
+	depthSRV.Format              = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 	depthSRV.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
 	depthSRV.Texture2D.MipLevels = 1;
 	HR(m_device->CreateShaderResourceView(depthStencilTexture.Get(), &depthSRV, m_depthSRV.ReleaseAndGetAddressOf()));
@@ -284,6 +283,8 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 
 	// Create lighting pass pixel shader
 	this->CreatePixelShader(m_lightingPassPS, L"Shaders/LightingPassPS.hlsl");
+
+	m_deferredShader = Shader(L"Shaders/Advanced/DeferredVS.hlsl", L"Shaders/Advanced/DeferredPS.hlsl");
 
 	LOG("Created G-Buffer");
 }
@@ -319,8 +320,9 @@ void Direct3D::BindGBuffer()
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
 		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Black);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
-
 	m_context->OMSetRenderTargets(_countof(renderTargets), renderTargets, m_depthStencilView.Get());
+
+	m_deferredShader.BindShader();
 }
 
 void Direct3D::BindBackBuffer()

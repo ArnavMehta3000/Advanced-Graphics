@@ -25,3 +25,17 @@ struct PixelShader
 
 	void Release();
 };
+
+struct Shader
+{
+	Shader();
+	Shader(LPCWSTR vsFile, LPCWSTR psFile, LPCSTR vsEntry = "VS", LPCSTR psEntry = "PS");
+	~Shader();
+
+	void BindVS();
+	void BindPS();
+	void BindShader();
+
+	VertexShader* m_VertexShader;
+	PixelShader* m_PixelShader;
+};

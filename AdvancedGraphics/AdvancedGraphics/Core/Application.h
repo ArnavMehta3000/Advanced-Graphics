@@ -37,10 +37,7 @@ private:
 	RenderTarget*              m_renderTarget;
 	std::vector<RenderTarget*> m_gBuffer;
 
-	VertexShader*              m_vertexShader;
-	PixelShader*               m_pixelShader;
-
-	ComPtr<ID3D11Buffer>       m_constantBuffer;
+	ComPtr<ID3D11Buffer>       m_wvpCB;
 	ComPtr<ID3D11Buffer>       m_lightCBuffer;
 
 	std::vector<GameObject*>   m_gameObjects;

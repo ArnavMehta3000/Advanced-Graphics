@@ -15,15 +15,11 @@ GameObject::GameObject()
 	m_mesh(nullptr),
 	m_textureDiffRV(nullptr),
 	m_textureNormRV(nullptr),
-	m_textureHeightRV(nullptr)
+	m_textureHeightRV(nullptr),
+	m_surfaceProps(SurfaceProperties())
 
 {
-	// Create material constant buffer
-	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.Specular      = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.SpecularPower = 32.0f;
-
-	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
+	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
 
 GameObject::GameObject(const GODesc& desc)
@@ -36,7 +32,8 @@ GameObject::GameObject(const GODesc& desc)
 	m_mesh(nullptr),
 	m_textureDiffRV(nullptr),
 	m_textureNormRV(nullptr),
-	m_textureHeightRV(nullptr)
+	m_textureHeightRV(nullptr),
+	m_surfaceProps(SurfaceProperties())
 {
 	using namespace Primitives;
 	// Init mesh
@@ -68,18 +65,11 @@ GameObject::GameObject(const GODesc& desc)
 		// Set textures
 		if (desc.HasDiffuse && desc.HasNormal && desc.HasHeight)
 			SetTexture(desc.DiffuseTexture, desc.NormalMap, desc.HeightMap);
-		else if (desc.HasDiffuse && desc.HasNormal)
-			SetTexture(desc.DiffuseTexture, desc.NormalMap);
 		else if (desc.HasDiffuse)
 			SetTexture(desc.DiffuseTexture);
 	}
 
-	// Create material constant buffer
-	m_material.Material.Diffuse = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.Specular = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	m_material.Material.SpecularPower = 32.0f;
-
-	D3D->CreateConstantBuffer(m_materialCBuffer, sizeof(MaterialProperties));
+	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
 
 GameObject::~GameObject()
@@ -90,7 +80,7 @@ GameObject::~GameObject()
 	COM_RELEASE(m_textureHeightRV);
 	COM_RELEASE(m_vertexBuffer);
 	COM_RELEASE(m_indexBuffer);
-	COM_RELEASE(m_materialCBuffer);
+	COM_RELEASE(m_surfacePropsCB);
 }
 
 // https://github.com/tinyobjloader/tinyobjloader
@@ -199,32 +189,23 @@ void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal, const
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, normal, nullptr, m_textureNormRV.ReleaseAndGetAddressOf()));
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, height, nullptr, m_textureHeightRV.ReleaseAndGetAddressOf()));
-	m_material.Material.UseTexture = true;
+	/*m_material.Material.UseTexture = true;
 	m_material.Material.UseNormals = true;
-	m_material.Material.UseHeight  = true;
-}
-
-void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal)
-{
-	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
-	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, normal, nullptr, m_textureNormRV.ReleaseAndGetAddressOf()));
-	m_material.Material.UseTexture = true;
-	m_material.Material.UseNormals = true;
-	m_material.Material.UseHeight  = false;
+	m_material.Material.UseHeight  = true;*/
 }
 
 void GameObject::SetTexture(const wchar_t* diffuse)
 {
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
-	m_material.Material.UseTexture = true;
+	/*m_material.Material.UseTexture = true;
 	m_material.Material.UseNormals = false;
-	m_material.Material.UseHeight = false;
+	m_material.Material.UseHeight = false;*/
 }
 
 void GameObject::Set()
 {
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_SAMPLER_LINEAR.GetAddressOf());
-	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_materialCBuffer.GetAddressOf());
+	//D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_surfacePropsCB.GetAddressOf());
 	
 	ID3D11ShaderResourceView* textureSrv[] = { m_textureDiffRV.Get(), m_textureNormRV.Get(), m_textureHeightRV.Get()};
 	D3D_CONTEXT->PSSetShaderResources(0, 3, textureSrv);
@@ -243,7 +224,7 @@ void GameObject::Update(double dt)
 
 	m_worldTransform = scale * rotation * translation;
 
-	D3D_CONTEXT->UpdateSubresource(m_materialCBuffer.Get(), 0, nullptr, &m_material, 0, 0);
+	D3D_CONTEXT->UpdateSubresource(m_surfacePropsCB.Get(), 0, nullptr, &m_surfaceProps, 0, 0);
 }
 
 void GameObject::Draw()

@@ -32,10 +32,11 @@ public:
 	void InitMesh(const void* vertices, const void * indices, UINT vertexTypeSize, UINT vertexByteWidth, UINT indexByteWidth, UINT indicesCount);
 	
 	void SetTexture(const wchar_t* diffuse, const wchar_t* normal, const wchar_t* height);
-	void SetTexture(const wchar_t* diffuse, const wchar_t* normal);
 	void SetTexture(const wchar_t* diffuse);
 
 	const sm::Matrix& GetWorldTransform() { return m_worldTransform; }
+
+	ComPtr<ID3D11Buffer>& GetSurfacePropsCB() { return m_surfacePropsCB; }
 
 	ComPtr<ID3D11ShaderResourceView> GetDiffuseSRV() { return m_textureDiffRV.Get(); }
 
@@ -55,8 +56,8 @@ private:
 	ComPtr<ID3D11Buffer> m_indexBuffer;
 
 	Mesh* m_mesh;
-	MaterialProperties   m_material;
-	ComPtr<ID3D11Buffer> m_materialCBuffer;
+	SurfaceProperties m_surfaceProps;
+	ComPtr<ID3D11Buffer> m_surfacePropsCB;
 
 	ComPtr<ID3D11ShaderResourceView> m_textureDiffRV;
 	ComPtr<ID3D11ShaderResourceView> m_textureNormRV;
