@@ -72,8 +72,8 @@ bool Application::Init()
 	ImGui::StyleColorsDark();
 
 	// Create shaders
-	D3D->CreateVertexShader(m_vertexShader, L"Shaders/Deffered.hlsl");
-	D3D->CreatePixelShader(m_pixelShader, L"Shaders/Deffered.hlsl");
+	D3D->CreateVertexShader(m_vertexShader, L"Shaders/Deferred.hlsl");
+	D3D->CreatePixelShader(m_pixelShader, L"Shaders/Deferred.hlsl");
 
 
 	CREATE_ZERO(GODesc, desc);
