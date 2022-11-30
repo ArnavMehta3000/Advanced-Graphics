@@ -1,21 +1,9 @@
-cbuffer ConstantBuffer : register (b0)
+cbuffer ConstantBuffer : register(b0)
 {
     matrix World;
     matrix View;
     matrix Projection;
 }
-
-cbuffer MaterialProperties : register (b1)
-{
-    float3 SpecularAlbedo;
-    float SpecularPower;
-}
-
-
-Texture2D    DiffuseMap   : register( t0 );
-Texture2D    NormalMap    : register( t1 );
-SamplerState samLinear    : register( s0 );
-
 
 struct VSInput
 {
@@ -37,13 +25,6 @@ struct VSOutput
     float3x3 TBN      : TBN;
 };
 
-struct PSOutput
-{
-    float4 DiffuseAlbedo : SV_TARGET0;
-    float4 Normal        : SV_TARGET1;
-    float4 Position      : SV_TARGET2;
-};
-
 
 VSOutput VS(VSInput input)
 {
@@ -63,23 +44,6 @@ VSOutput VS(VSInput input)
     output.TexCoord   = input.TexCoord;
 
     output.TBN = float3x3(output.TangentWS, output.BinormalWS, output.NormalWS);
-
-    return output;
-}
-
-PSOutput PS(VSOutput input)
-{
-    PSOutput output;
-
-    float4 diffuseColor = DiffuseMap.Sample(samLinear, input.TexCoord);
-    float4 normalTS  = NormalMap.Sample(samLinear, input.TexCoord);
-    normalTS = float4(normalize(2.0f * normalTS.xyz - 1.0f).xyz, 1.0f);
-
-    float4 normalWS = float4(mul(normalTS.xyz, input.TBN), 1.0f);
-
-    output.DiffuseAlbedo = diffuseColor;
-    output.Normal        = normalWS;
-    output.Position      = float4(input.PositionWS, 1.0f);
 
     return output;
 }
