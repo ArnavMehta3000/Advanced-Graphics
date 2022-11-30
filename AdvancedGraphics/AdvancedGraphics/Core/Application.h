@@ -25,9 +25,10 @@ public:
 	
 private:
 	void CalculateLighting();
+	void OnLightingPrePass();
 
-	void OnUpdate(double dt);
-	void OnRender();
+	void OnUpdateScene(double dt);
+	void OnRenderScene();
 	void OnGui();
 
 private:
@@ -35,8 +36,7 @@ private:
 	Window*                    m_window;
 
 	RenderTarget*              m_renderTarget;
-	std::vector<RenderTarget*> m_gBuffer;
-
+	PixelShader*               m_lightingPrePassPS;
 	ComPtr<ID3D11Buffer>       m_wvpCB;
 	ComPtr<ID3D11Buffer>       m_lightCBuffer;
 

@@ -15,8 +15,7 @@ Direct3D::Direct3D()
 	m_blendState(nullptr),
 	m_rasterWireframe(nullptr),
 	m_rasterSolid(nullptr),
-	m_rasterCullNone(nullptr),
-	m_lightingPassPS(nullptr)
+	m_rasterCullNone(nullptr)
 {}
 
 void Direct3D::Kill()
@@ -243,9 +242,10 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 
 	// Create shader resource views
 	CREATE_ZERO(D3D11_SHADER_RESOURCE_VIEW_DESC, shaderResourceViewDesc);
-	shaderResourceViewDesc.Format              = textureDesc.Format;
-	shaderResourceViewDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURE2D;
-	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+	shaderResourceViewDesc.Format                    = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+	shaderResourceViewDesc.Texture2D.MipLevels       = 1;
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
 		HR(m_device->CreateShaderResourceView(m_textureArray[i].Get(), &shaderResourceViewDesc, m_srvArray[i].ReleaseAndGetAddressOf()));
 
@@ -281,9 +281,6 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 	COM_RELEASE(depthStencilTexture);
 
 
-	// Create lighting pass pixel shader
-	this->CreatePixelShader(m_lightingPassPS, L"Shaders/LightingPassPS.hlsl");
-
 	m_deferredShader = Shader(L"Shaders/Advanced/DeferredVS.hlsl", L"Shaders/Advanced/DeferredPS.hlsl");
 
 	LOG("Created G-Buffer");
@@ -315,10 +312,10 @@ void Direct3D::BindGBuffer()
 {
 	// Get rtv array
 	ID3D11RenderTargetView* renderTargets[] = { m_rtvArray[0].Get(), m_rtvArray[1].Get() , m_rtvArray[2].Get() };
-	
+
 	// Clear rtv and depth
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
-		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Black);
+		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Cyan);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 	m_context->OMSetRenderTargets(_countof(renderTargets), renderTargets, m_depthStencilView.Get());
 
@@ -327,7 +324,7 @@ void Direct3D::BindGBuffer()
 
 void Direct3D::BindBackBuffer()
 {
-	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkGray);
+	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::HotPink);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
@@ -335,45 +332,30 @@ void Direct3D::BindBackBuffer()
 
 void Direct3D::BindRenderTarget(const RenderTarget* rt)
 {
-	// Clear buffer before binding
-	float color[] = { 0.01f, 0.01f, 0.01f, 1.0f };
-	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), color);
+	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::Green);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), nullptr);
 }
 
-void Direct3D::DoLightingPass(const RenderTarget* rt)
+void Direct3D::SetLightingPrePassResources(const RenderTarget* rt)
 {
-	// Unbind all render targets and shader resources
-	UnbindAllRenderTargets();
+	// Set g buffer as texture resources for PS
+	ID3D11ShaderResourceView* rtSRVs[]{ m_srvArray[0].Get(), m_srvArray[2].Get() , m_srvArray[2].Get() };
+	m_context->PSSetShaderResources(0, _countof(rtSRVs), rtSRVs);
 
-	// Bind lighting pass pixel shader
-	m_context->PSSetShader(m_lightingPassPS->Shader.Get(), nullptr, 0);
-
-	// Bind the SRV's as textures
-	ID3D11ShaderResourceView* textureSrv[] = { m_srvArray[0].Get(), m_srvArray[1].Get(), m_srvArray[2].Get()};
-	m_context->PSSetShaderResources(0, 3, textureSrv);
-
-	// Bind accumulation render target to slot 0
-	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), nullptr);
-
-	// Draw blank
-	ID3D11Buffer* nothing = 0;
-	UINT stride = sizeof(FSQuadVertex);
-	UINT offset = 0;
-	m_context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	m_context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-	m_context->Draw(3, 0);
+	// Clear Set render target texture to slot 0
+	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::Black);
+	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 
 }
 
-void Direct3D::UnbindAllRenderTargets()
+void Direct3D::UnbindAllResourcesAndTargets()
 {
 	m_context->OMSetRenderTargets(0, nullptr, nullptr);
 
 	// Clear PS shader resource views
-	ID3D11ShaderResourceView* srv[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+	ID3D11ShaderResourceView* srv[5] = { nullptr, nullptr, nullptr, nullptr, nullptr };
 	m_context->PSSetShaderResources(0, _countof(srv), srv);
 }
 
@@ -382,10 +364,10 @@ void Direct3D::DrawFSQuad(const RenderTarget* rt)
 {
 	// Set shader data
 	m_context->VSSetShader(rt->m_vertexShader->Shader.Get(), nullptr, 0);
-	m_context->PSSetShader(rt->m_pixelShader->Shader.Get(), nullptr, 0);
+	//m_context->PSSetShader(rt->m_pixelShader->Shader.Get(), nullptr, 0);
 
 	// Set texture
-	m_context->PSSetShaderResources(0, 1, rt->GetSRV().GetAddressOf());
+	//m_context->PSSetShaderResources(0, 1, rt->GetSRV().GetAddressOf());
 
 	// Set sampler
 	m_context->PSSetSamplers(0, 1, D3D_SAMPLER_LINEAR.GetAddressOf());
@@ -430,7 +412,6 @@ void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR pro
 	{
 		if (errorBlob)
 		{
-			// TODO: Log error message (handle hot reloading here)
 			LOG(reinterpret_cast<const char*>(errorBlob->GetBufferPointer()));
 			COM_RELEASE(errorBlob);
 		}

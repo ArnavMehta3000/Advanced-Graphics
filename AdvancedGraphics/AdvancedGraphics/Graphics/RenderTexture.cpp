@@ -91,7 +91,6 @@ void RenderTarget::CreateTexture(UINT width, UINT height)
 		{
 			rtvDesc.Format             = texDesc.Format;
 			rtvDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE2D;
-			rtvDesc.Texture2D.MipSlice = 0;
 			HR(D3D_DEVICE->CreateRenderTargetView(m_renderTargetTexture.Get(), &rtvDesc, m_renderTargetView.ReleaseAndGetAddressOf()));
 		}
 	}

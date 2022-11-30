@@ -51,7 +51,6 @@ Window::Window(HINSTANCE hInst, UINT width, UINT height)
 		this
 	);
 
-	// TODO: Add error logging here
 	if (!m_hWnd)
 		__debugbreak();
 

@@ -28,10 +28,10 @@ public:
 
 	void BindGBuffer();
 	void BindBackBuffer();
-	void UnbindAllRenderTargets();
+	void UnbindAllResourcesAndTargets();
 	void BindRenderTarget(const RenderTarget* rt);
 
-	void DoLightingPass(const RenderTarget* rt);
+	void SetLightingPrePassResources(const RenderTarget* rt);
 
 	void DrawFSQuad(const RenderTarget* rt);
 
@@ -70,8 +70,6 @@ public:
 	ComPtr<ID3D11Texture2D>          m_textureArray[G_BUFFER_COUNT];
 	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
 	ComPtr<ID3D11ShaderResourceView> m_depthSRV;
-
-	PixelShader* m_lightingPassPS;
 
 	Shader m_deferredShader;
 
