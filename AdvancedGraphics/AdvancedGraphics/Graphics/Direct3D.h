@@ -3,10 +3,13 @@
 #include "Graphics/RenderTexture.h"
 
 
-constexpr UINT G_BUFFER_COUNT = 3u;
+constexpr UINT G_BUFFER_COUNT = 4u;
 // 0 - Diffuse
 // 1 - Normal
 // 2 - Position
+// 3 - Accumulation
+// ---------------
+// (ext)RT-0: Accumulation with post process
 
 class Direct3D
 {
@@ -29,11 +32,8 @@ public:
 	void BindGBuffer();
 	void BindBackBuffer();
 	void UnbindAllResourcesAndTargets();
-	void BindRenderTarget(const RenderTarget* rt);
-
-	void SetLightingPrePassResources(const RenderTarget* rt);
-
-	void DrawFSQuad(const RenderTarget* rt);
+	void SetGBufferAsResource();
+	void DrawFSQuad();
 
 	/// <param name="cullBack">True - solid | False - Cull None</param>
 	void SetCullMode(bool cullBack) { m_context->RSSetState((cullBack) ? m_rasterSolid.Get() : m_rasterCullNone.Get()); }
@@ -70,8 +70,9 @@ public:
 	ComPtr<ID3D11Texture2D>          m_textureArray[G_BUFFER_COUNT];
 	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
 	ComPtr<ID3D11ShaderResourceView> m_depthSRV;
-
-	Shader m_deferredShader;
+	RenderTarget*                    m_renderTarget;
+	Shader                           m_deferredShader;
+	Shader                           m_lightingPrePass;
 
 private:
 	HWND m_hWnd;

@@ -15,7 +15,8 @@ Direct3D::Direct3D()
 	m_blendState(nullptr),
 	m_rasterWireframe(nullptr),
 	m_rasterSolid(nullptr),
-	m_rasterCullNone(nullptr)
+	m_rasterCullNone(nullptr),
+	m_renderTarget(nullptr)
 {}
 
 void Direct3D::Kill()
@@ -218,6 +219,12 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 
 void Direct3D::InitGBuffer(UINT width, UINT height)
 {
+	m_renderTarget    = new RenderTarget(width, height);
+	m_deferredShader  = Shader(L"Shaders/Advanced/DeferredVS.hlsl",
+							   L"Shaders/Advanced/DeferredPS.hlsl");
+	m_lightingPrePass = Shader(L"Shaders/Advanced/LightingPrePassVS.hlsl",
+							   L"Shaders/Advanced/LightingPrePassPS.hlsl");
+
 	// Create texture array
 	CREATE_ZERO(D3D11_TEXTURE2D_DESC, textureDesc);
 	textureDesc.Width            = width;
@@ -280,9 +287,6 @@ void Direct3D::InitGBuffer(UINT width, UINT height)
 
 	COM_RELEASE(depthStencilTexture);
 
-
-	m_deferredShader = Shader(L"Shaders/Advanced/DeferredVS.hlsl", L"Shaders/Advanced/DeferredPS.hlsl");
-
 	LOG("Created G-Buffer");
 }
 
@@ -311,11 +315,20 @@ void Direct3D::EndFrame()
 void Direct3D::BindGBuffer()
 {
 	// Get rtv array
-	ID3D11RenderTargetView* renderTargets[] = { m_rtvArray[0].Get(), m_rtvArray[1].Get() , m_rtvArray[2].Get() };
+	ID3D11RenderTargetView* renderTargets[] = {
+		m_rtvArray[0].Get(),  // Diffuse
+		m_rtvArray[1].Get(),  // Normals
+		m_rtvArray[2].Get(),  // PosW/Depth
+		m_rtvArray[3].Get(),  // Accumulation
+	};
 
 	// Clear rtv and depth
 	for (size_t i = 0; i < G_BUFFER_COUNT; i++)
-		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Cyan);
+		m_context->ClearRenderTargetView(m_rtvArray[i].Get(), Colors::Black);
+
+	// Clear render target
+	m_context->ClearRenderTargetView(m_renderTarget->m_renderTargetView.Get(), Colors::Pink);
+	
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 	m_context->OMSetRenderTargets(_countof(renderTargets), renderTargets, m_depthStencilView.Get());
 
@@ -324,34 +337,15 @@ void Direct3D::BindGBuffer()
 
 void Direct3D::BindBackBuffer()
 {
-	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::HotPink);
+	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DeepSkyBlue);
 	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
 }
 
-void Direct3D::BindRenderTarget(const RenderTarget* rt)
-{
-	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::Green);
-	m_context->ClearDepthStencilView(m_depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
-
-	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), nullptr);
-}
-
-void Direct3D::SetLightingPrePassResources(const RenderTarget* rt)
-{
-	// Set g buffer as texture resources for PS
-	ID3D11ShaderResourceView* rtSRVs[]{ m_srvArray[0].Get(), m_srvArray[2].Get() , m_srvArray[2].Get() };
-	m_context->PSSetShaderResources(0, _countof(rtSRVs), rtSRVs);
-
-	// Clear Set render target texture to slot 0
-	m_context->ClearRenderTargetView(rt->m_renderTargetView.Get(), Colors::Black);
-	m_context->OMSetRenderTargets(1, rt->m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
-
-}
-
 void Direct3D::UnbindAllResourcesAndTargets()
 {
+	// Clear all bound render targets
 	m_context->OMSetRenderTargets(0, nullptr, nullptr);
 
 	// Clear PS shader resource views
@@ -359,28 +353,29 @@ void Direct3D::UnbindAllResourcesAndTargets()
 	m_context->PSSetShaderResources(0, _countof(srv), srv);
 }
 
-
-void Direct3D::DrawFSQuad(const RenderTarget* rt)
+void Direct3D::SetGBufferAsResource()
 {
-	// Set shader data
-	m_context->VSSetShader(rt->m_vertexShader->Shader.Get(), nullptr, 0);
-	//m_context->PSSetShader(rt->m_pixelShader->Shader.Get(), nullptr, 0);
-
-	// Set texture
-	//m_context->PSSetShaderResources(0, 1, rt->GetSRV().GetAddressOf());
-
-	// Set sampler
-	m_context->PSSetSamplers(0, 1, D3D_SAMPLER_LINEAR.GetAddressOf());
+	// Array of gbuffer shader resources
 	
-	// Set buffers
-	m_context->IASetVertexBuffers(0, 1,rt-> m_vertexBuffer.GetAddressOf(), &rt->m_stride, &rt->m_offset);
-	m_context->IASetIndexBuffer(rt->m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-	
-	m_context->IASetInputLayout(rt->m_vertexShader->InputLayout.Get());
-
-	// Draw the quad
-	m_context->DrawIndexed(rt->m_indexCount, 0, 0);
 }
+
+void Direct3D::DrawFSQuad()
+{
+	m_lightingPrePass.BindShader();
+
+	m_context->IASetVertexBuffers(0, 1, m_renderTarget->m_vertexBuffer.GetAddressOf(), &m_renderTarget->m_stride, &m_renderTarget->m_offset);
+	m_context->IASetIndexBuffer(m_renderTarget->m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+	m_context->IASetInputLayout(m_renderTarget->m_vertexShader->InputLayout.Get());
+
+	// Set input textures
+	ID3D11ShaderResourceView* srv[] = { m_srvArray[0].Get(), m_srvArray[1].Get(), m_srvArray[2].Get(), m_srvArray[3].Get() };
+	m_context->PSSetShaderResources(0, _countof(srv), srv);
+	m_context->PSSetSamplers(0, 1, m_samplerAnisotropicWrap.GetAddressOf());
+
+	m_context->DrawIndexed(m_renderTarget->m_indexCount, 0, 0);
+}
+
+
 
 void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)
 {

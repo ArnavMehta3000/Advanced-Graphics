@@ -19,8 +19,6 @@
 Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	:
 	m_window(nullptr),
-	m_renderTarget(nullptr),
-	m_lightingPrePassPS(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
 	m_lightDiffuse(Colors::White),
@@ -45,8 +43,6 @@ Application::~Application()
 		SAFE_DELETE(go);
 
 	SAFE_DELETE(m_window);
-
-	SAFE_DELETE(m_renderTarget);
 }
 
 
@@ -97,15 +93,6 @@ bool Application::Init()
 	m_gameObjects.push_back(new GameObject(desc));
 	m_gameObjects[1]->m_scale = sm::Vector3(0.25f);
 
-	// Create FS render target
-	// Get window client rect
-	CREATE_ZERO(RECT, rc);
-	GetClientRect(m_window->GetHandle(), &rc);
-	UINT width = rc.right - rc.left;
-	UINT height = rc.bottom - rc.top;
-
-	m_renderTarget = new RenderTarget(width, height);
-	D3D->CreatePixelShader(m_lightingPrePassPS, L"Shaders/Advanced/LightingPrePassPS.hlsl");
 
 	// Create constant buffers
 	D3D->CreateConstantBuffer(m_wvpCB, sizeof(VSConstantBuffer));
@@ -134,12 +121,21 @@ void Application::Run()
 		SetWindowTextA(m_window->GetHandle(), ("FPS: " + std::to_string(1.0f / m_appTimer)).c_str());
 		OnUpdateScene(m_appTimer);
 		
+
+
+		// --- Geometry pass ---
 		D3D->BindGBuffer();
 		OnRenderScene();
+		
 		D3D->UnbindAllResourcesAndTargets();
-		OnLightingPrePass();
+		
+		// --- Lighting pass ---
+		D3D->SetGBufferAsResource();
+		D3D->DrawFSQuad();
+
 		D3D->BindBackBuffer();
-		//D3D->DrawFSQuad(m_renderTarget);
+		// Draw quad here
+
 		OnGui();
 		D3D->EndFrame();
 	}
@@ -174,13 +170,6 @@ void Application::CalculateLighting()
 	//D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
 }
 
-void Application::OnLightingPrePass()
-{
-	// Set lighting pre pass shader
-	D3D_CONTEXT->PSSetShader(m_lightingPrePassPS->Shader.Get(), nullptr, 0);
-	D3D->SetLightingPrePassResources(m_renderTarget);
-}
-
 void Application::OnUpdateScene(double dt)
 {
 	m_gameObjects[1]->m_position = m_lightPosition;
@@ -208,8 +197,9 @@ void Application::OnRenderScene()
 {
 	// At this stage, the GBuffer VS and PS are bound
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCB.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCB.GetAddressOf());
 
-	CalculateLighting();
+	//CalculateLighting();
 
 
 	CREATE_ZERO(VSConstantBuffer, cb);
@@ -283,8 +273,11 @@ void Application::OnGui()
 			ImGui::Text("Scene World Position");
 			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
 
-			ImGui::Text("Raw Scene");
-			ImGui::Image((void*)m_renderTarget->GetSRV().Get(), imageSize);
+			ImGui::Text("Scene Light Accumulation");
+			ImGui::Image((void*)D3D->m_srvArray[3].Get(), imageSize);
+
+			ImGui::Text("FS Quad");
+			ImGui::Image((void*)D3D->m_renderTarget->GetSRV().Get(), imageSize);
 		}
 		ImGui::End();
 	}
