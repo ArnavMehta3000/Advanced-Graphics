@@ -1,6 +1,13 @@
 Texture2D<float4> GDiffuse  : register(t0);
 Texture2D<float4> GNormal   : register(t1);
 Texture2D<float4> GPosition : register(t2);
+SamplerState samLinear      : register(s0);
+
+struct RT_PS_INPUT
+{
+    float4 Position : SV_POSITION;
+    float2 UV       : UV;
+};
 
 cbuffer ConstantBuffer : register(b0)
 {
@@ -22,7 +29,8 @@ cbuffer LightParams
     float  PointLightRange;
 }
 
-float4 PS() : SV_Target0
+float4 PS(RT_PS_INPUT input) : SV_Target3
 {
-    return float4(1, 1, 0, 1);
+    return float4(input.UV, 0,0);
+
 }

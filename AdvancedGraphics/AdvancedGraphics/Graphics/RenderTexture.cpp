@@ -19,6 +19,8 @@ RenderTarget::RenderTarget(UINT width, UINT height)
 	D3D->CreateVertexShader(m_vertexShader, L"Shaders/RenderTexture.fx");
 	D3D->CreatePixelShader(m_pixelShader, L"Shaders/RenderTexture.fx");
 
+	LOG("Created render target");
+
 	CreateTexture(width, height);	
 	InitMesh();
 }

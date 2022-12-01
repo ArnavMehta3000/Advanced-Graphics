@@ -37,6 +37,7 @@ struct PSOutput
     float4 DiffuseAlbedo : SV_TARGET0;
     float4 Normal        : SV_TARGET1;
     float4 Depth         : SV_Target2;
+    //float4 Acc : SV_Target3;
 };
 
 PSOutput PS(VSOutput input)
@@ -54,6 +55,7 @@ PSOutput PS(VSOutput input)
     output.Normal        = float4(input.NormalWS, 1.0f);
     output.Depth         = float4(input.PositionWS, 1.0f); //DepthMap.Sample(samLinear, input.TexCoord);
 
+    //output.Acc = lerp(output.DiffuseAlbedo, output.Depth, 0.5f);
 
     return output;
 }

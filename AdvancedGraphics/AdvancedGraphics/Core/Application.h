@@ -25,7 +25,6 @@ public:
 	
 private:
 	void CalculateLighting();
-	void OnLightingPrePass();
 
 	void OnUpdateScene(double dt);
 	void OnRenderScene();
@@ -35,8 +34,6 @@ private:
 	Timer                      m_appTimer;
 	Window*                    m_window;
 
-	RenderTarget*              m_renderTarget;
-	PixelShader*               m_lightingPrePassPS;
 	ComPtr<ID3D11Buffer>       m_wvpCB;
 	ComPtr<ID3D11Buffer>       m_lightCBuffer;
 

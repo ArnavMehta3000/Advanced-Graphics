@@ -5,6 +5,7 @@ class RenderTarget
 {
 	friend class Direct3D;
 public:
+	RenderTarget() = default;
 	RenderTarget(UINT width, UINT height);
 	~RenderTarget();
 
