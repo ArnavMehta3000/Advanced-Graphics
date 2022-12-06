@@ -37,11 +37,6 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 
 Application::~Application()
 {
-	COM_RELEASE(m_wvpCB);
-
-	for (auto& go : m_gameObjects)
-		SAFE_DELETE(go);
-
 	SAFE_DELETE(m_window);
 }
 
@@ -63,41 +58,7 @@ bool Application::Init()
 	ImGui_ImplDX11_Init(D3D_DEVICE, D3D_CONTEXT);
 	ImGui::StyleColorsDark();
 
-
-
-	CREATE_ZERO(GODesc, desc);
-	desc.MeshFile             = "Assets\\Plane.obj";
-	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
-	desc.NormalMap            = L"Assets\\rock_bump.dds";
-	desc.HeightMap            = L"Assets\\rock_height.dds";
-	desc.PrimitiveType        = Primitives::Type::NONE;
-	desc.IsPrimitive          = false;
-	desc.HasMesh              = true;
-	desc.HasDiffuse           = true;
-	desc.HasNormal            = true;
-	desc.HasHeight            = true;
-	desc.IsEmmissive          = false;
-	m_gameObjects.push_back(new GameObject(desc));
-	m_gameObjects[0]->m_scale = sm::Vector3(2.0f);
-
-
-
-	// Visualizer for light position
-	desc.MeshFile             = "Assets\\Sphere.obj";
-	desc.DiffuseTexture       = L"Assets\\stone.dds";
-	desc.HasDiffuse           = true;
-	desc.HasNormal            = false;
-	desc.HasHeight            = false;
-	desc.IsEmmissive          = true;
-	desc.EmmissiveColor       = sm::Vector3(10, 10, 10);
-	m_gameObjects.push_back(new GameObject(desc));
-	m_gameObjects[1]->m_scale = sm::Vector3(0.25f);
-
-
-	// Create constant buffers
-	D3D->CreateConstantBuffer(m_wvpCB, sizeof(VSConstantBuffer));
-	D3D->CreateConstantBuffer(m_lightCBuffer, sizeof(LightProperties));
-
+	InitGBuffer();
 	
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -110,6 +71,42 @@ bool Application::Init()
 	return true;
 }
 
+void Application::InitGBuffer()
+{
+	RECT r;
+	GetClientRect(m_window->GetHandle(), &r);
+	UINT width = r.right - r.left;
+	UINT height = r.bottom - r.top;
+
+	m_colorTarget    = RenderTarget(D3D->GetBackBufferFormat(), width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_normalTarget   = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_positionTarget = RenderTarget(DXGI_FORMAT_R16G16B16A16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+
+	LOG("Created G-Buffer");
+}
+
+void Application::SetGBuffer()
+{
+	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_positionTarget.RTV().Get() };
+
+	// Clear the render targets
+	for (auto& rt : rtv)
+		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::BlanchedAlmond);
+
+	// Clear depth before geometry pass
+	D3D_CONTEXT->ClearDepthStencilView(D3D->m_depthTarget.DSV().Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
+
+	D3D_CONTEXT->OMSetRenderTargets(_countof(rtv), rtv, D3D->m_depthTarget.DSV().Get());
+}
+
+void Application::DoGeometryPass()
+{
+}
+
+void Application::DoLightingPass()
+{
+}
+
 void Application::Run()
 {
 	m_appTimer.Reset();
@@ -118,23 +115,12 @@ void Application::Run()
 	while (m_window->ProcessMessages())
 	{
 		m_appTimer.Tick();
-		SetWindowTextA(m_window->GetHandle(), ("FPS: " + std::to_string(1.0f / m_appTimer)).c_str());
-		OnUpdateScene(m_appTimer);
-		
 
-
-		// --- Geometry pass ---
-		D3D->BindGBuffer();
-		OnRenderScene();
-		
-		D3D->UnbindAllResourcesAndTargets();
-		
-		// --- Lighting pass ---
-		D3D->SetGBufferAsResource();
-		D3D->DrawFSQuad();
-
+		SetGBuffer();
+		DoGeometryPass();
+		D3D->UnbindAllTargetsAndResources();
 		D3D->BindBackBuffer();
-		// Draw quad here
+		DoLightingPass();
 
 		OnGui();
 		D3D->EndFrame();
@@ -148,75 +134,6 @@ void Application::Shutdown()
 }
 
 
-
-void Application::CalculateLighting()
-{
-	// Set up the light
-	PointLight light  = PointLight();
-	light.Position    = TO_VEC4(m_lightPosition, 1.0f);
-	light.Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
-	light.Specular    = TO_VEC4(m_lightSpecular, 1.0f);
-	light.Attenuation = sm::Vector4(m_lightAttenuation);
-	light.Parallax    = m_parallaxData;
-	light.Bias        = m_biasData;
-
-
-	auto& pos = m_camera.Position();
-	LightProperties lightProperties = LightProperties();
-	lightProperties.EyePosition     = sm::Vector4(pos.x, pos.y, pos.z, 1.0f);
-	lightProperties.PointLight      = light;
-
-	// TODO: Update lighting constant buffer
-	//D3D_CONTEXT->UpdateSubresource(m_lightCBuffer.Get(), 0, nullptr, &lightProperties, 0, 0);
-}
-
-void Application::OnUpdateScene(double dt)
-{
-	m_gameObjects[1]->m_position = m_lightPosition;
-
-	if (KEYBOARD.X)
-		m_gameObjects[0]->m_rotation.x += (float)dt;
-	if (KEYBOARD.Y)
-		m_gameObjects[0]->m_rotation.y += (float)dt;
-	if (KEYBOARD.Z)
-		m_gameObjects[0]->m_rotation.z += (float)dt;
-
-	if (KEYBOARD.G)
-		m_gameObjects[0]->m_position.x += (float)dt;
-	if (KEYBOARD.H)
-		m_gameObjects[0]->m_position.x -= (float)dt;
-
-	
-	m_camera.Update(dt, KEYBOARD, MOUSE);
-
-	for (auto& go : m_gameObjects)
-		go->Update(m_appTimer);
-}
-
-void Application::OnRenderScene()
-{
-	// At this stage, the GBuffer VS and PS are bound
-	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCB.GetAddressOf());
-	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCB.GetAddressOf());
-
-	//CalculateLighting();
-
-
-	CREATE_ZERO(VSConstantBuffer, cb);
-	cb.View       = m_camera.GetView().Transpose();
-	cb.Projection = m_camera.GetProjection().Transpose();
-
-	for (auto& go : m_gameObjects)
-	{
-		// Set PS constant buffers
-		ID3D11Buffer* psCBs[] = { m_wvpCB.Get(), go->GetSurfacePropsCB().Get() };
-		D3D_CONTEXT->PSSetConstantBuffers(0, 2, psCBs);
-
-		cb.World = go->GetWorldTransform().Transpose();
-		D3D_CONTEXT->UpdateSubresource(m_wvpCB.Get(), 0, nullptr, &cb, 0, 0);
-		go->Draw();
-	}
-}
 
 void Application::OnGui()
 {
@@ -237,7 +154,7 @@ void Application::OnGui()
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::DragFloat3("Object Position", &m_gameObjects[0]->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+			//ImGui::DragFloat3("Object Position", &m_gameObjects[0]->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
 		}
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
@@ -265,19 +182,16 @@ void Application::OnGui()
 			ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
 
 			ImGui::Text("Scene Diffuse");
-			ImGui::Image((void*)D3D->m_srvArray[0].Get(), imageSize);
+			ImGui::Image((void*)m_colorTarget.SRV().Get(), imageSize);
 			
 			ImGui::Text("Scene Normals");
-			ImGui::Image((void*)D3D->m_srvArray[1].Get(), imageSize);
-			
+			ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
+
 			ImGui::Text("Scene World Position");
-			ImGui::Image((void*)D3D->m_srvArray[2].Get(), imageSize);
+			ImGui::Image((void*)m_positionTarget.SRV().Get(), imageSize);
 
-			ImGui::Text("Scene Light Accumulation");
-			ImGui::Image((void*)D3D->m_srvArray[3].Get(), imageSize);
-
-			ImGui::Text("FS Quad");
-			ImGui::Image((void*)D3D->m_renderTarget->GetSRV().Get(), imageSize);
+			ImGui::Text("Scene Depth");
+			ImGui::Image((void*)D3D->m_depthTarget.SRV().Get(), imageSize);
 		}
 		ImGui::End();
 	}

@@ -4,9 +4,7 @@
 #include "Graphics/Direct3D.h"
 #include "Core/GameObject.h"
 #include "Core/Camera.h"
-#include "Graphics/RenderTexture.h"
 
-#define DEFAULT_SHADER L"Shaders/Shader.fx"
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
 
 class Application
@@ -24,28 +22,34 @@ public:
 
 	
 private:
-	void CalculateLighting();
+	void InitGBuffer();
+	void SetGBuffer();
+	void DoGeometryPass();
+	// Set & clear back buffer
+	// Set back buffer shader resources
+	void DoLightingPass();
 
-	void OnUpdateScene(double dt);
-	void OnRenderScene();
+
 	void OnGui();
 
 private:
-	Timer                      m_appTimer;
-	Window*                    m_window;
+	Timer       m_appTimer;
+	Window*     m_window;
+	Camera      m_camera;
 
-	ComPtr<ID3D11Buffer>       m_wvpCB;
-	ComPtr<ID3D11Buffer>       m_lightCBuffer;
+	RenderTarget m_colorTarget;
+	RenderTarget m_normalTarget;
+	RenderTarget m_positionTarget;
 
-	std::vector<GameObject*>   m_gameObjects;
-	Camera                     m_camera;
+	Shader m_geometryShader;
+	Shader m_lightingShader;
 
-	float                      m_imageScale = 1.0f;
+	float       m_imageScale = 1.0f;
 
-	sm::Vector3                m_lightPosition;
-	sm::Vector3                m_lightDiffuse;
-	sm::Vector3                m_lightSpecular;
-	sm::Vector3                m_lightAttenuation;
-	sm::Vector4                m_parallaxData;
-	sm::Vector4                m_biasData;
+	sm::Vector3 m_lightPosition;
+	sm::Vector3 m_lightDiffuse;
+	sm::Vector3 m_lightSpecular;
+	sm::Vector3 m_lightAttenuation;
+	sm::Vector4 m_parallaxData;
+	sm::Vector4 m_biasData;
 };
