@@ -1,6 +1,6 @@
 #include "Core/Structures.h"
 #include "Graphics/Shaders.h"
-#include "Graphics/RenderTexture.h"
+#include "Graphics/Targets.h"
 
 
 constexpr UINT G_BUFFER_COUNT = 4u;
@@ -18,7 +18,6 @@ public:
 	static Direct3D* GetInstance();
 
 	bool Init(HWND hwnd, bool isVsync, UINT msaa = 1);
-	void InitGBuffer(UINT width, UINT height);
 	void Shutdown();
 	void EndFrame();
 
@@ -26,14 +25,12 @@ public:
 	inline ID3D11DeviceContext*       GetContext()            { return m_context.Get(); }
 	inline ComPtr<ID3D11SamplerState> GetSamplerStateLinear() { return m_samplerAnisotropicWrap; }
 
+	DXGI_FORMAT GetBackBufferFormat() { return m_backBufferFormat; }
+
+	void BindBackBuffer();
+	void UnbindAllTargetsAndResources();
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
-
-	void BindGBuffer();
-	void BindBackBuffer();
-	void UnbindAllResourcesAndTargets();
-	void SetGBufferAsResource();
-	void DrawFSQuad();
 
 	/// <param name="cullBack">True - solid | False - Cull None</param>
 	void SetCullMode(bool cullBack) { m_context->RSSetState((cullBack) ? m_rasterSolid.Get() : m_rasterCullNone.Get()); }
@@ -44,7 +41,7 @@ public:
 	void CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccess = 0);
 
 public:
-	sm::Vector4 m_clearColor;
+	DepthTarget m_depthTarget;
 
 private:
 	Direct3D();
@@ -64,20 +61,11 @@ private:
 	ComPtr<ID3D11RasterizerState>    m_rasterCullNone;
 
 public:
-	// GBuffer
-	ComPtr<ID3D11RenderTargetView>   m_rtvArray[G_BUFFER_COUNT];
-	ComPtr<ID3D11ShaderResourceView> m_srvArray[G_BUFFER_COUNT];
-	ComPtr<ID3D11Texture2D>          m_textureArray[G_BUFFER_COUNT];
-	ComPtr<ID3D11DepthStencilView>   m_depthStencilView;
-	ComPtr<ID3D11ShaderResourceView> m_depthSRV;
-	RenderTarget*                    m_renderTarget;
-	Shader                           m_deferredShader;
-	Shader                           m_lightingPrePass;
 
 private:
 	HWND m_hWnd;
 	bool m_isVsync;
-
+	DXGI_FORMAT m_backBufferFormat;
 	UINT RAM, VRAM;
 	char GPU[128];
 };
