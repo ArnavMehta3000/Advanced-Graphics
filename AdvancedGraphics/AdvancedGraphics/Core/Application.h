@@ -7,6 +7,12 @@
 
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
 
+enum class RenderTechnique
+{
+	Forward,
+	Deferred
+};
+
 class Application
 {
 #define KEYBOARD m_window->GetKbState()
@@ -20,8 +26,12 @@ public:
 	void Run();
 	void Shutdown();
 
+	void SetTechnique(RenderTechnique technique) { m_technique = technique; }
 	
 private:
+	void DoForwardRendering();
+	void DoDeferredRendering();
+
 	void InitGBuffer();
 	void SetGBuffer();
 	void DoGeometryPass();
@@ -33,23 +43,25 @@ private:
 	void OnGui();
 
 private:
-	Timer       m_appTimer;
-	Window*     m_window;
-	Camera      m_camera;
+	Timer           m_appTimer;
+	Window*         m_window;
+	Camera          m_camera;
 
-	RenderTarget m_colorTarget;
-	RenderTarget m_normalTarget;
-	RenderTarget m_positionTarget;
+	RenderTechnique m_technique;
 
-	Shader m_geometryShader;
-	Shader m_lightingShader;
+	RenderTarget    m_colorTarget;
+	RenderTarget    m_normalTarget;
+	RenderTarget    m_positionTarget;
 
-	float       m_imageScale = 1.0f;
+	Shader          m_geometryShader;
+	Shader          m_lightingShader;
 
-	sm::Vector3 m_lightPosition;
-	sm::Vector3 m_lightDiffuse;
-	sm::Vector3 m_lightSpecular;
-	sm::Vector3 m_lightAttenuation;
-	sm::Vector4 m_parallaxData;
-	sm::Vector4 m_biasData;
+	float           m_imageScale = 1.0f;
+
+	sm::Vector3     m_lightPosition;
+	sm::Vector3     m_lightDiffuse;
+	sm::Vector3     m_lightSpecular;
+	sm::Vector3     m_lightAttenuation;
+	sm::Vector4     m_parallaxData;
+	sm::Vector4     m_biasData;
 };

@@ -59,6 +59,7 @@ bool Application::Init()
 	ImGui::StyleColorsDark();
 
 	InitGBuffer();
+	SetTechnique(RenderTechnique::Deferred);
 	
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -107,6 +108,7 @@ void Application::DoLightingPass()
 {
 }
 
+
 void Application::Run()
 {
 	m_appTimer.Reset();
@@ -116,15 +118,32 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 
-		SetGBuffer();
-		DoGeometryPass();
-		D3D->UnbindAllTargetsAndResources();
-		D3D->BindBackBuffer();
-		DoLightingPass();
-
+		switch (m_technique)
+		{
+		case RenderTechnique::Forward:
+			DoForwardRendering();
+			break;
+		case RenderTechnique::Deferred:
+			DoDeferredRendering();
+			break;
+		}
+		
 		OnGui();
 		D3D->EndFrame();
 	}
+}
+
+void Application::DoDeferredRendering()
+{
+	SetGBuffer();
+	DoGeometryPass();
+	D3D->UnbindAllTargetsAndResources();
+	D3D->BindBackBuffer();
+	DoLightingPass();
+}
+
+void Application::DoForwardRendering()
+{
 }
 
 void Application::Shutdown()
