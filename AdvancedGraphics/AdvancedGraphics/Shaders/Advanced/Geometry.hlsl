@@ -45,7 +45,7 @@ struct PSOutput
 {
     float4 DiffuseAlbedo : SV_TARGET0;
     float4 Normal        : SV_TARGET1;
-    float4 Depth         : SV_Target2;
+    float  Depth         : SV_Target2;
 };
 // ~For PS only~
 
@@ -76,10 +76,10 @@ PSInput VS(VSInput input)
 
 
 
-float4 DoDepthPass(PSInput input)
+float DoDepthPass(PSInput input)
 {
     float depth = input.DepthVS / 100.0f; // 100 is the camera far plane distance
-    return float4(depth, depth, depth, 1.0f);
+    return depth;
 }
 
 

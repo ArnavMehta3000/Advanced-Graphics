@@ -132,7 +132,7 @@ void Application::InitGBuffer()
 
 	m_colorTarget    = RenderTarget(D3D->GetBackBufferFormat(), width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_normalTarget   = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R16G16B16A16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
 }
@@ -207,8 +207,9 @@ void Application::DoLightingPass()
 	// Update light and camera constant buffer
 	CREATE_ZERO(LightCameraBuffer, camCBuffer);
 	camCBuffer.EyePosition = TO_VEC4(m_camera.Position(), 1.0f);
-	camCBuffer.LightColor = TO_VEC4(m_lightDiffuse, 1.0f);
+	camCBuffer.LightColor  = TO_VEC4(m_lightDiffuse, 1.0f);
 	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_cameraBuffer.GetAddressOf());
+	D3D_CONTEXT->UpdateSubresource(m_cameraBuffer.Get(), 0, nullptr, &camCBuffer, 0, 0);
 	
 	// bind render targets as srv
 	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_depthRenderTarget.SRV().Get() };

@@ -29,6 +29,16 @@ struct VSOutput
     float2 TexCoord : UV;
 };
 
+struct SurfaceData
+{
+    float Depth;
+    float4 Position;
+    float4 Diffuse;
+    float4 Normal;
+};
+
+
+
 VSOutput VS(VSInput input)
 {
     VSOutput output;
@@ -37,7 +47,24 @@ VSOutput VS(VSInput input)
     return output;
 }
 
+float4 GetPositionFromDepth(float depth)
+{
+    return float4(1, 1, 1, 1);
+}
+
+SurfaceData UnpackGBuffer(float2 uv)
+{
+    SurfaceData output;
+    output.Depth    = GDepth.Sample(samLinear, uv).r;
+    output.Position = GetPositionFromDepth(output.Depth);
+    output.Diffuse  = GDiffuse.Sample(samLinear, uv);
+    output.Normal   = GNormal.Sample(samLinear, uv);
+    
+    return output;
+}
+
+
 float4 PS(VSOutput input) : SV_Target0
 {
-    return GDepth.Sample(samLinear, input.TexCoord) /** LightDiffuse*/;
+    return UnpackGBuffer(input.TexCoord).Depth * LightDiffuse;
 }
