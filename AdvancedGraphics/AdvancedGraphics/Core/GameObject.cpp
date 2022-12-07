@@ -15,9 +15,7 @@ GameObject::GameObject()
 	m_mesh(nullptr),
 	m_textureDiffRV(nullptr),
 	m_textureNormRV(nullptr),
-	m_textureHeightRV(nullptr),
-	m_surfaceProps(SurfaceProperties())
-
+	m_textureHeightRV(nullptr)
 {
 	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
@@ -32,8 +30,7 @@ GameObject::GameObject(const GODesc& desc)
 	m_mesh(nullptr),
 	m_textureDiffRV(nullptr),
 	m_textureNormRV(nullptr),
-	m_textureHeightRV(nullptr),
-	m_surfaceProps(SurfaceProperties())
+	m_textureHeightRV(nullptr)
 {
 	using namespace Primitives;
 	// Init mesh
@@ -80,7 +77,6 @@ GameObject::~GameObject()
 	COM_RELEASE(m_textureHeightRV);
 	COM_RELEASE(m_vertexBuffer);
 	COM_RELEASE(m_indexBuffer);
-	COM_RELEASE(m_surfacePropsCB);
 }
 
 // https://github.com/tinyobjloader/tinyobjloader
@@ -204,12 +200,6 @@ void GameObject::SetTexture(const wchar_t* diffuse)
 
 void GameObject::Set()
 {
-	D3D_CONTEXT->PSSetSamplers(0, 1, D3D_SAMPLER_LINEAR.GetAddressOf());
-	//D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_surfacePropsCB.GetAddressOf());
-	
-	ID3D11ShaderResourceView* textureSrv[] = { m_textureDiffRV.Get(), m_textureNormRV.Get(), m_textureHeightRV.Get()};
-	D3D_CONTEXT->PSSetShaderResources(0, 3, textureSrv);
-
 	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &m_stride, &m_offset);
 	D3D_CONTEXT->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 }
@@ -223,8 +213,6 @@ void GameObject::Update(double dt)
 	sm::Matrix translation = sm::Matrix::CreateTranslation(m_position);
 
 	m_worldTransform = scale * rotation * translation;
-
-	D3D_CONTEXT->UpdateSubresource(m_surfacePropsCB.Get(), 0, nullptr, &m_surfaceProps, 0, 0);
 }
 
 void GameObject::Draw()

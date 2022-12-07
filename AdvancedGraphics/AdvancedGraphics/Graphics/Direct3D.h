@@ -23,7 +23,6 @@ public:
 
 	inline ID3D11Device*              GetDevice()             { return m_device.Get(); }
 	inline ID3D11DeviceContext*       GetContext()            { return m_context.Get(); }
-	inline ComPtr<ID3D11SamplerState> GetSamplerStateLinear() { return m_samplerAnisotropicWrap; }
 
 	DXGI_FORMAT GetBackBufferFormat() { return m_backBufferFormat; }
 
@@ -41,7 +40,8 @@ public:
 	void CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccess = 0);
 
 public:
-	DepthTarget m_depthTarget;
+	DepthTarget                m_depthTarget;
+	ComPtr<ID3D11SamplerState> m_samplerAnisotropicWrap;
 
 private:
 	Direct3D();
@@ -53,14 +53,11 @@ private:
 	ComPtr<IDXGISwapChain>           m_swapChain;
 	ComPtr<ID3D11RenderTargetView>   m_backBufferRTV;
 
-	ComPtr<ID3D11SamplerState>       m_samplerAnisotropicWrap;
 	ComPtr<ID3D11BlendState>         m_blendState;
 
 	ComPtr<ID3D11RasterizerState>    m_rasterWireframe;
 	ComPtr<ID3D11RasterizerState>    m_rasterSolid;
 	ComPtr<ID3D11RasterizerState>    m_rasterCullNone;
-
-public:
 
 private:
 	HWND m_hWnd;

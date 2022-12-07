@@ -15,11 +15,17 @@ struct FSQuadVertex
 };
 
 // Buffer of data used to set the WVP matrices in the vertex shader
-struct VSConstantBuffer
+struct WVPBuffer
 {
 	sm::Matrix World;
 	sm::Matrix View;
 	sm::Matrix Projection;
+};
+
+struct LightCameraBuffer
+{
+	sm::Vector4 EyePosition;
+	sm::Vector4 LightColor;
 };
 
 struct SurfaceProperties
@@ -70,4 +76,9 @@ struct LightProperties
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
 	PointLight  PointLight;
+};
+
+struct Light
+{
+
 };

@@ -39,7 +39,7 @@ struct PS_OUT
 {
     float4 Diffuse  : SV_Target0; 
     float4 Normal   : SV_Target1; 
-    float4 Position : SV_Target2;
+    float4 Depth    : SV_Target2;
 };
 // ---------------------------------------------------------------------
 
@@ -282,7 +282,7 @@ PS_OUT DeffPS(PS_IN input)
     
     output.Diffuse = diffuse;
     output.Normal = normals;
-    output.Position = input.PositionW;
+    //output.Position = input.PositionW;
     output.Depth = depth / 100.0f;  //Far clip plane    
     return output;
 }

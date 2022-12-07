@@ -25,13 +25,16 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_lightSpecular(Colors::White),
 	m_lightAttenuation(1.0f),
 	m_parallaxData(8.0f, 32.0f, 0.05f, 1.0f),
-	m_biasData(0.01f, 0.01f, 0.0f, 0.0f)
+	m_biasData(0.01f, 0.01f, 0.0f, 0.0f),
+	m_technique(RenderTechnique::Deferred),
+	m_quadIB(nullptr),
+	m_quadVB(nullptr)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
 
 	m_window = new Window(hInst, width, height);
-	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight());
+	m_camera = Camera(90.0f, (float)m_window->GetClientWidth(), (float)m_window->GetClientHeight(), 0.01f, 100.0f);
 	m_camera.Position(sm::Vector3(0.0f, 0.0f, -8.0f));
 }
 
@@ -60,7 +63,28 @@ bool Application::Init()
 
 	InitGBuffer();
 	SetTechnique(RenderTechnique::Deferred);
+	m_geometryShader = Shader(L"Shaders/Advanced/Geometry.hlsl", L"Shaders/Advanced/Geometry.hlsl");
+	m_lightingShader = Shader(L"Shaders/Advanced/Lighting.hlsl", L"Shaders/Advanced/Lighting.hlsl");
 	
+	// Init game objects
+	CREATE_ZERO(GODesc, desc);
+	desc.MeshFile             = "Assets\\Cube.obj";
+	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
+	desc.NormalMap            = L"Assets\\rock_bump.dds";
+	desc.HeightMap            = L"Assets\\rock_height.dds";
+	desc.PrimitiveType        = Primitives::Type::NONE;
+	desc.IsPrimitive          = false;
+	desc.HasMesh              = true;
+	desc.HasDiffuse           = true;
+	desc.HasNormal            = true;
+	desc.HasHeight            = true;
+	desc.IsEmmissive          = false;
+	m_gameObjects.push_back(new GameObject(desc));
+	m_gameObjects[0]->m_scale = sm::Vector3(2.0f);
+	
+	InitConstantBuffers();
+	CreateQuad();
+
 	D3D_CONTEXT->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	D3D->SetWireframe(false);
@@ -72,6 +96,33 @@ bool Application::Init()
 	return true;
 }
 
+void Application::CreateQuad()
+{
+	// Create fullscreen quad vertex buffer
+	CREATE_ZERO(D3D11_BUFFER_DESC, vbd);
+	vbd.Usage              = D3D11_USAGE_DEFAULT;
+	vbd.ByteWidth          = Primitives::FSQuad::VerticesByteWidth;
+	vbd.BindFlags          = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags     = 0;
+	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, vertexInitData);
+	vertexInitData.pSysMem = Primitives::FSQuad::Vertices;
+	HR(D3D_DEVICE->CreateBuffer(&vbd, &vertexInitData, m_quadVB.ReleaseAndGetAddressOf()));
+
+	m_stride           = Primitives::FSQuad::VerticesTypeSize;
+	m_offset           = 0;
+	m_quadIndicesCount = Primitives::FSQuad::IndicesCount;
+
+	// Create fullscreen quad index buffer
+	CREATE_ZERO(D3D11_BUFFER_DESC, ibd);
+	ibd.Usage             = D3D11_USAGE_DEFAULT;
+	ibd.ByteWidth         = Primitives::FSQuad::IndicesByteWidth;
+	ibd.BindFlags         = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags    = 0;
+	CREATE_ZERO(D3D11_SUBRESOURCE_DATA, indexInitData);
+	indexInitData.pSysMem = Primitives::FSQuad::Indices;
+	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_quadIB.ReleaseAndGetAddressOf()));
+}
+
 void Application::InitGBuffer()
 {
 	RECT r;
@@ -81,31 +132,92 @@ void Application::InitGBuffer()
 
 	m_colorTarget    = RenderTarget(D3D->GetBackBufferFormat(), width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_normalTarget   = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_positionTarget = RenderTarget(DXGI_FORMAT_R16G16B16A16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R16G16B16A16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
 }
 
+void Application::InitConstantBuffers()
+{
+	D3D->CreateConstantBuffer(m_wvpCBuffer, sizeof(WVPBuffer));
+	D3D->CreateConstantBuffer(m_cameraBuffer, sizeof(LightCameraBuffer));
+}
+
+
 void Application::SetGBuffer()
 {
-	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_positionTarget.RTV().Get() };
+	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_depthRenderTarget.RTV().Get() };
 
 	// Clear the render targets
 	for (auto& rt : rtv)
-		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::BlanchedAlmond);
+		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::Black);
 
 	// Clear depth before geometry pass
-	D3D_CONTEXT->ClearDepthStencilView(D3D->m_depthTarget.DSV().Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0.0f);
+	D3D_CONTEXT->ClearDepthStencilView(D3D->m_depthTarget.DSV().Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
 
 	D3D_CONTEXT->OMSetRenderTargets(_countof(rtv), rtv, D3D->m_depthTarget.DSV().Get());
 }
 
 void Application::DoGeometryPass()
 {
+	// Bind geometry pass shader
+	m_geometryShader.BindShader();
+
+	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
+
+	// Set wvp constant buffer
+	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+
+	// Update WVP constant buffer
+	CREATE_ZERO(WVPBuffer, wvpCB);
+	wvpCB.View       = m_camera.GetView().Transpose();
+	wvpCB.Projection = m_camera.GetProjection().Transpose();
+
+	CREATE_ZERO(SurfaceProperties, surfaceCB);
+	surfaceCB = SurfaceProperties();  // Use default values
+
+	for (auto& go : m_gameObjects)
+	{
+		wvpCB.World = go->GetWorldTransform().Transpose();
+		D3D_CONTEXT->UpdateSubresource(m_wvpCBuffer.Get(), 0, nullptr, &wvpCB, 0, 0);
+
+		// Update surface properties constant buffer
+		D3D_CONTEXT->UpdateSubresource(go->m_surfacePropsCB.Get(), 0, nullptr, &surfaceCB, 0, 0);
+
+		// Set object textures and depth target
+		ID3D11ShaderResourceView* textureSrv[] = { go->GetDiffuseSRV().Get(), go->GetNormalSRV().Get(), go->GetHeightSRV().Get() };
+		D3D_CONTEXT->PSSetShaderResources(0, _countof(textureSrv), textureSrv);
+
+		go->Draw();
+	}
 }
 
 void Application::DoLightingPass()
 {
+	// bind lighting pass shader
+	m_lightingShader.BindShader();
+	
+	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
+
+	// set wvp constant buffer
+	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	
+	// Update light and camera constant buffer
+	CREATE_ZERO(LightCameraBuffer, camCBuffer);
+	camCBuffer.EyePosition = TO_VEC4(m_camera.Position(), 1.0f);
+	camCBuffer.LightColor = TO_VEC4(m_lightDiffuse, 1.0f);
+	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_cameraBuffer.GetAddressOf());
+	
+	// bind render targets as srv
+	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_depthRenderTarget.SRV().Get() };
+	D3D_CONTEXT->PSSetShaderResources(0, _countof(srv), srv);
+	
+	// Draw full screen quad
+	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_quadVB.GetAddressOf(), &m_stride, &m_offset);
+	D3D_CONTEXT->IASetIndexBuffer(m_quadIB.Get(), DXGI_FORMAT_R16_UINT, 0);
+	D3D_CONTEXT->DrawIndexed(m_quadIndicesCount, 0, 0);
 }
 
 
@@ -117,6 +229,8 @@ void Application::Run()
 	while (m_window->ProcessMessages())
 	{
 		m_appTimer.Tick();
+		
+		UpdateWorld(m_appTimer);
 
 		switch (m_technique)
 		{
@@ -127,10 +241,18 @@ void Application::Run()
 			DoDeferredRendering();
 			break;
 		}
+
+		// Expected Back buffer to be bound at this stage
 		
 		OnGui();
 		D3D->EndFrame();
 	}
+}
+
+
+void Application::UpdateWorld(double dt)
+{
+	m_camera.Update(dt, KEYBOARD, MOUSE);
 }
 
 void Application::DoDeferredRendering()
@@ -139,6 +261,7 @@ void Application::DoDeferredRendering()
 	DoGeometryPass();
 	D3D->UnbindAllTargetsAndResources();
 	D3D->BindBackBuffer();
+	// TODO: Instead of binding back buffer, set render target to a full screen quad
 	DoLightingPass();
 }
 
@@ -148,6 +271,8 @@ void Application::DoForwardRendering()
 
 void Application::Shutdown()
 {
+	// TODO release all objects
+	COM_RELEASE(m_wvpCBuffer);
 	D3D->Shutdown();
 	Direct3D::Kill();
 }
@@ -170,6 +295,7 @@ void Application::OnGui()
 		ImGui::Begin("Editor");
 		ImGui::SetWindowPos({ 0,0 }, ImGuiCond_Always);
 		ImGui::SetWindowSize({ imguiWidth, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
+
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -206,11 +332,8 @@ void Application::OnGui()
 			ImGui::Text("Scene Normals");
 			ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
 
-			ImGui::Text("Scene World Position");
-			ImGui::Image((void*)m_positionTarget.SRV().Get(), imageSize);
-
 			ImGui::Text("Scene Depth");
-			ImGui::Image((void*)D3D->m_depthTarget.SRV().Get(), imageSize);
+			ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
 		}
 		ImGui::End();
 	}

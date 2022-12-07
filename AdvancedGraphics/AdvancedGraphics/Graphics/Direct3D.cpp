@@ -256,6 +256,12 @@ void Direct3D::BindBackBuffer()
 
 void Direct3D::UnbindAllTargetsAndResources()
 {
+	// Unbind all render targets
+	m_context->OMSetRenderTargets(0, nullptr, nullptr);
+
+	// Unbind all shader resources
+	ID3D11ShaderResourceView* srv[] = { nullptr, nullptr, nullptr, nullptr, nullptr };
+	m_context->PSSetShaderResources(0, _countof(srv), srv);
 }
 
 void Direct3D::CreateVertexShader(VertexShader*& vs, LPCWSTR srcFile, LPCSTR profile, LPCSTR entryPoint)

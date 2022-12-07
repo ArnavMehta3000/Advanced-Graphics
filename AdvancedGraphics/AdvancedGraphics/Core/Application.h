@@ -29,6 +29,10 @@ public:
 	void SetTechnique(RenderTechnique technique) { m_technique = technique; }
 	
 private:
+	void CreateQuad();
+
+	void UpdateWorld(double dt);
+	void InitConstantBuffers();
 	void DoForwardRendering();
 	void DoDeferredRendering();
 
@@ -39,29 +43,38 @@ private:
 	// Set back buffer shader resources
 	void DoLightingPass();
 
-
 	void OnGui();
 
 private:
-	Timer           m_appTimer;
-	Window*         m_window;
-	Camera          m_camera;
+	Timer                    m_appTimer;
+	Window*                  m_window;
+	Camera                   m_camera;
 
-	RenderTechnique m_technique;
+	RenderTechnique          m_technique;
+	ComPtr<ID3D11Buffer>     m_wvpCBuffer;
+	ComPtr<ID3D11Buffer>     m_cameraBuffer;
 
-	RenderTarget    m_colorTarget;
-	RenderTarget    m_normalTarget;
-	RenderTarget    m_positionTarget;
+	std::vector<GameObject*> m_gameObjects;
 
-	Shader          m_geometryShader;
-	Shader          m_lightingShader;
+	RenderTarget             m_colorTarget;
+	RenderTarget             m_normalTarget;
+	RenderTarget             m_depthRenderTarget;
 
-	float           m_imageScale = 1.0f;
+	Shader                   m_geometryShader;
+	Shader                   m_lightingShader;
 
-	sm::Vector3     m_lightPosition;
-	sm::Vector3     m_lightDiffuse;
-	sm::Vector3     m_lightSpecular;
-	sm::Vector3     m_lightAttenuation;
-	sm::Vector4     m_parallaxData;
-	sm::Vector4     m_biasData;
+	ComPtr<ID3D11Buffer>     m_quadVB;
+	ComPtr<ID3D11Buffer>     m_quadIB;
+
+	float                    m_imageScale = 1.0f;
+	UINT                     m_stride;
+	UINT                     m_offset;
+	UINT                     m_quadIndicesCount;
+
+	sm::Vector3              m_lightPosition;
+	sm::Vector3              m_lightDiffuse;
+	sm::Vector3              m_lightSpecular;
+	sm::Vector3              m_lightAttenuation;
+	sm::Vector4              m_parallaxData;
+	sm::Vector4              m_biasData;
 };
