@@ -29,6 +29,7 @@ struct Light
 	sm::Vector4 Position;
 	sm::Vector4 Diffuse;
 	sm::Vector4 Specular;
+	sm::Vector4 Attenuation;
 };
 
 struct LightCameraBuffer

@@ -81,6 +81,12 @@ bool Application::Init()
 	desc.IsEmmissive          = false;
 	m_gameObjects.push_back(new GameObject(desc));
 	m_gameObjects[0]->m_scale = sm::Vector3(2.0f);
+
+	//desc.HasMesh = false;
+	//desc.PrimitiveType = Primitives::Type::CUBE;
+	//m_gameObjects.push_back(new GameObject(desc));
+	//m_gameObjects[1]->m_scale = sm::Vector3(0.5f);
+	//m_gameObjects[1]->m_position = m_lightPosition;
 	
 	InitConstantBuffers();
 	CreateQuad();
@@ -207,11 +213,13 @@ void Application::DoLightingPass()
 	
 	// Update light and camera constant buffer
 	CREATE_ZERO(LightCameraBuffer, camCBuffer);
-	camCBuffer.EyePosition             = TO_VEC4(m_camera.Position(), 1.0f);
-	camCBuffer.Lights[0].Diffuse    = TO_VEC4(m_lightDiffuse, 1.0f);
-	camCBuffer.Lights[0].Position = TO_VEC4(m_lightPosition, 1.0f);
-	camCBuffer.InvView                 = m_camera.GetView().Invert();
-	camCBuffer.InvProjection           = m_camera.GetProjection().Invert();
+	camCBuffer.EyePosition           = TO_VEC4(m_camera.Position(), 1.0f);
+	camCBuffer.Lights[0].Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
+	camCBuffer.Lights[0].Position    = TO_VEC4(m_lightPosition, 1.0f);
+	camCBuffer.Lights[0].Specular    = TO_VEC4(m_lightSpecular, 1.0f);
+	camCBuffer.Lights[0].Attenuation = TO_VEC4(m_lightAttenuation, 1.0f);
+	camCBuffer.InvView               = m_camera.GetView().Invert();
+	camCBuffer.InvProjection         = m_camera.GetProjection().Invert();
 
 	D3D_CONTEXT->UpdateSubresource(m_cameraBuffer.Get(), 0, nullptr, &camCBuffer, 0, 0);
 	
