@@ -77,4 +77,5 @@ private:
 	sm::Vector3              m_lightAttenuation;
 	sm::Vector4              m_parallaxData;
 	sm::Vector4              m_biasData;
+	sm::Vector4              m_globalAmbient;
 };

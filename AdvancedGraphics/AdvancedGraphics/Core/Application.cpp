@@ -39,7 +39,10 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_biasData(0.01f, 0.01f, 0.0f, 0.0f),
 	m_technique(RenderTechnique::Deferred),
 	m_quadIB(nullptr),
-	m_quadVB(nullptr)
+	m_quadVB(nullptr),
+	m_offset(0),
+	m_stride(0),
+	m_quadIndicesCount(6)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -224,6 +227,7 @@ void Application::DoLightingPass()
 	
 	// Update light and camera constant buffer
 	CREATE_ZERO(LightCameraBuffer, camCBuffer);
+	camCBuffer.GlobalAmbient         = m_globalAmbient;
 	camCBuffer.EyePosition           = TO_VEC4(m_camera.Position(), 1.0f);
 	camCBuffer.Lights[0].Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
 	camCBuffer.Lights[0].Position    = TO_VEC4(m_lightPosition, 1.0f);
@@ -329,19 +333,20 @@ void Application::OnGui()
 		{
 			for (auto& go : m_gameObjects)
 			{
-				ImGui::DragFloat3("Object Position", &go->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+				ImGui::DragFloat3("Object Position", &go->m_position.x, 0.1f, -100.0f, 100.0f, "%0.2f");
 				ImGui::DragFloat3("Object Rotation", &go->m_rotation.x, 0.01f, -100.0f, 100.0f, "%0.2f");
 				ImGui::DragFloat3("Object Scale", &go->m_scale.x, 0.01f, 0.01f, 100.0f, "%0.2f");
 				ImGui::Spacing();
 			}
+			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
 		}
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
+			ImGui::ColorEdit3("Global Ambient", &m_globalAmbient.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
-			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.001f, 0.00f, 100.0f);
+			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.01f, 0.00f, 100.0f);
 
 		}
 		ImGui::Spacing();

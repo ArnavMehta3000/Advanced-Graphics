@@ -37,6 +37,7 @@ struct LightCameraBuffer
 	sm::Matrix InvView;
 	sm::Matrix InvProjection;
 	sm::Vector4 EyePosition;
+	sm::Vector4 GlobalAmbient;
 	Light Lights[MAX_LIGHTS];
 };
 

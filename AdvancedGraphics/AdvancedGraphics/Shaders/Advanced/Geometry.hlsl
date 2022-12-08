@@ -45,7 +45,7 @@ struct PSOutput
 {
     float4 DiffuseAlbedo : SV_TARGET0;
     float4 Normal        : SV_TARGET1;
-    float4 Position         : SV_Target2;
+    float4 Position      : SV_Target2;
 };
 // ~For PS only~
 
