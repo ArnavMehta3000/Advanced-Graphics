@@ -13,6 +13,17 @@
 #include "Imgui/imgui.h"    
 #endif // ENABLE_IMGUI
 
+/*
+* ----- References -----
+* Aarthificial: https://www.youtube.com/watch?v=R6vQ9VmMz2w&t=344s
+* Tile based rendering: https://www.digipen.edu/sites/default/files/public/docs/theses/denis-ishmukhametov-master-of-science-in-computer-science-thesis-efficient-tile-based-deferred-shading-pipeline.pdf
+* 3DGEP: https://www.3dgep.com/forward-plus/#Deferred_Shading
+* Learn OpenGL: https://learnopengl.com/Advanced-Lighting/Deferred-Shading
+* Deferred rendering with light volumes: https://community.khronos.org/t/deferred-shading-and-light-volumes/69323
+* 
+*/
+
+
 
 
 
