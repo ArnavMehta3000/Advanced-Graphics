@@ -132,7 +132,7 @@ void Application::InitGBuffer()
 
 	m_colorTarget    = RenderTarget(D3D->GetBackBufferFormat(), width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_normalTarget   = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_positionTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
 }
@@ -146,7 +146,7 @@ void Application::InitConstantBuffers()
 
 void Application::SetGBuffer()
 {
-	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_depthRenderTarget.RTV().Get() };
+	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_positionTarget.RTV().Get() };
 
 	// Clear the render targets
 	for (auto& rt : rtv)
@@ -200,19 +200,23 @@ void Application::DoLightingPass()
 	
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
 
-	// set wvp constant buffer
+	// Set constant buffers
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
 	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_cameraBuffer.GetAddressOf());
 	
 	// Update light and camera constant buffer
 	CREATE_ZERO(LightCameraBuffer, camCBuffer);
-	camCBuffer.EyePosition = TO_VEC4(m_camera.Position(), 1.0f);
-	camCBuffer.LightColor  = TO_VEC4(m_lightDiffuse, 1.0f);
-	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_cameraBuffer.GetAddressOf());
+	camCBuffer.EyePosition             = TO_VEC4(m_camera.Position(), 1.0f);
+	camCBuffer.Lights[0].Diffuse    = TO_VEC4(m_lightDiffuse, 1.0f);
+	camCBuffer.Lights[0].Position = TO_VEC4(m_lightPosition, 1.0f);
+	camCBuffer.InvView                 = m_camera.GetView().Invert();
+	camCBuffer.InvProjection           = m_camera.GetProjection().Invert();
+
 	D3D_CONTEXT->UpdateSubresource(m_cameraBuffer.Get(), 0, nullptr, &camCBuffer, 0, 0);
 	
 	// bind render targets as srv
-	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_depthRenderTarget.SRV().Get() };
+	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_positionTarget.SRV().Get() };
 	D3D_CONTEXT->PSSetShaderResources(0, _countof(srv), srv);
 	
 	// Draw full screen quad
@@ -254,6 +258,10 @@ void Application::Run()
 void Application::UpdateWorld(double dt)
 {
 	m_camera.Update(dt, KEYBOARD, MOUSE);
+	for (auto& go : m_gameObjects)
+	{
+		go->Update(dt);
+	}
 }
 
 void Application::DoDeferredRendering()
@@ -300,7 +308,13 @@ void Application::OnGui()
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			//ImGui::DragFloat3("Object Position", &m_gameObjects[0]->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+			for (auto& go : m_gameObjects)
+			{
+				ImGui::DragFloat3("Object Position", &go->m_position.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+				ImGui::DragFloat3("Object Rotation", &go->m_rotation.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+				ImGui::DragFloat3("Object Scale", &go->m_scale.x, 0.01f, 0.01f, 100.0f, "%0.2f");
+				ImGui::Spacing();
+			}
 		}
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
@@ -334,7 +348,7 @@ void Application::OnGui()
 			ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
 
 			ImGui::Text("Scene Depth");
-			ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
+			ImGui::Image((void*)m_positionTarget.SRV().Get(), imageSize);
 		}
 		ImGui::End();
 	}

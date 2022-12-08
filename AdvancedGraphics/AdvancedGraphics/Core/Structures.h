@@ -1,4 +1,6 @@
 #pragma once
+#define MAX_LIGHTS 1
+
 struct SimpleVertex
 {
 	sm::Vector3 Pos;
@@ -22,10 +24,19 @@ struct WVPBuffer
 	sm::Matrix Projection;
 };
 
+struct Light
+{
+	sm::Vector4 Position;
+	sm::Vector4 Diffuse;
+	sm::Vector4 Specular;
+};
+
 struct LightCameraBuffer
 {
+	sm::Matrix InvView;
+	sm::Matrix InvProjection;
 	sm::Vector4 EyePosition;
-	sm::Vector4 LightColor;
+	Light Lights[MAX_LIGHTS];
 };
 
 struct SurfaceProperties
@@ -76,9 +87,4 @@ struct LightProperties
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
 	PointLight  PointLight;
-};
-
-struct Light
-{
-
 };

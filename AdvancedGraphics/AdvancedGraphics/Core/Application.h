@@ -58,7 +58,7 @@ private:
 
 	RenderTarget             m_colorTarget;
 	RenderTarget             m_normalTarget;
-	RenderTarget             m_depthRenderTarget;
+	RenderTarget             m_positionTarget;
 
 	Shader                   m_geometryShader;
 	Shader                   m_lightingShader;

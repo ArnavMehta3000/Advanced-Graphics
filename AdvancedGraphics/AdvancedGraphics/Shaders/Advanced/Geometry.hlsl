@@ -45,7 +45,7 @@ struct PSOutput
 {
     float4 DiffuseAlbedo : SV_TARGET0;
     float4 Normal        : SV_TARGET1;
-    float  Depth         : SV_Target2;
+    float4 Position         : SV_Target2;
 };
 // ~For PS only~
 
@@ -96,7 +96,7 @@ PSOutput PS(PSInput input)
 
     output.DiffuseAlbedo = float4(diffuseColor, heightDepth);
     output.Normal        = normalWS;
-    output.Depth         = DoDepthPass(input);
+    output.Position      = float4(input.PositionWS, 1.0f); //DoDepthPass(input).rrrr;
 
     return output;
 }
