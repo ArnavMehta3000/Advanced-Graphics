@@ -1,4 +1,4 @@
-#define MAX_LIGHTS 1
+#include "Common.hlsli"
 
 cbuffer WVPBuffer : register(b0)
 {
@@ -6,13 +6,6 @@ cbuffer WVPBuffer : register(b0)
     matrix View;
     matrix Projection;
 }
-
-struct Light
-{
-    float4 Position;
-    float4 Diffuse;
-    float4 Specular;
-};
 
 cbuffer LightCameraBuffer : register(b1)
 {
@@ -39,7 +32,6 @@ struct VSOutput
     float4 Position : SV_POSITION;
     float2 TexCoord : UV;
 };
-
 struct SurfaceData
 {
     //float Depth;
@@ -58,34 +50,54 @@ VSOutput VS(VSInput input)
     return output;
 }
 
-float4 GetPositionFromDepth(int3 uv, VSOutput input, float depth)
-{
-    if (depth == 0.0f)
-        discard;
-    
-    float4 viewDir = float4(input.Position.xyz / input.Position.w, 1.0f);
-    
-    
-    return depth * viewDir + EyePosition;
-}
 
 SurfaceData UnpackGBuffer(VSOutput input)
 {
     int3 pos = int3((int2) input.Position.xy, 0);
     
     SurfaceData output;
-   // output.Depth    = GDepth.Load(pos);
-    output.Position = GPosition.Load(pos); //GetPositionFromDepth(pos, input, output.Depth);
+    output.Position = GPosition.Load(pos);
     output.Diffuse  = GDiffuse.Load(pos);
     output.Normal   = GNormal.Load(pos);
+    output.Normal   = normalize(2.0f * output.Normal - 1.0f);  // Convert from [0,1] to [-1, 1]
     
     return output;
+}
+
+LightingResult ComputeLighting(SurfaceData input)
+{
+    LightingResult result = (LightingResult) 0;
+    
+    [unroll(MAX_LIGHTS)]
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        Light l = Lights[i];
+        
+        float3 lightDir     = normalize(l.Position.xyz - input.Position.xyz);
+        float3 viewDir      = normalize(EyePosition - input.Position).xyz;
+        float distFromLight = length(l.Position.xyz - input.Position.xyz);
+        
+        // Done in world space
+        result.Diffuse += DoPointLightDiffuse(l, lightDir, viewDir, input.Position.xyz, input.Normal.xyz);
+        result.Specular += DoPointLightSpecular(l, lightDir, viewDir, input.Position.xyz, input.Normal.xyz, 32);
+    }
+        
+    //float attenuation = DoAttenutation(distFromLight, l.Attenuation.zyx);
+    
+    //result.Diffuse  *= attenuation;
+    //result.Specular *= attenuation;
+    
+    return result;
 }
 
 
 float4 PS(VSOutput input) : SV_Target0
 {
-    return UnpackGBuffer(input).Position * Lights[0].Diffuse;
+    SurfaceData surfaceData = UnpackGBuffer(input);
+    LightingResult lighting = ComputeLighting(surfaceData);
+    
+    float3 finalColor = (lighting.Diffuse).xyz * surfaceData.Diffuse.xyz;
+    return float4(finalColor, 1.0f);
 }
 
 // Assuming "matView" is your current view matrix.D3DXMATRIX matInverseView;
