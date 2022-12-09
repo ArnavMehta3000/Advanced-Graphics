@@ -27,9 +27,17 @@ struct WVPBuffer
 struct Light
 {
 	sm::Vector4 Position;
-	sm::Vector4 Diffuse;
-	sm::Vector4 Specular;
-	sm::Vector4 Attenuation;
+	sm::Vector3 Diffuse;
+	float Intensity;
+
+	sm::Vector3 Specular;
+	float Radius;
+
+	sm::Vector4 Parallax;
+	sm::Vector4 Bias;
+
+	float SpecularPower;
+	sm::Vector3 _padding0;
 };
 
 struct LightCameraBuffer
@@ -38,7 +46,7 @@ struct LightCameraBuffer
 	sm::Matrix InvProjection;
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
-	Light Lights[MAX_LIGHTS];
+	Light PointLight;
 };
 
 struct SurfaceProperties

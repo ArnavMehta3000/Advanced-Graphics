@@ -58,7 +58,7 @@ private:
 
 	RenderTarget             m_colorTarget;
 	RenderTarget             m_normalTarget;
-	RenderTarget             m_positionTarget;
+	RenderTarget             m_depthRenderTarget;
 
 	Shader                   m_geometryShader;
 	Shader                   m_lightingShader;
@@ -67,6 +67,9 @@ private:
 	ComPtr<ID3D11Buffer>     m_quadIB;
 
 	float                    m_imageScale = 1.0f;
+	float                    m_lightRadius;
+	float                    m_lightIntensity;
+	float                    m_specularPower;
 	UINT                     m_stride;
 	UINT                     m_offset;
 	UINT                     m_quadIndicesCount;
@@ -74,7 +77,6 @@ private:
 	sm::Vector3              m_lightPosition;
 	sm::Vector3              m_lightDiffuse;
 	sm::Vector3              m_lightSpecular;
-	sm::Vector3              m_lightAttenuation;
 	sm::Vector4              m_parallaxData;
 	sm::Vector4              m_biasData;
 	sm::Vector4              m_globalAmbient;

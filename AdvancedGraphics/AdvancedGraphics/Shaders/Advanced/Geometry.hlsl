@@ -37,7 +37,6 @@ struct PSInput
     float3 TangentWS  : TANGENTWS;
     float3 BinormalWS : BINORMALWS;
     float3x3 TBN      : TBN;
-    float DepthVS     : DepthVS;
 };
 
 // For PS only
@@ -45,7 +44,7 @@ struct PSOutput
 {
     float4 DiffuseAlbedo : SV_TARGET0;
     float4 Normal        : SV_TARGET1;
-    float4 Position      : SV_Target2;
+    float4 Depth         : SV_Target2;
 };
 // ~For PS only~
 
@@ -69,16 +68,15 @@ PSInput VS(VSInput input)
     output.TexCoord = input.TexCoord;
 
     output.TBN = float3x3(output.TangentWS, output.BinormalWS, output.NormalWS);
-    output.DepthVS = mul(pos, mul(World, View)).z;
     return output;
 }
 
 
 
 
-float DoDepthPass(PSInput input)
+float DoDepthPass(float4 position)
 {
-    float depth = input.DepthVS / 100.0f; // 100 is the camera far plane distance
+    float depth = position.z / position.w;
     return depth;
 }
 
@@ -96,7 +94,7 @@ PSOutput PS(PSInput input)
 
     output.DiffuseAlbedo = float4(diffuseColor, heightDepth);
     output.Normal        = normalWS;
-    output.Position      = float4(input.PositionWS, 1.0f); //DoDepthPass(input).rrrr;
+    output.Depth         = DoDepthPass(input.Position);
 
     return output;
 }

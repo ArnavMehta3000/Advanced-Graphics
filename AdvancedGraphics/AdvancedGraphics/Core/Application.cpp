@@ -32,9 +32,10 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_window(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
+	m_lightRadius(5.0f),
+	m_lightIntensity(1.0f),
 	m_lightDiffuse(Colors::White),
-	m_lightSpecular(Colors::White),
-	m_lightAttenuation(1.0f),
+	m_lightSpecular(Colors::LightGreen),
 	m_parallaxData(8.0f, 32.0f, 0.05f, 1.0f),
 	m_biasData(0.01f, 0.01f, 0.0f, 0.0f),
 	m_technique(RenderTechnique::Deferred),
@@ -42,7 +43,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_quadVB(nullptr),
 	m_offset(0),
 	m_stride(0),
-	m_quadIndicesCount(6)
+	m_quadIndicesCount(6),
+	m_specularPower(10.0f)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -151,8 +153,8 @@ void Application::InitGBuffer()
 	UINT height = r.bottom - r.top;
 
 	m_colorTarget    = RenderTarget(D3D->GetBackBufferFormat(), width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_normalTarget   = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_positionTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_normalTarget   = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
 }
@@ -166,7 +168,7 @@ void Application::InitConstantBuffers()
 
 void Application::SetGBuffer()
 {
-	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_positionTarget.RTV().Get() };
+	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_depthRenderTarget.RTV().Get() };
 
 	// Clear the render targets
 	for (auto& rt : rtv)
@@ -215,6 +217,8 @@ void Application::DoGeometryPass()
 
 void Application::DoLightingPass()
 {
+	// Only one light in the scene hence no for loop here
+
 	// bind lighting pass shader
 	m_lightingShader.BindShader();
 	
@@ -227,19 +231,23 @@ void Application::DoLightingPass()
 	
 	// Update light and camera constant buffer
 	CREATE_ZERO(LightCameraBuffer, camCBuffer);
-	camCBuffer.GlobalAmbient         = m_globalAmbient;
-	camCBuffer.EyePosition           = TO_VEC4(m_camera.Position(), 1.0f);
-	camCBuffer.Lights[0].Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
-	camCBuffer.Lights[0].Position    = TO_VEC4(m_lightPosition, 1.0f);
-	camCBuffer.Lights[0].Specular    = TO_VEC4(m_lightSpecular, 1.0f);
-	camCBuffer.Lights[0].Attenuation = TO_VEC4(m_lightAttenuation, 1.0f);
-	camCBuffer.InvView               = m_camera.GetView().Invert();
-	camCBuffer.InvProjection         = m_camera.GetProjection().Invert();
+	camCBuffer.GlobalAmbient            = m_globalAmbient;
+	camCBuffer.EyePosition              = TO_VEC4(m_camera.Position(), 1.0f);
+	camCBuffer.PointLight.Diffuse       = m_lightDiffuse;
+	camCBuffer.PointLight.Position      = TO_VEC4(m_lightPosition, 1.0f);
+	camCBuffer.PointLight.Specular      = m_lightSpecular;
+	camCBuffer.PointLight.Intensity     = m_lightIntensity;
+	camCBuffer.PointLight.SpecularPower = m_specularPower;
+	camCBuffer.PointLight.Parallax      = m_parallaxData;
+	camCBuffer.PointLight.Bias          = m_biasData;
+	camCBuffer.PointLight.Radius        = m_lightRadius;
+	camCBuffer.InvView                  = m_camera.GetView().Invert();
+	camCBuffer.InvProjection            = m_camera.GetProjection().Invert();
 
 	D3D_CONTEXT->UpdateSubresource(m_cameraBuffer.Get(), 0, nullptr, &camCBuffer, 0, 0);
 	
 	// bind render targets as srv
-	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_positionTarget.SRV().Get() };
+	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_depthRenderTarget.SRV().Get() };
 	D3D_CONTEXT->PSSetShaderResources(0, _countof(srv), srv);
 	
 	// Draw full screen quad
@@ -346,8 +354,9 @@ void Application::OnGui()
 			ImGui::ColorEdit3("Global Ambient", &m_globalAmbient.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
-			ImGui::DragFloat3("Light Attenuation", &m_lightAttenuation.x, 0.01f, 0.00f, 100.0f);
-
+			ImGui::DragFloat("Specular Power", &m_specularPower, 0.1f, 0.0f, 50.0f);
+			ImGui::DragFloat("Light Intensity", &m_lightIntensity, 0.1f, 0.0f, 50.0f);
+			ImGui::DragFloat("Light Radius", &m_lightRadius, 0.1f, 0.0f, 50.0f);
 		}
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Parallax Mapping"))
@@ -372,7 +381,7 @@ void Application::OnGui()
 			ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
 
 			ImGui::Text("Scene Depth");
-			ImGui::Image((void*)m_positionTarget.SRV().Get(), imageSize);
+			ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
 		}
 		ImGui::End();
 	}
@@ -380,5 +389,4 @@ void Application::OnGui()
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #endif // ENABLE_IMGUI
-
 }
