@@ -251,7 +251,7 @@ void Direct3D::BindBackBuffer()
 {
 	// Clear the back buffer before binding
 	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkKhaki);
-	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
+	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), m_depthTarget.DSV().Get());
 }
 
 void Direct3D::UnbindAllTargetsAndResources()

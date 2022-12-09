@@ -18,7 +18,7 @@ cbuffer LightCameraBuffer : register(b1)
 
 Texture2D<float4> GDiffuse  : register(t0);
 Texture2D<float4> GNormal   : register(t1);
-Texture2D<float4> GPosition : register(t2);
+Texture2D<float4> GDepth : register(t2);
 SamplerState samLinear      : register(s0);
 
 
@@ -51,9 +51,15 @@ float4 GetGNormals(float2 uv)
     return GNormal.Sample(samLinear, uv);
 }
 
-float4 GetGPosition(float2 uv)
+float4 GetGDepth(float2 uv)
 {
-    return GPosition.Sample(samLinear, uv);
+    float depth = GDepth.Sample(samLinear, uv).r;
+    //depth = depth * 2.0f - 1.0f;
+    float near = 0.01f;
+    float far = 100.0f;
+    float linearDepth = Projection._43 / (depth - Projection._33);
+    
+    return linearDepth;
 }
 
 float4 GetGDiffuse(float2 uv)
@@ -121,11 +127,6 @@ LightingResult ComputeLighting(float3 position, float3 normal)
     return result;
 }
 
-float4 GetDepth()
-{
-    
-}
-
 float4 PS(VSOutput input) : SV_Target0
 {
     float3 lightDir = normalize(PointLight.Position.xyz - input.Position.xyz);
@@ -139,9 +140,8 @@ float4 PS(VSOutput input) : SV_Target0
     // Convert from [0,1] to [-1, 1]
     float3 normals = normalize(2.0f * GetGNormals(texCoord).xyz - 1.0f);
     
-    LightingResult lighting = ComputeLighting(GetGPosition(texCoord).xyz, GetGNormals(texCoord).xyz);
+    LightingResult lighting = ComputeLighting(GetGDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
     
     float3 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular).xyz * GetGDiffuse(texCoord).xyz;
-    return float4(1, 1, 1,1);
-    //GetDepth(GetGPosition(input.TexCoord));
+    return GetGDepth(input.TexCoord);
 }

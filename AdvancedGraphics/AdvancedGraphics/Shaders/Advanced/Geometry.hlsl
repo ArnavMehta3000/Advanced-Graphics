@@ -73,14 +73,6 @@ PSInput VS(VSInput input)
 
 
 
-
-float DoDepthPass(float4 position)
-{
-    float depth = position.z / position.w;
-    return depth;
-}
-
-
 PSOutput PS(PSInput input)
 {
     PSOutput output;
@@ -91,10 +83,11 @@ PSOutput PS(PSInput input)
     //normalTS            = float4(normalize(2.0f * normalTS.xyz - 1.0f).xyz, 1.0f);
 
     float4 normalWS = float4(mul(normalTS.xyz, input.TBN), 1.0f);
-
+    
     output.DiffuseAlbedo = float4(diffuseColor, heightDepth);
     output.Normal        = normalWS;
-    output.Depth         = DoDepthPass(input.Position);
+    float depth          = input.Position.z / input.Position.w;
+    output.Depth         = depth;
 
     return output;
 }
