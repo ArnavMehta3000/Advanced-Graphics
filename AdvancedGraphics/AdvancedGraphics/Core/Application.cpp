@@ -38,7 +38,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_lightSpecular(Colors::LightGreen),
 	m_parallaxData(8.0f, 32.0f, 0.05f, 1.0f),
 	m_biasData(0.01f, 0.01f, 0.0f, 0.0f),
-	m_technique(RenderTechnique::Deferred),
+	m_technique(RenderTechnique::Forward),
 	m_quadIB(nullptr),
 	m_quadVB(nullptr),
 	m_offset(0),
@@ -78,7 +78,7 @@ bool Application::Init()
 	ImGui::StyleColorsDark();
 
 	InitGBuffer();
-	SetTechnique(RenderTechnique::Deferred);
+	SetTechnique(RenderTechnique::Forward);
 	m_geometryShader = Shader(L"Shaders/Advanced/Geometry.hlsl", L"Shaders/Advanced/Geometry.hlsl");
 	m_lightingShader = Shader(L"Shaders/Advanced/Lighting.hlsl", L"Shaders/Advanced/Lighting.hlsl");
 	
@@ -152,9 +152,9 @@ void Application::InitGBuffer()
 	UINT width = r.right - r.left;
 	UINT height = r.bottom - r.top;
 
-	m_colorTarget    = RenderTarget(D3D->GetBackBufferFormat(), width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_normalTarget   = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_colorTarget       = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_normalTarget      = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT,    width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM,     width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
 }
@@ -182,6 +182,8 @@ void Application::SetGBuffer()
 
 void Application::DoGeometryPass()
 {
+	D3D_CONTEXT->OMSetDepthStencilState(D3D->m_depthWriteState.Get(), 1u);
+
 	// Bind geometry pass shader
 	m_geometryShader.BindShader();
 
@@ -213,10 +215,15 @@ void Application::DoGeometryPass()
 
 		go->Draw();
 	}
+
+	D3D_CONTEXT->ClearDepthStencilView(D3D->m_depthTarget.DSV().Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 void Application::DoLightingPass()
 {
+	D3D_CONTEXT->OMSetDepthStencilState(D3D->m_depthReadState.Get(), 1u);
+
+
 	// Only one light in the scene hence no for loop here
 
 	// bind lighting pass shader
@@ -307,6 +314,8 @@ void Application::DoDeferredRendering()
 
 void Application::DoForwardRendering()
 {
+	D3D->BindBackBuffer();
+
 }
 
 void Application::Shutdown()
@@ -368,20 +377,23 @@ void Application::OnGui()
 			ImGui::Spacing();
 			ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
 		}
-		ImGui::Spacing();
-		if (ImGui::CollapsingHeader("Post Processing"))
+		if (m_technique == RenderTechnique::Deferred)
 		{
-			ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
-			ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
+			ImGui::Spacing();
+			if (ImGui::CollapsingHeader("Post Processing"))
+			{
+				ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
+				ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
 
-			ImGui::Text("Scene Diffuse");
-			ImGui::Image((void*)m_colorTarget.SRV().Get(), imageSize);
-			
-			ImGui::Text("Scene Normals");
-			ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
+				ImGui::Text("Scene Diffuse");
+				ImGui::Image((void*)m_colorTarget.SRV().Get(), imageSize);
 
-			ImGui::Text("Scene Depth");
-			ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
+				ImGui::Text("Scene Normals");
+				ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
+
+				ImGui::Text("Scene Depth");
+				ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
+			}
 		}
 		ImGui::End();
 	}
