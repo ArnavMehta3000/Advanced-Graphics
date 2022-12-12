@@ -89,6 +89,7 @@ GameObject::~GameObject()
 	COM_RELEASE(m_textureHeightRV);
 	COM_RELEASE(m_vertexBuffer);
 	COM_RELEASE(m_indexBuffer);
+	COM_RELEASE(m_materialPropsCB);
 }
 
 // https://github.com/tinyobjloader/tinyobjloader

@@ -30,7 +30,7 @@ public:
 	
 private:
 	void CreateQuad();
-
+	void ClearAllCB();  // Unbinds all constant buffers
 	void UpdateWorld(double dt);
 	void InitConstantBuffers();
 	void DoForwardRendering();
@@ -39,8 +39,6 @@ private:
 	void InitGBuffer();
 	void SetGBuffer();
 	void DoGeometryPass();
-	// Set & clear back buffer
-	// Set back buffer shader resources
 	void DoLightingPass();
 
 	void OnGui();
@@ -49,10 +47,7 @@ private:
 	Timer                    m_appTimer;
 	Window*                  m_window;
 	Camera                   m_camera;
-
 	RenderTechnique          m_technique;
-	ComPtr<ID3D11Buffer>     m_wvpCBuffer;
-	ComPtr<ID3D11Buffer>     m_cameraBuffer;
 
 	std::vector<GameObject*> m_gameObjects;
 
@@ -64,6 +59,8 @@ private:
 	Shader                   m_geometryShader;
 	Shader                   m_lightingShader;
 
+	ComPtr<ID3D11Buffer>     m_wvpCBuffer;
+	ComPtr<ID3D11Buffer>     m_cameraBuffer;
 	ComPtr<ID3D11Buffer>     m_lightPropsCB;
 	ComPtr<ID3D11Buffer>     m_quadVB;
 	ComPtr<ID3D11Buffer>     m_quadIB;

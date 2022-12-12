@@ -148,6 +148,13 @@ void Application::CreateQuad()
 	HR(D3D_DEVICE->CreateBuffer(&ibd, &indexInitData, m_quadIB.ReleaseAndGetAddressOf()));
 }
 
+void Application::ClearAllCB()
+{
+	ID3D11Buffer* cb[] = {nullptr, nullptr, nullptr, nullptr};
+	D3D_CONTEXT->VSSetConstantBuffers(0, _countof(cb), cb);
+	D3D_CONTEXT->PSSetConstantBuffers(0, _countof(cb), cb);
+}
+
 void Application::InitGBuffer()
 {
 	RECT r;
@@ -277,6 +284,7 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 		
+		ClearAllCB();
 		UpdateWorld(m_appTimer);
 
 		switch (m_technique)
@@ -364,8 +372,12 @@ void Application::DoForwardRendering()
 
 void Application::Shutdown()
 {
-	// TODO release all objects
 	COM_RELEASE(m_wvpCBuffer);
+	COM_RELEASE(m_cameraBuffer);
+	COM_RELEASE(m_lightPropsCB);
+	COM_RELEASE(m_quadIB);
+	COM_RELEASE(m_quadVB);
+	
 	D3D->Shutdown();
 	Direct3D::Kill();
 }
@@ -390,6 +402,15 @@ void Application::OnGui()
 		ImGui::SetWindowSize({ imguiWidth, static_cast<float>(m_window->GetClientHeight()) }, ImGuiCond_Once);
 
 
+		if (ImGui::Button("Forward"))
+			SetTechnique(RenderTechnique::Forward);
+		ImGui::SameLine();
+		if (ImGui::Button("Deferred"))
+			SetTechnique(RenderTechnique::Deferred);
+
+		ImGui::Text("Current Rendering Technique: %s", (m_technique == RenderTechnique::Forward) ? "Forward" : "Deferred");
+
+
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			for (auto& go : m_gameObjects)
@@ -407,9 +428,12 @@ void Application::OnGui()
 			ImGui::ColorEdit3("Global Ambient", &m_globalAmbient.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Diffuse", &m_lightDiffuse.x, ImGuiColorEditFlags_Float);
 			ImGui::ColorEdit3("Light Specular", &m_lightSpecular.x, ImGuiColorEditFlags_Float);
-			ImGui::DragFloat("Specular Power", &m_specularPower, 0.1f, 0.0f, 50.0f);
-			ImGui::DragFloat("Light Intensity", &m_lightIntensity, 0.1f, 0.0f, 50.0f);
-			ImGui::DragFloat("Light Radius", &m_lightRadius, 0.1f, 0.0f, 50.0f);
+			if (m_technique == RenderTechnique::Deferred)
+			{
+				ImGui::DragFloat("Specular Power", &m_specularPower, 0.1f, 0.0f, 50.0f);
+				ImGui::DragFloat("Light Intensity", &m_lightIntensity, 0.1f, 0.0f, 50.0f);
+				ImGui::DragFloat("Light Radius", &m_lightRadius, 0.1f, 0.0f, 50.0f);
+			}
 		}
 		ImGui::Spacing();
 		if (ImGui::CollapsingHeader("Parallax Mapping"))
