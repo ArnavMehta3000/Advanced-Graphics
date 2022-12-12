@@ -87,7 +87,7 @@ PSOutput PS(PSInput input)
     output.DiffuseAlbedo = float4(diffuseColor, heightDepth);
     output.Normal        = normalWS;
     float depth          = input.Position.z / input.Position.w;
-    output.Depth         = depth;
+    output.Depth         = float4(input.PositionWS, depth);
 
     return output;
 }

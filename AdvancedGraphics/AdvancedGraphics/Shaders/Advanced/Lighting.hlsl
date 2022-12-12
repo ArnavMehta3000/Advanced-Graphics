@@ -53,13 +53,19 @@ float4 GetGNormals(float2 uv)
 
 float4 GetGDepth(float2 uv)
 {
-    float depth = GDepth.Sample(samLinear, uv).r;
-    //depth = depth * 2.0f - 1.0f;
+    float4 sample = GDepth.Sample(samLinear, uv);
+    
+    float depth = sample.a;
     float near = 0.01f;
     float far = 100.0f;
-    float linearDepth = Projection._43 / (depth - Projection._33);
+    float projectionA = far / far - near;
+    float projectionB = (-far * near) / (far - near);
     
-    return linearDepth;
+    float linearDepth = projectionA / (depth - projectionB);
+    
+    
+    
+    return float4(sample.xyz, linearDepth);
 }
 
 float4 GetGDiffuse(float2 uv)
@@ -143,5 +149,5 @@ float4 PS(VSOutput input) : SV_Target0
     LightingResult lighting = ComputeLighting(GetGDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
     
     float3 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular).xyz * GetGDiffuse(texCoord).xyz;
-    return GetGDepth(input.TexCoord);
+    return float4(finalColor, 1.0f);
 }
