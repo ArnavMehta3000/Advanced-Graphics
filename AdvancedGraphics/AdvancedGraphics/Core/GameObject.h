@@ -37,8 +37,8 @@ public:
 	const sm::Matrix& GetWorldTransform() { return m_worldTransform; }
 
 	ComPtr<ID3D11ShaderResourceView> GetDiffuseSRV() { return m_textureDiffRV; }
-	ComPtr<ID3D11ShaderResourceView> GetNormalSRV() { return m_textureNormRV; }
-	ComPtr<ID3D11ShaderResourceView> GetHeightSRV() { return m_textureHeightRV; }
+	ComPtr<ID3D11ShaderResourceView> GetNormalSRV()  { return m_textureNormRV; }
+	ComPtr<ID3D11ShaderResourceView> GetHeightSRV()  { return m_textureHeightRV; }
 
 	void Set();
 	void Update(double dt);
@@ -49,13 +49,15 @@ public:
 	sm::Vector3 m_rotation;
 	sm::Vector3 m_scale;
 
+	ComPtr<ID3D11Buffer> m_materialPropsCB;
 	ComPtr<ID3D11Buffer> m_surfacePropsCB;
+	MaterialProperties   m_material;
 private:
-	sm::Matrix m_worldTransform;
+	sm::Matrix           m_worldTransform;
 
 	ComPtr<ID3D11Buffer> m_vertexBuffer;
 	ComPtr<ID3D11Buffer> m_indexBuffer;
-	Mesh* m_mesh;
+	Mesh*                m_mesh;
 
 	ComPtr<ID3D11ShaderResourceView> m_textureDiffRV;
 	ComPtr<ID3D11ShaderResourceView> m_textureNormRV;

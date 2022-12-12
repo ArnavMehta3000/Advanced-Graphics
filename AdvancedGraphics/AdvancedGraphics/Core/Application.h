@@ -60,9 +60,11 @@ private:
 	RenderTarget             m_normalTarget;
 	RenderTarget             m_depthRenderTarget;
 
+	Shader                   m_forwardShader;
 	Shader                   m_geometryShader;
 	Shader                   m_lightingShader;
 
+	ComPtr<ID3D11Buffer>     m_lightPropsCB;
 	ComPtr<ID3D11Buffer>     m_quadVB;
 	ComPtr<ID3D11Buffer>     m_quadIB;
 

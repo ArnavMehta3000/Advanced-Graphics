@@ -24,6 +24,32 @@ struct WVPBuffer
 	sm::Matrix Projection;
 };
 
+struct _Material
+{
+	sm::Vector4 Diffuse;       
+	sm::Vector4 Specular;      
+	float       SpecularPower; 
+	int         UseTexture;    
+	int         UseNormals;    
+	int         UseHeight;
+
+	_Material()
+		:
+		Diffuse(1.0f),
+		Specular(Colors::LightGreen),
+		SpecularPower(10.0f),
+		UseTexture(true),
+		UseNormals(true),
+		UseHeight(true)
+	{}
+};
+
+
+struct MaterialProperties
+{
+	_Material Material;
+};
+
 struct Light
 {
 	sm::Vector4 Position;

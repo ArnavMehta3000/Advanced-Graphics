@@ -34,27 +34,20 @@ struct PS_IN
     float3 EyeDirT         : TEYEDIR;
     float3 EyePosT         : EYEPOSITIONT;
 };
-
-struct PS_OUT
-{
-    float4 Diffuse  : SV_Target0; 
-    float4 Normal   : SV_Target1; 
-    float4 Depth    : SV_Target2;
-};
 // ---------------------------------------------------------------------
 
 
 // ------------------
 //  CONSTANT BUFFERS
 // ------------------
-cbuffer ConstantBuffer : register(b0)
+cbuffer ConstantBuffer : register(b0)  // For VS/PS
 {
     matrix World;
     matrix View;
     matrix Projection;
 }
 
-cbuffer MaterialProperties : register(b1)
+cbuffer MaterialProperties : register(b1) // For PS
 {
     _Material Material;
 };
@@ -224,7 +217,7 @@ PS_IN VS(VS_IN input)
     output.Position   = mul(output.Position, View);
     output.Position   = mul(output.Position, Projection);
 
-    output.UV        = input.UV;
+    output.UV         = input.UV;
     
     // Create the TBN matrix
     float3 T          = normalize(mul(float4(input.Tangent,  0.0f), World)).xyz;
@@ -234,18 +227,18 @@ PS_IN VS(VS_IN input)
     
     float3x3 invTBN   = transpose(TBN);
     
-    float3 lightDir = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
-    float3 viewDir  = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
-    float3 normal   = normalize(mul(float4(input.Normal, 0), World).xyz);
-    output.NormalW = normal;
+    float3 lightDir   = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
+    float3 viewDir    = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
+    float3 normal     = normalize(mul(float4(input.Normal, 0), World).xyz);
+    output.NormalW    = normal;
     
     
     // Get tangent space vectors
-    output.LightDirT = ToTangentSpace(lightDir, invTBN);
-    output.EyeDirT   = ToTangentSpace(viewDir, invTBN);    
-    output.PositionT = ToTangentSpace(output.PositionW.xyz, invTBN);
-    output.NormalT   = ToTangentSpace(normal, invTBN);
-    output.EyePosT   = ToTangentSpace(EyePosition.xyz, invTBN);
+    output.LightDirT  = ToTangentSpace(lightDir, invTBN);
+    output.EyeDirT    = ToTangentSpace(viewDir, invTBN);    
+    output.PositionT  = ToTangentSpace(output.PositionW.xyz, invTBN);
+    output.NormalT    = ToTangentSpace(normal, invTBN);
+    output.EyePosT    = ToTangentSpace(EyePosition.xyz, invTBN);
 
     return output;
 }
@@ -256,41 +249,8 @@ PS_IN VS(VS_IN input)
 //  PIXEL SHADER
 // ---------------
 
-PS_OUT DeffPS(PS_IN input)
-{
-    PS_OUT output = (PS_OUT) 0;
-    
-    float4 diffuse;
-    float4 normals;
-    
-    // Set diffuse color
-    if (Material.UseTexture)
-        diffuse = txDiffuse.Sample(samLinear, input.UV);
-    else
-        diffuse = float4(0, 0, 0, 1);
-    
-    
-    // Unpack normals from normal map
-    if (Material.UseNormals)
-    {
-        float4 texNormal = txNormal.Sample(samLinear, input.UV);
-        texNormal = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
-        normals = texNormal;
-    }
-    else
-        normals = float4(input.NormalT, 1.0f);
-    
-    output.Diffuse = diffuse;
-    output.Normal = normals;
-    //output.Position = input.PositionW;
-    output.Depth = depth / 100.0f;  //Far clip plane    
-    return output;
-}
-
 float4 PS(PS_IN input) : SV_Target0
 {
-    PS_OUT output = (PS_OUT) 0;
-    
     LightingResult pointLight;
     float4 finalColor = (float) 0;
     float4 texColor = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -312,10 +272,9 @@ float4 PS(PS_IN input) : SV_Target0
     if (Material.UseTexture)
         texColor = txDiffuse.Sample(samLinear, texCoords);
 
-    // This uses world space normal mapping
     if (Material.UseNormals)
     {
-    // Uncompress the normals from the normal map (in tangent space)
+        // Uncompress the normals from the normal map (in tangent space)
         float4 texNormal = txNormal.Sample(samLinear, texCoords);
         float4 bumpNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
     
@@ -327,12 +286,10 @@ float4 PS(PS_IN input) : SV_Target0
     }
 
     float4 ambient = GlobalAmbient;
-    float4 diffuse = Material.Diffuse * pointLight.Diffuse * shadowFactor;
-    float4 specular = Material.Specular * pointLight.Specular * shadowFactor;
+    float4 diffuse = Material.Diffuse * pointLight.Diffuse;
+    float4 specular = Material.Specular * pointLight.Specular;
     
     finalColor = texColor * (ambient + diffuse + specular);
-    
     return finalColor;
-    //return DeffPS(input);
 }
 // ---------------------------------------------------------------------

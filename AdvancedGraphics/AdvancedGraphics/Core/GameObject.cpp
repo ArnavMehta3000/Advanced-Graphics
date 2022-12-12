@@ -17,6 +17,12 @@ GameObject::GameObject()
 	m_textureNormRV(nullptr),
 	m_textureHeightRV(nullptr)
 {
+	m_material                        = MaterialProperties();
+	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.Specular      = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.SpecularPower = 32.0f;
+
+	D3D->CreateConstantBuffer(m_materialPropsCB, sizeof(MaterialProperties));
 	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
 
@@ -66,6 +72,12 @@ GameObject::GameObject(const GODesc& desc)
 			SetTexture(desc.DiffuseTexture);
 	}
 
+	m_material                        = MaterialProperties();
+	m_material.Material.Diffuse       = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.Specular      = sm::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.SpecularPower = 32.0f;
+
+	D3D->CreateConstantBuffer(m_materialPropsCB, sizeof(MaterialProperties));
 	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
 
@@ -185,17 +197,17 @@ void GameObject::SetTexture(const wchar_t* diffuse, const wchar_t* normal, const
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, normal, nullptr, m_textureNormRV.ReleaseAndGetAddressOf()));
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, height, nullptr, m_textureHeightRV.ReleaseAndGetAddressOf()));
-	/*m_material.Material.UseTexture = true;
+	m_material.Material.UseTexture = true;
 	m_material.Material.UseNormals = true;
-	m_material.Material.UseHeight  = true;*/
+	m_material.Material.UseHeight  = true;
 }
 
 void GameObject::SetTexture(const wchar_t* diffuse)
 {
 	HR(CreateDDSTextureFromFile(D3D_DEVICE, D3D_CONTEXT, diffuse, nullptr, m_textureDiffRV.ReleaseAndGetAddressOf()));
-	/*m_material.Material.UseTexture = true;
+	m_material.Material.UseTexture = true;
 	m_material.Material.UseNormals = false;
-	m_material.Material.UseHeight = false;*/
+	m_material.Material.UseHeight = false;
 }
 
 void GameObject::Set()

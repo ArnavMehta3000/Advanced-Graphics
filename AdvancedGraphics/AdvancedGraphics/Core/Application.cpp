@@ -32,6 +32,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_window(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
+	m_globalAmbient(0.01f, 0.01f, 0.1f, 1.0f),
 	m_lightRadius(5.0f),
 	m_lightIntensity(1.0f),
 	m_lightDiffuse(Colors::White),
@@ -41,6 +42,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_technique(RenderTechnique::Forward),
 	m_quadIB(nullptr),
 	m_quadVB(nullptr),
+	m_lightPropsCB(nullptr),
 	m_offset(0),
 	m_stride(0),
 	m_quadIndicesCount(6),
@@ -79,8 +81,9 @@ bool Application::Init()
 
 	InitGBuffer();
 	SetTechnique(RenderTechnique::Forward);
-	m_geometryShader = Shader(L"Shaders/Advanced/Geometry.hlsl", L"Shaders/Advanced/Geometry.hlsl");
-	m_lightingShader = Shader(L"Shaders/Advanced/Lighting.hlsl", L"Shaders/Advanced/Lighting.hlsl");
+	m_forwardShader  = Shader(L"Shaders\\Shader.hlsl", L"Shaders\\Shader.hlsl");
+	m_geometryShader = Shader(L"Shaders\\Advanced\\Geometry.hlsl", L"Shaders\\Advanced\\Geometry.hlsl");
+	m_lightingShader = Shader(L"Shaders\\Advanced\\Lighting.hlsl", L"Shaders\\Advanced\\Lighting.hlsl");
 	
 	// Init game objects
 	CREATE_ZERO(GODesc, desc);
@@ -163,6 +166,7 @@ void Application::InitConstantBuffers()
 {
 	D3D->CreateConstantBuffer(m_wvpCBuffer, sizeof(WVPBuffer));
 	D3D->CreateConstantBuffer(m_cameraBuffer, sizeof(LightCameraBuffer));
+	D3D->CreateConstantBuffer(m_lightPropsCB, sizeof(LightProperties));
 }
 
 
@@ -315,7 +319,47 @@ void Application::DoDeferredRendering()
 void Application::DoForwardRendering()
 {
 	D3D->BindBackBuffer();
+	m_forwardShader.BindShader();
+	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
 
+	// Set wvp constant buffer
+	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	D3D_CONTEXT->PSSetConstantBuffers(2, 1, m_lightPropsCB.GetAddressOf());
+	D3D_CONTEXT->VSSetConstantBuffers(2, 1, m_lightPropsCB.GetAddressOf());
+
+	// Update lighting
+	LightProperties lightProps{};
+	lightProps.EyePosition            = TO_VEC4(m_camera.Position(), 1.0f);
+	lightProps.GlobalAmbient          = m_globalAmbient;
+	lightProps.PointLight.Position    = TO_VEC4(m_lightPosition, 1.0f);
+	lightProps.PointLight.Diffuse     = TO_VEC4(m_lightDiffuse, 1.0f);
+	lightProps.PointLight.Specular    = TO_VEC4(m_lightSpecular, 1.0f);
+	lightProps.PointLight.Attenuation = sm::Vector4(1.0f, 0.7f, 1.8f, 0.0f);
+	lightProps.PointLight.Parallax    = m_parallaxData;
+	lightProps.PointLight.Bias        = m_biasData;
+	D3D_CONTEXT->UpdateSubresource(m_lightPropsCB.Get(), 0, nullptr, &lightProps, 0, 0);
+	
+
+	// Update WVP constant buffer
+	CREATE_ZERO(WVPBuffer, wvpCB);
+	wvpCB.View       = m_camera.GetView().Transpose();
+	wvpCB.Projection = m_camera.GetProjection().Transpose();
+
+	for (auto& go : m_gameObjects)
+	{
+		wvpCB.World = go->GetWorldTransform().Transpose();
+		D3D_CONTEXT->UpdateSubresource(m_wvpCBuffer.Get(), 0, nullptr, &wvpCB, 0, 0);
+
+		// Update material buffers
+		D3D_CONTEXT->UpdateSubresource(go->m_materialPropsCB.Get(), 0, nullptr, &go->m_material, 0, 0);
+		D3D_CONTEXT->PSSetConstantBuffers(1, 1, go->m_materialPropsCB.GetAddressOf());
+
+		ID3D11ShaderResourceView* textureSrv[] = { go->GetDiffuseSRV().Get(), go->GetNormalSRV().Get(), go->GetHeightSRV().Get() };
+		D3D_CONTEXT->PSSetShaderResources(0, _countof(textureSrv), textureSrv);
+
+		go->Draw();
+	}
 }
 
 void Application::Shutdown()
