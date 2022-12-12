@@ -32,12 +32,12 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_window(nullptr),
 	m_appTimer(Timer()),
 	m_lightPosition(-2.0f, 1.5f, -2.0f),
-	m_globalAmbient(0.01f, 0.01f, 0.1f, 1.0f),
+	m_globalAmbient(0.1f, 0.1f, 0.1f, 1.0f),
 	m_lightRadius(5.0f),
 	m_lightIntensity(1.0f),
 	m_lightDiffuse(Colors::White),
 	m_lightSpecular(Colors::LightGreen),
-	m_parallaxData(8.0f, 32.0f, 0.05f, 1.0f),
+	m_parallaxData(8.0f, 32.0f, 0.05f, 0.05f),
 	m_biasData(0.01f, 0.01f, 0.0f, 0.0f),
 	m_technique(RenderTechnique::Forward),
 	m_quadIB(nullptr),
@@ -65,7 +65,7 @@ Application::~Application()
 
 bool Application::Init()
 {
-	if (!D3D->Init(m_window->GetHandle(), false, 4))
+	if (!D3D->Init(m_window->GetHandle(), true, 4))
 	{
 		LOG("Failed to initialize Direct3D");
 		return false;
@@ -299,7 +299,7 @@ void Application::Run()
 
 		// Expected Back buffer to be bound at this stage
 		
-		OnGui();
+		OnGui(m_appTimer);
 		D3D->EndFrame();
 	}
 }
@@ -384,7 +384,7 @@ void Application::Shutdown()
 
 
 
-void Application::OnGui()
+void Application::OnGui(double dt)
 {
 	// Commented line 298 in inmgui_impl_dx11.cpp to stop the PSSETSHADERRESOURCE_HAZARD warnings
 
@@ -409,7 +409,8 @@ void Application::OnGui()
 			SetTechnique(RenderTechnique::Deferred);
 
 		ImGui::Text("Current Rendering Technique: %s", (m_technique == RenderTechnique::Forward) ? "Forward" : "Deferred");
-
+		ImGui::Text("FPS: %f", 1.0f / dt);
+		ImGui::Text("Frame time: %f ms", dt * 1000.0f);
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -436,19 +437,19 @@ void Application::OnGui()
 			}
 		}
 		ImGui::Spacing();
-		if (ImGui::CollapsingHeader("Parallax Mapping"))
+		if (ImGui::CollapsingHeader("Parallax Mapping"), ImGuiTreeNodeFlags_DefaultOpen)
 		{
-			ImGui::DragFloat("Min Layers", &m_parallaxData.x, 1, 5.0f, 50.0f);
-			ImGui::DragFloat("Max Layers", &m_parallaxData.y, 1, 20.0f, 150.0f);
+			ImGui::DragFloat("Min Layers", &m_parallaxData.x, 1, 100.0f, 5000.0f);
+			ImGui::DragFloat("Max Layers", &m_parallaxData.y, 1, 500.0f, 5000.0f);
 			ImGui::DragFloat("Height Scale", &m_parallaxData.z, 0.01f, -5.0f, 5.0f);
-			ImGui::DragFloat("Shadow Factor", &m_parallaxData.w, 0.01f, 1.0f, 10.0f);
+			ImGui::DragFloat("Shadow Factor", &m_parallaxData.w, 0.01f, 0.0f, 1.0f);
 			ImGui::Spacing();
 			ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
 		}
 		if (m_technique == RenderTechnique::Deferred)
 		{
 			ImGui::Spacing();
-			if (ImGui::CollapsingHeader("Post Processing"))
+			if (ImGui::CollapsingHeader("Post Processing"), ImGuiTreeNodeFlags_DefaultOpen)
 			{
 				ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
 				ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);

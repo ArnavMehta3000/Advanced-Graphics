@@ -41,7 +41,7 @@ private:
 	void DoGeometryPass();
 	void DoLightingPass();
 
-	void OnGui();
+	void OnGui(double dt);
 
 private:
 	Timer                    m_appTimer;

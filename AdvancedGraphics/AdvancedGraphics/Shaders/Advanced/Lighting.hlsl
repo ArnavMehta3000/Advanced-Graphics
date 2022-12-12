@@ -18,7 +18,7 @@ cbuffer LightCameraBuffer : register(b1)
 
 Texture2D<float4> GDiffuse  : register(t0);
 Texture2D<float4> GNormal   : register(t1);
-Texture2D<float4> GDepth : register(t2);
+Texture2D<float4> GDepth    : register(t2);
 SamplerState samLinear      : register(s0);
 
 

@@ -160,45 +160,40 @@ float2 CalculatePOM(float2 uv, float3 viewDir, float3 normal)
     return finalTexCoords;
 }
 
-// Same as POM calculation but in this case the view direction is th light
-float CalculatePOMSelfShadowFactor(float2 uv, float3 lightDir, float3 normal)
-{
-    float selfShadowFactor = 1.0f;
-    float shadowMultiplier = Light.Parallax.w;
-
-    lightDir = normalize(lightDir);
-    float2 dx = ddx(uv);
-    float2 dy = ddy(uv);
-
-    float minLayers   = Light.Parallax.x;
-    float maxLayers   = Light.Parallax.y;
-    float heightScale = Light.Parallax.z;
-    float2 bias       = Light.Bias.xy;
-
-    float numLayers         = lerp(maxLayers, minLayers, abs(dot(lightDir, normal)));
-    float layerDepth        = 1.0 / numLayers;
-
-    float2 offset         = (lightDir.xy / lightDir.z * heightScale) + bias;
-    float2 deltaTexCoords = offset / numLayers;
-
-    float2 currentTexCoords    = uv;
-    float currentDepthMapValue = txHeight.SampleGrad(samLinear, currentTexCoords, dx, dy).r;
-    float currentLayerDepth    = currentDepthMapValue;
-
-    while(currentLayerDepth < currentDepthMapValue)
+float CalculatePOMSelfShadow(float2 uv, float3 lightDir, float3 normal)
+{    
+    float result = 0.0f;
+    
+    [branch]
+    if (lightDir.z >= 0.0)
+        return result;
+    else
     {
-        currentTexCoords    -= deltaTexCoords;
-        currentDepthMapValue = txHeight.SampleGrad(samLinear, currentTexCoords, dx, dy).r;
-        currentLayerDepth   += layerDepth;
+        float minLayers   = Light.Parallax.x;
+        float maxLayers   = Light.Parallax.y;
+        float heightScale = Light.Parallax.z;
+        float2 bias       = Light.Bias.xy;
+        float numLayers   = lerp(maxLayers, minLayers, abs(dot(lightDir, normal)));
 
-        // if (currentDepthMapValue < currentLayerDepth)
-            // selfShadowFactor -= ((currentLayerDepth - currentDepthMapValue) / layerDepth) * max(shadowMultiplier, 0.0f);
-        selfShadowFactor = currentLayerDepth > currentDepthMapValue ? 0.0 : 1.0;
+        float2 currentTexCoords    = uv;
+        float currentDepthMapValue = txHeight.Sample(samLinear, currentTexCoords).r;
+        float currentLayerDepth    = currentDepthMapValue;
+
+        float layerDepth      = 1.0 / numLayers;
+        float2 offset         = (lightDir.xy / lightDir.z * heightScale) + bias;
+        float2 deltaTexCoords = offset / numLayers;
+        
+        [unroll(100)]
+        while (currentLayerDepth <= currentDepthMapValue && currentLayerDepth > 0.0)
+        {
+            currentTexCoords += deltaTexCoords;
+            currentDepthMapValue = txHeight.Sample(samLinear, currentTexCoords).r;
+            currentLayerDepth -= layerDepth;
+        }
+
+        result = currentLayerDepth > currentDepthMapValue ? 0.0 : 1.0;
+        return result;
     }
-
-    // selfShadowFactor = max(selfShadowFactor, 0.0f);
-
-    return selfShadowFactor;
 }
 // ---------------------------------------------------------------------
 
@@ -258,20 +253,24 @@ float4 PS(PS_IN input) : SV_Target0
     float2 texCoords = input.UV;
     float shadowFactor = 1.0f;
     
+    [branch]
     if (Material.UseHeight)
     {
         // texCoords = SimpleParallaxMapping(input.UV, input.EyeDirT);
-        texCoords = CalculatePOM(input.UV, input.EyeDirT, input.NormalT);
-        shadowFactor = CalculatePOMSelfShadowFactor(texCoords, input.EyeDirT, input.NormalT);
+        texCoords    = CalculatePOM(input.UV, input.EyeDirT, input.NormalT);
+        shadowFactor = CalculatePOMSelfShadow(texCoords, input.LightDirT, input.NormalT);
+        shadowFactor *= Light.Parallax.w; // Shadow multiplier
 
         // Discard pixel if uv is not in bounds
         if (!IsUVInBounds(texCoords))
             discard;
     }
     
+    [branch]
     if (Material.UseTexture)
         texColor = txDiffuse.Sample(samLinear, texCoords);
 
+    [branch]
     if (Material.UseNormals)
     {
         // Uncompress the normals from the normal map (in tangent space)
@@ -286,10 +285,10 @@ float4 PS(PS_IN input) : SV_Target0
     }
 
     float4 ambient = GlobalAmbient;
-    float4 diffuse = Material.Diffuse * pointLight.Diffuse;
-    float4 specular = Material.Specular * pointLight.Specular;
+    float4 diffuse = Material.Diffuse * pointLight.Diffuse * shadowFactor;
+    float4 specular = Material.Specular * pointLight.Specular * shadowFactor;
     
-    finalColor = texColor * (ambient + diffuse + specular);
+    finalColor = (texColor * (ambient + diffuse + specular));
     return finalColor;
 }
 // ---------------------------------------------------------------------
