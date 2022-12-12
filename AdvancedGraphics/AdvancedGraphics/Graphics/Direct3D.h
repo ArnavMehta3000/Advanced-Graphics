@@ -18,6 +18,7 @@ public:
 	static Direct3D* GetInstance();
 
 	bool Init(HWND hwnd, bool isVsync, UINT msaa = 1);
+	void CreateDepthStencilStates();
 	void Shutdown();
 	void EndFrame();
 
@@ -40,24 +41,27 @@ public:
 	void CreateConstantBuffer(ComPtr<ID3D11Buffer>& buf, UINT size, D3D11_USAGE usage = D3D11_USAGE_DEFAULT, UINT cpuAccess = 0);
 
 public:
-	DepthTarget                m_depthTarget;
-	ComPtr<ID3D11SamplerState> m_samplerAnisotropicWrap;
+	DepthTarget                      m_depthTarget;
+	ComPtr<ID3D11SamplerState>       m_samplerAnisotropicWrap;
+	ComPtr<ID3D11DepthStencilState>  m_depthWriteState;
+	ComPtr<ID3D11DepthStencilState>  m_depthReadState;
 
 private:
 	Direct3D();
 
 	static Direct3D* s_instance;
 
-	ComPtr<ID3D11Device>             m_device;
-	ComPtr<ID3D11DeviceContext>      m_context;
-	ComPtr<IDXGISwapChain>           m_swapChain;
-	ComPtr<ID3D11RenderTargetView>   m_backBufferRTV;
-
-	ComPtr<ID3D11BlendState>         m_blendState;
-
-	ComPtr<ID3D11RasterizerState>    m_rasterWireframe;
-	ComPtr<ID3D11RasterizerState>    m_rasterSolid;
-	ComPtr<ID3D11RasterizerState>    m_rasterCullNone;
+	ComPtr<ID3D11Device>           m_device;
+	ComPtr<ID3D11DeviceContext>    m_context;
+	ComPtr<IDXGISwapChain>         m_swapChain;
+	ComPtr<ID3D11RenderTargetView> m_backBufferRTV;
+								   
+	ComPtr<ID3D11BlendState>       m_blendState;
+								   
+								   
+	ComPtr<ID3D11RasterizerState>  m_rasterWireframe;
+	ComPtr<ID3D11RasterizerState>  m_rasterSolid;
+	ComPtr<ID3D11RasterizerState>  m_rasterCullNone;
 
 private:
 	HWND m_hWnd;

@@ -214,13 +214,53 @@ bool Direct3D::Init(HWND hwnd, bool isVsync, UINT msaa)
 	}
 	SetWireframe(false);
 
-	m_depthTarget = DepthTarget(DXGI_FORMAT_R24G8_TYPELESS,
-								DXGI_FORMAT_D24_UNORM_S8_UINT,
-								DXGI_FORMAT_R24_UNORM_X8_TYPELESS,
+	CreateDepthStencilStates();
+
+	m_depthTarget = DepthTarget(DXGI_FORMAT_R32_TYPELESS,
+								DXGI_FORMAT_D32_FLOAT ,
+								DXGI_FORMAT_R32_FLOAT,
 								width, height,
 								D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE);
 
 	return true;
+}
+
+void Direct3D::CreateDepthStencilStates()
+{
+	CREATE_ZERO(D3D11_DEPTH_STENCIL_DESC, depthWriteDesc);
+	depthWriteDesc.DepthEnable                  = true;
+	depthWriteDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthWriteDesc.DepthFunc                    = D3D11_COMPARISON_LESS;
+	depthWriteDesc.StencilEnable                = false;
+	depthWriteDesc.StencilReadMask              = 0xFF;
+	depthWriteDesc.StencilWriteMask             = 0xFF;
+	depthWriteDesc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
+	depthWriteDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	depthWriteDesc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
+	depthWriteDesc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
+	depthWriteDesc.BackFace.StencilFailOp       = D3D11_STENCIL_OP_KEEP;
+	depthWriteDesc.BackFace.StencilDepthFailOp  = D3D11_STENCIL_OP_KEEP;
+	depthWriteDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
+
+	HR(m_device->CreateDepthStencilState(&depthWriteDesc, m_depthWriteState.ReleaseAndGetAddressOf()));
+
+
+	CREATE_ZERO(D3D11_DEPTH_STENCIL_DESC, depthReadDesc);
+	depthReadDesc.DepthEnable                  = true;
+	depthReadDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ZERO;
+	depthReadDesc.DepthFunc                    = D3D11_COMPARISON_LESS;
+	depthReadDesc.StencilEnable                = false;
+	depthReadDesc.StencilReadMask              = 0xFF;
+	depthReadDesc.StencilWriteMask             = 0xFF;
+	depthReadDesc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
+	depthReadDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	depthReadDesc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
+	depthReadDesc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
+	depthReadDesc.BackFace.StencilFailOp       = D3D11_STENCIL_OP_KEEP;
+	depthReadDesc.BackFace.StencilDepthFailOp  = D3D11_STENCIL_OP_KEEP;
+	depthReadDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
+
+	HR(m_device->CreateDepthStencilState(&depthReadDesc, m_depthReadState.ReleaseAndGetAddressOf()));
 }
 
 
@@ -251,7 +291,7 @@ void Direct3D::BindBackBuffer()
 {
 	// Clear the back buffer before binding
 	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkKhaki);
-	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), m_depthTarget.DSV().Get());
+	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
 }
 
 void Direct3D::UnbindAllTargetsAndResources()
