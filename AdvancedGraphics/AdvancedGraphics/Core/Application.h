@@ -4,10 +4,14 @@
 #include "Graphics/Direct3D.h"
 #include "Core/GameObject.h"
 #include "Core/Camera.h"
-#include "Graphics/RenderTexture.h"
 
-#define DEFAULT_SHADER L"Shaders/Shader.fx"
 #define TO_VEC4(vec, val) sm::Vector4(vec.x, vec.y, vec.z, val)
+
+enum class RenderTechnique
+{
+	Forward,
+	Deferred
+};
 
 class Application
 {
@@ -22,36 +26,58 @@ public:
 	void Run();
 	void Shutdown();
 
+	void SetTechnique(RenderTechnique technique) { m_technique = technique; }
 	
 private:
-	void CalculateLighting();
+	void CreateQuad();
 
-	void OnUpdate(double dt);
-	void OnRender();
+	void UpdateWorld(double dt);
+	void InitConstantBuffers();
+	void DoForwardRendering();
+	void DoDeferredRendering();
+
+	void InitGBuffer();
+	void SetGBuffer();
+	void DoGeometryPass();
+	// Set & clear back buffer
+	// Set back buffer shader resources
+	void DoLightingPass();
+
 	void OnGui();
 
 private:
-	Timer                      m_appTimer;
-	Window*                    m_window;
+	Timer                    m_appTimer;
+	Window*                  m_window;
+	Camera                   m_camera;
 
-	RenderTarget*              m_renderTarget;
-	std::vector<RenderTarget*> m_gBuffer;
+	RenderTechnique          m_technique;
+	ComPtr<ID3D11Buffer>     m_wvpCBuffer;
+	ComPtr<ID3D11Buffer>     m_cameraBuffer;
 
-	VertexShader*              m_vertexShader;
-	PixelShader*               m_pixelShader;
+	std::vector<GameObject*> m_gameObjects;
 
-	ComPtr<ID3D11Buffer>       m_constantBuffer;
-	ComPtr<ID3D11Buffer>       m_lightCBuffer;
+	RenderTarget             m_colorTarget;
+	RenderTarget             m_normalTarget;
+	RenderTarget             m_depthRenderTarget;
 
-	std::vector<GameObject*>   m_gameObjects;
-	Camera                     m_camera;
+	Shader                   m_geometryShader;
+	Shader                   m_lightingShader;
 
-	float                      m_imageScale = 1.0f;
+	ComPtr<ID3D11Buffer>     m_quadVB;
+	ComPtr<ID3D11Buffer>     m_quadIB;
 
-	sm::Vector3                m_lightPosition;
-	sm::Vector3                m_lightDiffuse;
-	sm::Vector3                m_lightSpecular;
-	sm::Vector3                m_lightAttenuation;
-	sm::Vector4                m_parallaxData;
-	sm::Vector4                m_biasData;
+	float                    m_imageScale = 1.0f;
+	float                    m_lightRadius;
+	float                    m_lightIntensity;
+	float                    m_specularPower;
+	UINT                     m_stride;
+	UINT                     m_offset;
+	UINT                     m_quadIndicesCount;
+
+	sm::Vector3              m_lightPosition;
+	sm::Vector3              m_lightDiffuse;
+	sm::Vector3              m_lightSpecular;
+	sm::Vector4              m_parallaxData;
+	sm::Vector4              m_biasData;
+	sm::Vector4              m_globalAmbient;
 };

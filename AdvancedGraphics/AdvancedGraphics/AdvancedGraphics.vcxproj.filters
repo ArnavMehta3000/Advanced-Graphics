@@ -81,7 +81,7 @@
     <ClInclude Include="Graphics\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\RenderTexture.h">
+    <ClInclude Include="Graphics\Targets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -140,12 +140,9 @@
     <ClCompile Include="Graphics\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\RenderTexture.cpp">
+    <ClCompile Include="Graphics\Targets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\Shader.fx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

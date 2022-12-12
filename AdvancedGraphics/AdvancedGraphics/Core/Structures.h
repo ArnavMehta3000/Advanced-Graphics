@@ -1,4 +1,6 @@
 #pragma once
+#define MAX_LIGHTS 1
+
 struct SimpleVertex
 {
 	sm::Vector3 Pos;
@@ -15,37 +17,48 @@ struct FSQuadVertex
 };
 
 // Buffer of data used to set the WVP matrices in the vertex shader
-struct VSConstantBuffer
+struct WVPBuffer
 {
 	sm::Matrix World;
 	sm::Matrix View;
 	sm::Matrix Projection;
 };
 
-struct _Material
+struct Light
 {
-	_Material()
-		:
-		Diffuse(1.0f, 1.0f, 1.0f, 1.0f),
-		Specular(1.0f, 1.0f, 1.0f, 1.0f),
-		SpecularPower(128.0f),
-		UseTexture(false),
-		UseNormals(false),
-		UseHeight(false)
-	{}
+	sm::Vector4 Position;
+	sm::Vector3 Diffuse;
+	float Intensity;
 
+	sm::Vector3 Specular;
+	float Radius;
 
-	sm::Vector4 Diffuse;
-	sm::Vector4 Specular;
-	float       SpecularPower;
-	int         UseTexture;
-	int         UseNormals;
-	int         UseHeight;
+	sm::Vector4 Parallax;
+	sm::Vector4 Bias;
+
+	float SpecularPower;
+	sm::Vector3 _padding0;
 };
 
-struct MaterialProperties
+struct LightCameraBuffer
 {
-	_Material Material;
+	sm::Matrix InvView;
+	sm::Matrix InvProjection;
+	sm::Vector4 EyePosition;
+	sm::Vector4 GlobalAmbient;
+	Light PointLight;
+};
+
+struct SurfaceProperties
+{
+	SurfaceProperties()
+		:
+		SpecularColor(1.0f),
+		SpecularPower(32.0f)
+	{}
+
+	sm::Vector3 SpecularColor;
+	float SpecularPower;
 };
 
 enum class LightType
