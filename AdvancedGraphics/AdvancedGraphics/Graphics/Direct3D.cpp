@@ -244,7 +244,6 @@ void Direct3D::CreateDepthStencilStates()
 
 	HR(m_device->CreateDepthStencilState(&depthWriteDesc, m_depthWriteState.ReleaseAndGetAddressOf()));
 
-
 	CREATE_ZERO(D3D11_DEPTH_STENCIL_DESC, depthReadDesc);
 	depthReadDesc.DepthEnable                  = true;
 	depthReadDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ZERO;
@@ -261,6 +260,26 @@ void Direct3D::CreateDepthStencilStates()
 	depthReadDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
 
 	HR(m_device->CreateDepthStencilState(&depthReadDesc, m_depthReadState.ReleaseAndGetAddressOf()));
+
+	CREATE_ZERO(D3D11_DEPTH_STENCIL_DESC, depthStencilDesc);
+	// Depth test parameters
+	depthStencilDesc.DepthEnable                  = true;
+	depthStencilDesc.DepthWriteMask               = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthStencilDesc.DepthFunc                    = D3D11_COMPARISON_LESS;
+	depthStencilDesc.StencilEnable                = true;
+	depthStencilDesc.StencilReadMask              = 0xFF;
+	depthStencilDesc.StencilWriteMask             = 0xFF;
+	depthStencilDesc.FrontFace.StencilFailOp      = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	depthStencilDesc.FrontFace.StencilPassOp      = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.FrontFace.StencilFunc        = D3D11_COMPARISON_ALWAYS;
+	depthStencilDesc.BackFace.StencilFailOp       = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilDepthFailOp  = D3D11_STENCIL_OP_DECR;
+	depthStencilDesc.BackFace.StencilPassOp       = D3D11_STENCIL_OP_KEEP;
+	depthStencilDesc.BackFace.StencilFunc         = D3D11_COMPARISON_ALWAYS;
+
+
+	HR(m_device->CreateDepthStencilState(&depthStencilDesc, m_depthStateDefault.ReleaseAndGetAddressOf()));
 }
 
 
@@ -287,11 +306,11 @@ void Direct3D::EndFrame()
 
 
 
-void Direct3D::BindBackBuffer()
+void Direct3D::BindBackBuffer(bool bindDSV)
 {
 	// Clear the back buffer before binding
 	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkKhaki);
-	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), nullptr);
+	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), (bindDSV) ? m_depthTarget.DSV().Get() : nullptr);
 }
 
 void Direct3D::UnbindAllTargetsAndResources()

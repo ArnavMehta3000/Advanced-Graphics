@@ -27,7 +27,7 @@ public:
 
 	DXGI_FORMAT GetBackBufferFormat() { return m_backBufferFormat; }
 
-	void BindBackBuffer();
+	void BindBackBuffer(bool bindDSV = false);
 	void UnbindAllTargetsAndResources();
 
 	void SetWireframe(bool isWireframe) { m_context->RSSetState((isWireframe) ? m_rasterWireframe.Get() : m_rasterSolid.Get()); }
@@ -45,6 +45,7 @@ public:
 	ComPtr<ID3D11SamplerState>       m_samplerAnisotropicWrap;
 	ComPtr<ID3D11DepthStencilState>  m_depthWriteState;
 	ComPtr<ID3D11DepthStencilState>  m_depthReadState;
+	ComPtr<ID3D11DepthStencilState>  m_depthStateDefault;
 
 private:
 	Direct3D();

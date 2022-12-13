@@ -87,27 +87,21 @@ bool Application::Init()
 	m_lightingShader = Shader(L"Shaders\\Advanced\\Lighting.hlsl", L"Shaders\\Advanced\\Lighting.hlsl");
 	
 	// Init game objects
-	CREATE_ZERO(GODesc, desc);
-	desc.MeshFile             = "Assets\\Cube.obj";
-	desc.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
-	desc.NormalMap            = L"Assets\\rock_bump.dds";
-	desc.HeightMap            = L"Assets\\rock_height.dds";
-	desc.PrimitiveType        = Primitives::Type::NONE;
-	desc.IsPrimitive          = false;
-	desc.HasMesh              = true;
-	desc.HasDiffuse           = true;
-	desc.HasNormal            = true;
-	desc.HasHeight            = true;
-	desc.IsEmmissive          = false;
-	m_gameObjects.push_back(new GameObject(desc));
+	CREATE_ZERO(GODesc, cube);
+	cube.MeshFile             = "Assets\\Cube.obj";
+	cube.DiffuseTexture       = L"Assets\\rock_diffuse2.dds";
+	cube.NormalMap            = L"Assets\\rock_bump.dds";
+	cube.HeightMap            = L"Assets\\rock_height.dds";
+	cube.PrimitiveType        = Primitives::Type::NONE;
+	cube.IsPrimitive          = false;
+	cube.HasMesh              = true;
+	cube.HasDiffuse           = true;
+	cube.HasNormal            = true;
+	cube.HasHeight            = true;
+	cube.IsEmmissive          = false;
+	m_gameObjects.push_back(new GameObject(cube));
 	m_gameObjects[0]->m_scale = sm::Vector3(2.0f);
-
-	//desc.HasMesh = false;
-	//desc.PrimitiveType = Primitives::Type::CUBE;
-	//m_gameObjects.push_back(new GameObject(desc));
-	//m_gameObjects[1]->m_scale = sm::Vector3(0.5f);
-	//m_gameObjects[1]->m_position = m_lightPosition;
-	
+		
 	InitConstantBuffers();
 	CreateQuad();
 
@@ -237,7 +231,7 @@ void Application::DoLightingPass()
 	D3D_CONTEXT->OMSetDepthStencilState(D3D->m_depthReadState.Get(), 1u);
 
 
-	// Only one light in the scene hence no for loop here
+	// Only one light in the scene hence no for-loop here
 
 	// bind lighting pass shader
 	m_lightingShader.BindShader();
@@ -288,7 +282,7 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 		
-		//ClearAllCB();
+		ClearAllCB();
 		UpdateWorld(m_appTimer);
 
 		switch (m_technique)
@@ -324,7 +318,6 @@ void Application::DoDeferredRendering()
 	DoGeometryPass();
 	D3D->UnbindAllTargetsAndResources();
 	D3D->BindBackBuffer();
-	// TODO: Instead of binding back buffer, set render target to a full screen quad
 	DoLightingPass();
 }
 
@@ -338,7 +331,9 @@ void Application::DoPostProcess()
 
 void Application::DoForwardRendering()
 {
-	D3D->BindBackBuffer();
+	D3D->BindBackBuffer(false);
+
+	D3D_CONTEXT->OMSetDepthStencilState(D3D->m_depthStateDefault.Get(), 1u);
 	m_forwardShader.BindShader();
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
 
@@ -426,13 +421,11 @@ void Application::OnGui(double dt)
 
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			for (auto& go : m_gameObjects)
-			{
-				ImGui::DragFloat3("Object Position", &go->m_position.x, 0.1f, -100.0f, 100.0f, "%0.2f");
-				ImGui::DragFloat3("Object Rotation", &go->m_rotation.x, 0.01f, -100.0f, 100.0f, "%0.2f");
-				ImGui::DragFloat3("Object Scale", &go->m_scale.x, 0.01f, 0.01f, 100.0f, "%0.2f");
-				ImGui::Spacing();
-			}
+			ImGui::DragFloat3("Cube Position", &m_gameObjects[0]->m_position.x, 0.1f, -100.0f, 100.0f, "%0.2f");
+			ImGui::DragFloat3("Cube Rotation", &m_gameObjects[0]->m_rotation.x, 0.01f, -100.0f, 100.0f, "%0.2f");
+			ImGui::DragFloat3("Cube Scale", &m_gameObjects[0]->m_scale.x, 0.01f, 0.01f, 100.0f, "%0.2f");
+			ImGui::Spacing();
+
 			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
 		}
 		ImGui::Spacing();
