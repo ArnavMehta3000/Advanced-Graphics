@@ -47,7 +47,9 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_stride(0),
 	m_quadIndicesCount(6),
 	m_specularPower(10.0f),
-	m_vigRadSoft(0.4f, 0.2f)
+	m_vigRadSoft(0.4f, 0.2f),
+	m_enableVignette(true),
+	m_enableGrayscale(false)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -326,6 +328,8 @@ void Application::DoPostProcess()
 	// Update post processing
 	PostProcessing pp{};
 	pp.VignetteRadiusSoftness = m_vigRadSoft;
+	pp.EnableGrayscale        = m_enableGrayscale;
+	pp.EnableVignette         = m_enableVignette;
 	D3D_CONTEXT->UpdateSubresource(m_postProcessCB.Get(), 0, nullptr, &pp, 0, 0);
 }
 
@@ -459,8 +463,18 @@ void Application::OnGui(double dt)
 			{
 				if (ImGui::TreeNode("Vignette"))
 				{
-					ImGui::DragFloat("Radius", &m_vigRadSoft.x, 0.05f, 0.0f, 1.0f);
-					ImGui::DragFloat("Softness", &m_vigRadSoft.y, 0.05f, -10.0f, 10.0f);
+					ImGui::Checkbox("Enable Vignette", &m_enableVignette);
+					if (m_enableVignette)
+					{
+						ImGui::DragFloat("Radius", &m_vigRadSoft.x, 0.05f, 0.0f, 1.0f);
+						ImGui::DragFloat("Softness", &m_vigRadSoft.y, 0.05f, -10.0f, 10.0f);
+					}
+					ImGui::TreePop();
+				}
+
+				if (ImGui::TreeNode("Grayscale"))
+				{
+					ImGui::Checkbox("Enable Vignette", &m_enableGrayscale);
 					ImGui::TreePop();
 				}
 				

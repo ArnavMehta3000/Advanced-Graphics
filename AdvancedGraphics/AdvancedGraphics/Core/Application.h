@@ -75,7 +75,10 @@ private:
 	UINT                     m_offset;
 	UINT                     m_quadIndicesCount;
 
+	bool                     m_enableVignette;
+	bool                     m_enableGrayscale;
 	sm::Vector2              m_vigRadSoft;
+
 	sm::Vector3              m_lightPosition;
 	sm::Vector3              m_lightDiffuse;
 	sm::Vector3              m_lightSpecular;

@@ -52,8 +52,9 @@ struct MaterialProperties
 
 struct PostProcessing
 {
+	int EnableVignette;
+	int EnableGrayscale;
 	sm::Vector2 VignetteRadiusSoftness;
-	sm::Vector2 _padding0;
 };
 
 struct Light

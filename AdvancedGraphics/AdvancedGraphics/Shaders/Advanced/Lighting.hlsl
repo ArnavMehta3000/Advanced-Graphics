@@ -18,8 +18,9 @@ cbuffer LightCameraBuffer : register(b1)
 
 cbuffer PostProcessing : register(b2)
 {
+    bool EnableVignette;
+    bool EnableGrayscale;
     float2 VignetteRadiusSoftness;
-    float2 _padding0;
 }
 
 Texture2D<float4> GDiffuse  : register(t0);
@@ -104,6 +105,23 @@ float4 DoVignette(float2 uv)
     return vignette;
 }
 
+float4 Grayscale(float4 color)
+{
+    float avg = (color.x + color.y + color.z) / 3.0f;
+    return float4(avg, avg, avg, 1.0f);
+}
+
+float4 DoPostProcess(float4 color, float2 uv)
+{
+    if (EnableGrayscale)        
+        color = Grayscale(color);
+    
+    if (EnableVignette)
+        color.xyz *= DoVignette(uv);
+    
+    
+    return color;
+}
 
 float4 PS(VSOutput input) : SV_Target0
 {
@@ -121,7 +139,8 @@ float4 PS(VSOutput input) : SV_Target0
     LightingResult lighting = ComputeLighting(GetGPosDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
     
     float4 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular) * GetGDiffuse(texCoord);
-    finalColor.xyz *= DoVignette(texCoord).xyz;
+     
     
-    return GetGPosDepth(texCoord).a;
+    
+    return DoPostProcess(finalColor, texCoord);
 }
