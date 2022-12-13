@@ -57,6 +57,7 @@ float4 GetGNormals(float2 uv)
     return GNormal.Sample(samLinear, uv);
 }
 
+// XYZ: World Position | W: 
 float4 GetGDepth(float2 uv)
 {
     float4 sample = GDepth.Sample(samLinear, uv);
@@ -76,46 +77,6 @@ float4 GetGDiffuse(float2 uv)
     return GDiffuse.Sample(samLinear, uv);
 }
 
-
-float2 CalculateParallaxOffset(float2 uv, float3 viewDir, float3 normal)
-{
-    viewDir = normalize(viewDir);
-    // Compute all the derivatives
-    float2 dx = ddx(uv);
-    float2 dy = ddy(uv);
-
-    float minLayers   = PointLight.Parallax.x;
-    float maxLayers   = PointLight.Parallax.y;
-    float heightScale = PointLight.Parallax.z;
-    float2 bias       = PointLight.Bias.xy;
-
-    float numLayers         = lerp(maxLayers, minLayers, abs(dot(viewDir, normal)));
-    float layerDepth        = 1.0 / numLayers;
-    float currentLayerDepth = 0.0;
-
-    float2 offset = (viewDir.xy / viewDir.z * heightScale) + bias;
-    float2 deltaTexCoords = offset / numLayers;
-
-    float2 currentTexCoords    = uv;
-    float currentDepthMapValue = GDiffuse.SampleGrad(samLinear, currentTexCoords, dx, dy).a;
-
-    while (currentLayerDepth < currentDepthMapValue)
-    {
-        currentTexCoords -= deltaTexCoords;
-        currentDepthMapValue = GDiffuse.SampleGrad(samLinear, currentTexCoords, dx, dy).a;
-        currentLayerDepth += layerDepth;
-    }
-
-    float2 prevTexCoords = currentTexCoords + deltaTexCoords;
-
-    float afterDepth  = currentDepthMapValue - currentLayerDepth;
-    float beforeDepth = GDiffuse.SampleGrad(samLinear, currentTexCoords, dx, dy).a - currentLayerDepth + layerDepth;
-
-    float weight          = afterDepth / (afterDepth - beforeDepth);
-    float2 finalTexCoords = prevTexCoords * weight + currentTexCoords * (1.0 - weight);
-
-    return finalTexCoords;
-}
 
 LightingResult ComputeLighting(float3 position, float3 normal)
 {
