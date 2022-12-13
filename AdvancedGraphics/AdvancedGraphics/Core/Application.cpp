@@ -185,7 +185,7 @@ void Application::SetGBuffer()
 
 	// Clear the render targets
 	for (auto& rt : rtv)
-		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::Black);
+		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::DarkKhaki);
 
 	// Clear depth before geometry pass
 	D3D_CONTEXT->ClearDepthStencilView(D3D->m_depthTarget.DSV().Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
@@ -460,12 +460,18 @@ void Application::OnGui(double dt)
 		}
 		if (m_technique == RenderTechnique::Deferred)
 		{
-			ImGui::DragFloat("Radius", &m_vigRadSoft.x, 0.1f, -10.0f, 10.0f);
-			ImGui::DragFloat("Softness", &m_vigRadSoft.y, 0.1f, -10.0f, 10.0f);
 
 			ImGui::Spacing();
 			if (ImGui::CollapsingHeader("Post Processing"), ImGuiTreeNodeFlags_DefaultOpen)
 			{
+				if (ImGui::TreeNode("Vignette"))
+				{
+					ImGui::DragFloat("Radius", &m_vigRadSoft.x, 0.05f, 0.0f, 1.0f);
+					ImGui::DragFloat("Softness", &m_vigRadSoft.y, 0.05f, -10.0f, 10.0f);
+					ImGui::TreePop();
+				}
+				
+				ImGui::Spacing();
 				ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
 				ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
 

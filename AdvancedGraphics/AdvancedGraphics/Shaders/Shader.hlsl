@@ -183,7 +183,8 @@ float CalculatePOMSelfShadow(float2 uv, float3 lightDir, float3 normal)
         float2 offset         = (lightDir.xy / lightDir.z * heightScale) + bias;
         float2 deltaTexCoords = offset / numLayers;
         
-        [unroll(100)]
+        // TODO: Change unroll to 100
+        [unroll(20)]
         while (currentLayerDepth <= currentDepthMapValue && currentLayerDepth > 0.0)
         {
             currentTexCoords += deltaTexCoords;
