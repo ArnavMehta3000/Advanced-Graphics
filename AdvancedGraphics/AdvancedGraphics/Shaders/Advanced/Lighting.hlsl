@@ -16,6 +16,12 @@ cbuffer LightCameraBuffer : register(b1)
     Light PointLight;
 }
 
+cbuffer PostProcessing : register(b2)
+{
+    float2 VignetteRadiusSoftness;
+    float2 _padding0;
+}
+
 Texture2D<float4> GDiffuse  : register(t0);
 Texture2D<float4> GNormal   : register(t1);
 Texture2D<float4> GDepth    : register(t2);
@@ -62,9 +68,6 @@ float4 GetGDepth(float2 uv)
     float projectionB = (-far * near) / (far - near);
     
     float linearDepth = projectionA / (depth - projectionB);
-    
-    
-    
     return float4(sample.xyz, linearDepth);
 }
 
@@ -133,6 +136,14 @@ LightingResult ComputeLighting(float3 position, float3 normal)
     return result;
 }
 
+float4 DoVignette(float2 uv)
+{
+    float len = distance(uv, float2(0.5, 0.5)) * 0.7f;
+    float vignette = smoothstep(VignetteRadiusSoftness.x, VignetteRadiusSoftness.x - VignetteRadiusSoftness.y, len);
+    return vignette;
+}
+
+
 float4 PS(VSOutput input) : SV_Target0
 {
     float3 lightDir = normalize(PointLight.Position.xyz - input.Position.xyz);
@@ -148,6 +159,8 @@ float4 PS(VSOutput input) : SV_Target0
     
     LightingResult lighting = ComputeLighting(GetGDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
     
-    float3 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular).xyz * GetGDiffuse(texCoord).xyz;
-    return float4(finalColor, 1.0f);
+    float4 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular) * GetGDiffuse(texCoord);
+    finalColor.xyz *= DoVignette(texCoord).xyz;
+    
+    return finalColor;
 }

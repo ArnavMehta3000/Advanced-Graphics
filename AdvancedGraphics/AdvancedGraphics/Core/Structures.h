@@ -50,6 +50,12 @@ struct MaterialProperties
 	_Material Material;
 };
 
+struct PostProcessing
+{
+	sm::Vector2 VignetteRadiusSoftness;
+	sm::Vector2 _padding0;
+};
+
 struct Light
 {
 	sm::Vector4 Position;

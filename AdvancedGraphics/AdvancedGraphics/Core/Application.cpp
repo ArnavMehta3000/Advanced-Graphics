@@ -46,7 +46,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_offset(0),
 	m_stride(0),
 	m_quadIndicesCount(6),
-	m_specularPower(10.0f)
+	m_specularPower(10.0f),
+	m_vigRadSoft(0.4f, 0.2f)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -174,6 +175,7 @@ void Application::InitConstantBuffers()
 	D3D->CreateConstantBuffer(m_wvpCBuffer, sizeof(WVPBuffer));
 	D3D->CreateConstantBuffer(m_cameraBuffer, sizeof(LightCameraBuffer));
 	D3D->CreateConstantBuffer(m_lightPropsCB, sizeof(LightProperties));
+	D3D->CreateConstantBuffer(m_postProcessCB, sizeof(PostProcessing));
 }
 
 
@@ -244,8 +246,10 @@ void Application::DoLightingPass()
 
 	// Set constant buffers
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
-	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
-	D3D_CONTEXT->PSSetConstantBuffers(1, 1, m_cameraBuffer.GetAddressOf());
+	ID3D11Buffer* psCB[] = { m_wvpCBuffer.Get(), m_cameraBuffer.Get(), m_postProcessCB.Get() };
+	D3D_CONTEXT->PSSetConstantBuffers(0, _countof(psCB), psCB);
+	
+	DoPostProcess();
 	
 	// Update light and camera constant buffer
 	CREATE_ZERO(LightCameraBuffer, camCBuffer);
@@ -284,7 +288,7 @@ void Application::Run()
 	{
 		m_appTimer.Tick();
 		
-		ClearAllCB();
+		//ClearAllCB();
 		UpdateWorld(m_appTimer);
 
 		switch (m_technique)
@@ -322,6 +326,14 @@ void Application::DoDeferredRendering()
 	D3D->BindBackBuffer();
 	// TODO: Instead of binding back buffer, set render target to a full screen quad
 	DoLightingPass();
+}
+
+void Application::DoPostProcess()
+{
+	// Update post processing
+	PostProcessing pp{};
+	pp.VignetteRadiusSoftness = m_vigRadSoft;
+	D3D_CONTEXT->UpdateSubresource(m_postProcessCB.Get(), 0, nullptr, &pp, 0, 0);
 }
 
 void Application::DoForwardRendering()
@@ -448,6 +460,9 @@ void Application::OnGui(double dt)
 		}
 		if (m_technique == RenderTechnique::Deferred)
 		{
+			ImGui::DragFloat("Radius", &m_vigRadSoft.x, 0.1f, -10.0f, 10.0f);
+			ImGui::DragFloat("Softness", &m_vigRadSoft.y, 0.1f, -10.0f, 10.0f);
+
 			ImGui::Spacing();
 			if (ImGui::CollapsingHeader("Post Processing"), ImGuiTreeNodeFlags_DefaultOpen)
 			{

@@ -35,6 +35,7 @@ private:
 	void InitConstantBuffers();
 	void DoForwardRendering();
 	void DoDeferredRendering();
+	void DoPostProcess();
 
 	void InitGBuffer();
 	void SetGBuffer();
@@ -62,6 +63,7 @@ private:
 	ComPtr<ID3D11Buffer>     m_wvpCBuffer;
 	ComPtr<ID3D11Buffer>     m_cameraBuffer;
 	ComPtr<ID3D11Buffer>     m_lightPropsCB;
+	ComPtr<ID3D11Buffer>     m_postProcessCB;
 	ComPtr<ID3D11Buffer>     m_quadVB;
 	ComPtr<ID3D11Buffer>     m_quadIB;
 
@@ -73,6 +75,7 @@ private:
 	UINT                     m_offset;
 	UINT                     m_quadIndicesCount;
 
+	sm::Vector2              m_vigRadSoft;
 	sm::Vector3              m_lightPosition;
 	sm::Vector3              m_lightDiffuse;
 	sm::Vector3              m_lightSpecular;
