@@ -58,7 +58,7 @@ float4 GetGNormals(float2 uv)
 }
 
 // XYZ: World Position | W: 
-float4 GetGDepth(float2 uv)
+float4 GetGPosDepth(float2 uv)
 {
     float4 sample = GDepth.Sample(samLinear, uv);
     
@@ -69,7 +69,7 @@ float4 GetGDepth(float2 uv)
     float projectionB = (-far * near) / (far - near);
     
     float linearDepth = projectionA / (depth - projectionB);
-    return float4(sample.xyz, linearDepth);
+    return float4(sample.xyz, linearDepth / 100.0f);
 }
 
 float4 GetGDiffuse(float2 uv)
@@ -118,10 +118,10 @@ float4 PS(VSOutput input) : SV_Target0
     // Convert from [0,1] to [-1, 1]
     float3 normals = normalize(2.0f * GetGNormals(texCoord).xyz - 1.0f);
     
-    LightingResult lighting = ComputeLighting(GetGDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
+    LightingResult lighting = ComputeLighting(GetGPosDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
     
     float4 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular) * GetGDiffuse(texCoord);
     finalColor.xyz *= DoVignette(texCoord).xyz;
     
-    return finalColor;
+    return GetGPosDepth(texCoord).a;
 }
