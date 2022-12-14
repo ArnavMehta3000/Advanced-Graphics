@@ -286,10 +286,10 @@ float4 PS(PS_IN input) : SV_Target0
     }
 
     float4 ambient = GlobalAmbient;
-    float4 diffuse = Material.Diffuse * pointLight.Diffuse * shadowFactor;
-    float4 specular = Material.Specular * pointLight.Specular * shadowFactor;
+    float4 diffuse = Material.Diffuse * pointLight.Diffuse;
+    float4 specular = Material.Specular * pointLight.Specular;
     
-    finalColor = (texColor * (ambient + diffuse + specular));
+    finalColor = (texColor * (ambient + diffuse + specular) * (1.0f - shadowFactor));
     return finalColor;
 }
 // ---------------------------------------------------------------------
