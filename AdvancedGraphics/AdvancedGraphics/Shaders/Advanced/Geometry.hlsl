@@ -77,12 +77,11 @@ PSOutput PS(PSInput input)
 {
     PSOutput output;
 
-    float3 diffuseColor = DiffuseMap.Sample(samLinear, input.TexCoord).rgb;
-    float heightDepth   = HeightMap.Sample(samLinear, input.TexCoord).r;
-    float4 normalTS     = NormalMap.Sample(samLinear, input.TexCoord);
-    //normalTS            = float4(normalize(2.0f * normalTS.xyz - 1.0f).xyz, 1.0f);
+    float3 diffuseColor  = DiffuseMap.Sample(samLinear, input.TexCoord).rgb;
+    float heightDepth    = HeightMap.Sample(samLinear, input.TexCoord).r;
+    float4 normalTS      = NormalMap.Sample(samLinear, input.TexCoord);
 
-    float4 normalWS = float4(mul(normalTS.xyz, input.TBN), 1.0f);
+    float4 normalWS      = float4(mul(normalTS.xyz, input.TBN), 1.0f);
     
     output.DiffuseAlbedo = float4(diffuseColor, heightDepth);
     output.Normal        = normalWS;

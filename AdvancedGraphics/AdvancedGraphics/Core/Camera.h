@@ -16,7 +16,7 @@ public:
 
 	const sm::Matrix& GetView()           const { return m_view; }
 	const sm::Matrix& GetProjection()     const { return m_projection; }
-	const sm::Matrix& GetViewProjection() const { return m_view * m_projection; }
+	const sm::Matrix  GetViewProjection() const { return m_view * m_projection; }
 
 private:
 	void Move(double dt, const DirectX::Keyboard::State& kb);

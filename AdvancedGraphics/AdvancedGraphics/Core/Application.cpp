@@ -50,7 +50,9 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_vigRadSoft(0.4f, 0.2f),
 	m_enableVignette(true),
 	m_enableGrayscale(false),
-	m_showPreview(false)
+	m_showPreview(false),
+	m_currentViewProj(sm::Matrix::Identity),
+	m_prevViewProj(sm::Matrix::Identity)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -260,8 +262,8 @@ void Application::DoLightingPass()
 	camCBuffer.PointLight.Parallax      = m_parallaxData;
 	camCBuffer.PointLight.Bias          = m_biasData;
 	camCBuffer.PointLight.Radius        = m_lightRadius;
-	camCBuffer.InvView                  = m_camera.GetView().Invert();
-	camCBuffer.InvProjection            = m_camera.GetProjection().Invert();
+	camCBuffer.CurrentViewProjection    = m_currentViewProj.Transpose();
+	camCBuffer.PrevViewProjection       = m_prevViewProj.Transpose();
 
 	D3D_CONTEXT->UpdateSubresource(m_cameraBuffer.Get(), 0, nullptr, &camCBuffer, 0, 0);
 	
@@ -309,6 +311,9 @@ void Application::Run()
 void Application::UpdateWorld(double dt)
 {
 	m_camera.Update(dt, KEYBOARD, MOUSE);
+	m_prevViewProj    = m_currentViewProj;
+	m_currentViewProj = m_camera.GetViewProjection();
+
 	for (auto& go : m_gameObjects)
 	{
 		go->Update(dt);
@@ -420,6 +425,10 @@ void Application::OnGui(double dt)
 		if (ImGui::Button("Deferred"))
 			SetTechnique(RenderTechnique::Deferred);
 
+		auto pos = m_camera.Position();
+		ImGui::Text("Camera position: %.2f, %.2f, %.2f", pos.x, pos.y, pos.z);
+		AddSpace(2);
+
 		// ----- Info -----
 		ImGui::Text("Current Rendering Technique: %s", (m_technique == RenderTechnique::Forward) ? "Forward" : "Deferred");
 		ImGui::Text("FPS: %f", 1.0f / dt);
@@ -433,11 +442,11 @@ void Application::OnGui(double dt)
 			ImGui::DragFloat3("Cube Position", &m_gameObjects[0]->m_position.x, 0.1f, -100.0f, 100.0f, "%0.2f");
 			ImGui::DragFloat3("Cube Rotation", &m_gameObjects[0]->m_rotation.x, 0.01f, -100.0f, 100.0f, "%0.2f");
 			ImGui::DragFloat3("Cube Scale", &m_gameObjects[0]->m_scale.x, 0.01f, 0.01f, 100.0f, "%0.2f");
-			ImGui::Spacing();
+			AddSpace(2);
 
 			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
 		}
-		ImGui::Spacing();
+		AddSpace();
 
 		// ----- POINT LIGHT SETTINGS -----
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
@@ -452,7 +461,7 @@ void Application::OnGui(double dt)
 				ImGui::DragFloat("Light Radius", &m_lightRadius, 0.1f, 0.0f, 50.0f);
 			}
 		}
-		ImGui::Spacing();
+		AddSpace();
 
 		// ----- PARALLAX MAPPING SETTINGS -----
 		if (m_technique == RenderTechnique::Forward)
@@ -491,7 +500,7 @@ void Application::OnGui(double dt)
 					ImGui::TreePop();
 				}
 				
-				ImGui::Spacing(); ImGui::Spacing();
+				AddSpace(3);
 				ImGui::Checkbox("Show G-Buffer", &m_showPreview);
 				if (m_showPreview)
 				{
@@ -505,7 +514,7 @@ void Application::OnGui(double dt)
 					ImGui::Text("Scene Normals");
 					ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
 
-					ImGui::Text("Scene Depth");
+					ImGui::Text("Scene Pos-Depth (RGB-A)");
 					ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
 				}
 			}
@@ -516,4 +525,9 @@ void Application::OnGui(double dt)
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #endif // ENABLE_IMGUI
+}
+
+void Application::AddSpace(UINT n)
+{
+	for (UINT i = 0; i < n; i++)ImGui::Spacing();
 }

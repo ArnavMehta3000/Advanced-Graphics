@@ -9,8 +9,8 @@ cbuffer WVPBuffer : register(b0)
 
 cbuffer LightCameraBuffer : register(b1)
 {
-    matrix InvView;
-    matrix InvProjection;
+    matrix CurrentViewProjection;
+    matrix PrevViewProjection;
     float4 EyePosition;
     float4 GlobalAmbient;
     Light PointLight;
@@ -47,9 +47,9 @@ struct VSOutput
 VSOutput VS(VSInput input)
 {
     VSOutput output;
-    output.Position = input.Position;
-    output.TexCoord = input.TexCoord;
-    output.PositionWS = mul(input.Position, mul(mul(World, View), Projection));
+    output.Position   = input.Position;
+    output.TexCoord   = input.TexCoord;
+    output.PositionWS = mul(input.Position, mul(View, Projection));
     return output;
 }
 
@@ -58,25 +58,43 @@ float4 GetGNormals(float2 uv)
     return GNormal.Sample(samLinear, uv);
 }
 
-// XYZ: World Position | W: 
+
 float4 GetGPosDepth(float2 uv)
 {
-    float4 sample = GDepth.Sample(samLinear, uv);
-    
-    float depth = sample.a;
-    float near = 0.01f;
-    float far = 100.0f;
+    float4 pos        = GDepth.Sample(samLinear, uv);
+    float depth       = pos.a;
+        
+    float near        = 0.01f;
+    float far         = 100.0f;
     float projectionA = far / far - near;
     float projectionB = (-far * near) / (far - near);
-    
     float linearDepth = projectionA / (depth - projectionB);
-    return float4(sample.xyz, linearDepth / 100.0f);
+
+    // world position-depth (RGB-A)
+    return float4(pos.xyz, linearDepth / 100.0f);
+    
+    // Ref: https://developer.nvidia.com/gpugems/gpugems3/part-iv-image-effects/chapter-27-motion-blur-post-processing-effect
 }
 
 float4 GetGDiffuse(float2 uv)
 {
     return GDiffuse.Sample(samLinear, uv);
 }
+
+float4 GetProjectionPos(float2 uv, matrix proj)
+{
+    float4 pos = float4(GDepth.Sample(samLinear, uv).xyz, 1.0f);
+    return mul(pos, mul(View, proj));
+}
+
+float2 GetPixelVelocity(float2 uv)
+{
+    float4 currentPos = GetProjectionPos(uv, CurrentViewProjection);
+    float4 prevPos    = GetProjectionPos(uv, PrevViewProjection);
+
+    return ((currentPos - prevPos) / 2.0f).xy;
+}
+
 
 
 LightingResult ComputeLighting(float3 position, float3 normal)
@@ -140,7 +158,7 @@ float4 PS(VSOutput input) : SV_Target0
     
     float4 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular) * GetGDiffuse(texCoord);
      
-    
+    float2 velocity = GetPixelVelocity(texCoord);
     
     return DoPostProcess(finalColor, texCoord);
 }

@@ -44,6 +44,9 @@ private:
 
 	void OnGui(double dt);
 
+	// Uses ImGui::Spacing() based on input count
+	void AddSpace(UINT n = 1);
+
 private:
 	Timer                    m_appTimer;
 	Window*                  m_window;
@@ -79,6 +82,9 @@ private:
 	bool                     m_enableVignette;
 	bool                     m_enableGrayscale;
 	sm::Vector2              m_vigRadSoft;
+
+	sm::Matrix               m_currentViewProj;
+	sm::Matrix               m_prevViewProj;
 
 	sm::Vector3              m_lightPosition;
 	sm::Vector3              m_lightDiffuse;

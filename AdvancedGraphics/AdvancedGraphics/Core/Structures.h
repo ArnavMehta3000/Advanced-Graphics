@@ -75,8 +75,8 @@ struct Light
 
 struct LightCameraBuffer
 {
-	sm::Matrix InvView;
-	sm::Matrix InvProjection;
+	sm::Matrix CurrentViewProjection;
+	sm::Matrix PrevViewProjection;
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
 	Light PointLight;
