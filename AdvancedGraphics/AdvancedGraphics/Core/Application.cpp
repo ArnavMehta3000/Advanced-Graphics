@@ -446,15 +446,19 @@ void Application::OnGui(double dt)
 			}
 		}
 		ImGui::Spacing();
-		if (ImGui::CollapsingHeader("Parallax Mapping"), ImGuiTreeNodeFlags_DefaultOpen)
+		if (m_technique == RenderTechnique::Forward)
 		{
-			ImGui::DragFloat("Min Layers", &m_parallaxData.x, 1, 100.0f, 5000.0f);
-			ImGui::DragFloat("Max Layers", &m_parallaxData.y, 1, 500.0f, 5000.0f);
-			ImGui::DragFloat("Height Scale", &m_parallaxData.z, 0.01f, -5.0f, 5.0f);
-			ImGui::DragFloat("Shadow Factor", &m_parallaxData.w, 0.01f, 0.0f, 1.0f);
-			ImGui::Spacing();
-			ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
+			if (ImGui::CollapsingHeader("Parallax Mapping"), ImGuiTreeNodeFlags_DefaultOpen)
+			{
+				ImGui::DragFloat("Min Layers", &m_parallaxData.x, 1, 100.0f, 5000.0f);
+				ImGui::DragFloat("Max Layers", &m_parallaxData.y, 1, 500.0f, 5000.0f);
+				ImGui::DragFloat("Height Scale", &m_parallaxData.z, 0.01f, -5.0f, 5.0f);
+				ImGui::DragFloat("Shadow Factor", &m_parallaxData.w, 0.01f, 0.0f, 1.0f);
+				ImGui::Spacing();
+				ImGui::DragFloat2("Parallax Bias", &m_biasData.x, 0.001f, -1.0f, 1.0f);
+			}
 		}
+
 		if (m_technique == RenderTechnique::Deferred)
 		{
 
