@@ -117,7 +117,7 @@ float4 DoPostProcess(float4 color, float2 uv)
         color = Grayscale(color);
     
     if (EnableVignette)
-        color.xyz *= DoVignette(uv);
+        color.xyz *= DoVignette(uv).xyz;
     
     
     return color;
