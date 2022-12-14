@@ -49,7 +49,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_specularPower(10.0f),
 	m_vigRadSoft(0.4f, 0.2f),
 	m_enableVignette(true),
-	m_enableGrayscale(false)
+	m_enableGrayscale(false),
+	m_showPreview(false)
 {
 	CREATE_AND_ATTACH_CONSOLE();
 	LOG("----- DEBUG CONSOLE ATTACHED -----");
@@ -419,10 +420,14 @@ void Application::OnGui(double dt)
 		if (ImGui::Button("Deferred"))
 			SetTechnique(RenderTechnique::Deferred);
 
+		// ----- Info -----
 		ImGui::Text("Current Rendering Technique: %s", (m_technique == RenderTechnique::Forward) ? "Forward" : "Deferred");
 		ImGui::Text("FPS: %f", 1.0f / dt);
 		ImGui::Text("Frame time: %f ms", dt * 1000.0f);
 
+
+
+		// ----- WORLD SETTINGS -----
 		if (ImGui::CollapsingHeader("World", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::DragFloat3("Cube Position", &m_gameObjects[0]->m_position.x, 0.1f, -100.0f, 100.0f, "%0.2f");
@@ -433,6 +438,8 @@ void Application::OnGui(double dt)
 			ImGui::DragFloat3("Light Position", &m_lightPosition.x, 0.1f, -50.0f, 50.0f);
 		}
 		ImGui::Spacing();
+
+		// ----- POINT LIGHT SETTINGS -----
 		if (ImGui::CollapsingHeader("Point Light", ImGuiTreeNodeFlags_DefaultOpen))
 		{
 			ImGui::ColorEdit3("Global Ambient", &m_globalAmbient.x, ImGuiColorEditFlags_Float);
@@ -446,6 +453,8 @@ void Application::OnGui(double dt)
 			}
 		}
 		ImGui::Spacing();
+
+		// ----- PARALLAX MAPPING SETTINGS -----
 		if (m_technique == RenderTechnique::Forward)
 		{
 			if (ImGui::CollapsingHeader("Parallax Mapping"), ImGuiTreeNodeFlags_DefaultOpen)
@@ -459,9 +468,9 @@ void Application::OnGui(double dt)
 			}
 		}
 
+		// ----- POST PROCESSING SETTINGS -----
 		if (m_technique == RenderTechnique::Deferred)
 		{
-
 			ImGui::Spacing();
 			if (ImGui::CollapsingHeader("Post Processing"), ImGuiTreeNodeFlags_DefaultOpen)
 			{
@@ -478,22 +487,27 @@ void Application::OnGui(double dt)
 
 				if (ImGui::TreeNode("Grayscale"))
 				{
-					ImGui::Checkbox("Enable Vignette", &m_enableGrayscale);
+					ImGui::Checkbox("Enable Grayscale", &m_enableGrayscale);
 					ImGui::TreePop();
 				}
 				
-				ImGui::Spacing();
-				ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
-				ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
+				ImGui::Spacing(); ImGui::Spacing();
+				ImGui::Checkbox("Show G-Buffer", &m_showPreview);
+				if (m_showPreview)
+				{
+					ImGui::Spacing();
+					ImGui::SliderFloat("Preview Scale", &m_imageScale, 0.5f, 3.0f);
+					ImVec2 imageSize = ImVec2(imguiWidth * m_imageScale, 197 * m_imageScale);
 
-				ImGui::Text("Scene Diffuse");
-				ImGui::Image((void*)m_colorTarget.SRV().Get(), imageSize);
+					ImGui::Text("Scene Diffuse");
+					ImGui::Image((void*)m_colorTarget.SRV().Get(), imageSize);
 
-				ImGui::Text("Scene Normals");
-				ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
+					ImGui::Text("Scene Normals");
+					ImGui::Image((void*)m_normalTarget.SRV().Get(), imageSize);
 
-				ImGui::Text("Scene Depth");
-				ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
+					ImGui::Text("Scene Depth");
+					ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
+				}
 			}
 		}
 		ImGui::End();

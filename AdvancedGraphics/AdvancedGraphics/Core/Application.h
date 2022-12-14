@@ -75,6 +75,7 @@ private:
 	UINT                     m_offset;
 	UINT                     m_quadIndicesCount;
 
+	bool                     m_showPreview;
 	bool                     m_enableVignette;
 	bool                     m_enableGrayscale;
 	sm::Vector2              m_vigRadSoft;
