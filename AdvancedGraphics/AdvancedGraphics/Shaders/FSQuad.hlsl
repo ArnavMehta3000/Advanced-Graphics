@@ -61,15 +61,16 @@ float4 DoMotionBlur(float4 color, float2 uv)
 {
     float4 result = color;
     float2 vel = velocity.Sample(samLinear, uv).xy;
+    
  
     [unroll(50)]
     for (int i = 0; i < MotionBlurSampleCount; i++)
     {
-        uv += vel;
-        
+        uv -= abs(vel);
+    
         if (!IsUVInBounds(uv))
-            discard;
-        
+            return float4(0, 0, 0, 0);
+    
         float4 currentColor = render.Sample(samLinear, uv);
         result += currentColor;
     }
@@ -78,6 +79,8 @@ float4 DoMotionBlur(float4 color, float2 uv)
 
 float4 DoPostProcess(float4 color, float2 uv)
 {
+    if (EnableMotionBlur)
+        color = DoMotionBlur(color, uv);
     
     if (EnableGrayscale)        
         color = DoGrayscale(color);
@@ -85,8 +88,6 @@ float4 DoPostProcess(float4 color, float2 uv)
     if (EnableVignette)
         color.xyz *= DoVignette(uv).xyz;
     
-    if (EnableMotionBlur)
-        color = DoMotionBlur(color, uv);
     
     return color;
 }

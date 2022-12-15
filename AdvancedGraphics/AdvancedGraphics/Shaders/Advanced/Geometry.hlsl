@@ -58,12 +58,12 @@ float4 GetProjectionPos(float3 position, matrix proj)
     return mul(pos, mul(View, proj));
 }
 
-float2 GetPixelVelocity(float3 position)
+float4 GetPixelVelocity(float3 position)
 {
     float4 currentPos = GetProjectionPos(position, CurrentViewProjection);
     float4 prevPos = GetProjectionPos(position, PrevViewProjection);
 
-    return ((currentPos - prevPos) / 2.0f).xy;
+    return (abs(prevPos - currentPos) / 2.0f);
 }
 
 
@@ -105,7 +105,7 @@ PSOutput PS(PSInput input)
     output.Normal        = normalWS;
     float depth          = input.Position.z / input.Position.w;
     output.Depth         = float4(input.PositionWS, depth);
-    output.Velocity.xy   = GetPixelVelocity(input.PositionWS).xy;
+    output.Velocity.xyz = GetPixelVelocity(input.PositionWS).xyz + 0.000000001f;
     output.Velocity.z    = 0.0f;
     return output;
 }
