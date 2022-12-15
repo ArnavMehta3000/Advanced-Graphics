@@ -52,11 +52,13 @@ struct MaterialProperties
 
 struct PostProcessing
 {
-	sm::Matrix CurrentViewProjection;
-	sm::Matrix PrevViewProjection;
 	int EnableVignette;
 	int EnableGrayscale;
+	int EnableMotionBlur;
+	int _padding0;
+	int MotionBlurSampleCount;
 	sm::Vector2 VignetteRadiusSoftness;
+	float _padding1;
 };
 
 struct Light
@@ -82,16 +84,10 @@ struct LightBuffer
 	Light PointLight;
 };
 
-struct SurfaceProperties
+struct Matrices
 {
-	SurfaceProperties()
-		:
-		SpecularColor(1.0f),
-		SpecularPower(32.0f)
-	{}
-
-	sm::Vector3 SpecularColor;
-	float SpecularPower;
+	sm::Matrix CurrentViewProjection;
+	sm::Matrix PrevViewProjection;
 };
 
 enum class LightType

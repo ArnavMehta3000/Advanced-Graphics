@@ -50,7 +50,6 @@ public:
 	sm::Vector3 m_scale;
 
 	ComPtr<ID3D11Buffer> m_materialPropsCB;
-	ComPtr<ID3D11Buffer> m_surfacePropsCB;
 	MaterialProperties   m_material;
 private:
 	sm::Matrix           m_worldTransform;

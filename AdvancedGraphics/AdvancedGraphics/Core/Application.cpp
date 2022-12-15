@@ -50,6 +50,8 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_vigRadSoft(0.4f, 0.2f),
 	m_enableVignette(true),
 	m_enableGrayscale(false),
+	m_enableMotionBlur(false),
+	m_motionBlurSamples(5),
 	m_showPreview(false),
 	m_currentViewProj(sm::Matrix::Identity),
 	m_prevViewProj(sm::Matrix::Identity)
@@ -161,12 +163,13 @@ void Application::InitGBuffer()
 {
 	RECT r;
 	GetClientRect(m_window->GetHandle(), &r);
-	UINT width = r.right - r.left;
-	UINT height = r.bottom - r.top;
+	UINT width = r.right - r.left;  //1920
+	UINT height = r.bottom - r.top;  //1057
 
-	m_lightTarget          = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_lightTarget       = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_colorTarget       = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_normalTarget      = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT,    width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_velocityTarget    = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT,    width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM,     width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
@@ -175,6 +178,7 @@ void Application::InitGBuffer()
 void Application::InitConstantBuffers()
 {
 	D3D->CreateConstantBuffer(m_wvpCBuffer, sizeof(WVPBuffer));
+	D3D->CreateConstantBuffer(m_matricesCBuffer, sizeof(Matrices));
 	D3D->CreateConstantBuffer(m_cameraBuffer, sizeof(LightBuffer));
 	D3D->CreateConstantBuffer(m_lightPropsCB, sizeof(LightProperties));
 	D3D->CreateConstantBuffer(m_postProcessCB, sizeof(PostProcessing));
@@ -183,7 +187,7 @@ void Application::InitConstantBuffers()
 
 void Application::SetGBuffer()
 {
-	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_depthRenderTarget.RTV().Get() };
+	ID3D11RenderTargetView* rtv[] = { m_colorTarget.RTV().Get(), m_normalTarget.RTV().Get(), m_depthRenderTarget.RTV().Get(), m_velocityTarget.RTV().Get()};
 
 	// Clear the render targets
 	for (auto& rt : rtv)
@@ -206,23 +210,24 @@ void Application::DoGeometryPass()
 
 	// Set wvp constant buffer
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
-	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
+	ID3D11Buffer* psCB[] = { m_wvpCBuffer.Get(), m_matricesCBuffer.Get() };
+	D3D_CONTEXT->PSSetConstantBuffers(0, _countof(psCB), psCB);
 
 	// Update WVP constant buffer
 	CREATE_ZERO(WVPBuffer, wvpCB);
 	wvpCB.View       = m_camera.GetView().Transpose();
 	wvpCB.Projection = m_camera.GetProjection().Transpose();
 
-	CREATE_ZERO(SurfaceProperties, surfaceCB);
-	surfaceCB = SurfaceProperties();  // Use default values
+	// Update matrices constant buffer
+	CREATE_ZERO(Matrices, mats);
+	mats.CurrentViewProjection = m_currentViewProj.Transpose();
+	mats.PrevViewProjection    = m_prevViewProj.Transpose();
+	D3D_CONTEXT->UpdateSubresource(m_matricesCBuffer.Get(), 0, nullptr, &mats, 0, 0);
 
 	for (auto& go : m_gameObjects)
 	{
 		wvpCB.World = go->GetWorldTransform().Transpose();
 		D3D_CONTEXT->UpdateSubresource(m_wvpCBuffer.Get(), 0, nullptr, &wvpCB, 0, 0);
-
-		// Update surface properties constant buffer
-		D3D_CONTEXT->UpdateSubresource(go->m_surfacePropsCB.Get(), 0, nullptr, &surfaceCB, 0, 0);
 
 		// Set object textures and depth target
 		ID3D11ShaderResourceView* textureSrv[] = { go->GetDiffuseSRV().Get(), go->GetNormalSRV().Get(), go->GetHeightSRV().Get() };
@@ -335,15 +340,16 @@ void Application::DoPostProcess()
 
 	// Update post processing
 	PostProcessing pp{};
-	pp.CurrentViewProjection  = m_currentViewProj.Transpose();
-	pp.PrevViewProjection     = m_prevViewProj.Transpose();
 	pp.VignetteRadiusSoftness = m_vigRadSoft;
 	pp.EnableGrayscale        = m_enableGrayscale;
 	pp.EnableVignette         = m_enableVignette;
+	pp.EnableMotionBlur       = m_enableMotionBlur;
+	pp.MotionBlurSampleCount  = m_motionBlurSamples;
 	D3D_CONTEXT->UpdateSubresource(m_postProcessCB.Get(), 0, nullptr, &pp, 0, 0);
 
 	// Set render texture
-	D3D_CONTEXT->PSSetShaderResources(0, 1, m_lightTarget.SRV().GetAddressOf());
+	ID3D11ShaderResourceView* srv[] = { m_lightTarget.SRV().Get() , m_velocityTarget.SRV().Get() };
+	D3D_CONTEXT->PSSetShaderResources(0, _countof(srv), srv);
 	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
 
 	DrawQuad();
@@ -509,6 +515,16 @@ void Application::OnGui(double dt)
 					ImGui::Checkbox("Enable Grayscale", &m_enableGrayscale);
 					ImGui::TreePop();
 				}
+
+				if (ImGui::TreeNode("Motion Blur"))
+				{
+					ImGui::Checkbox("Enable Motion Blur", &m_enableMotionBlur);
+					if (m_enableMotionBlur)
+					{
+						ImGui::DragInt("Sample Count", &m_motionBlurSamples, 1, 1, 100);
+					}
+					ImGui::TreePop();
+				}
 				
 				AddSpace(3);
 				ImGui::Checkbox("Show G-Buffer", &m_showPreview);
@@ -527,7 +543,10 @@ void Application::OnGui(double dt)
 					ImGui::Text("Scene Pos-Depth (RGB-A)");
 					ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
 
-					ImGui::Text("PP");
+					ImGui::Text("Scene Object Velocity");
+					ImGui::Image((void*)m_velocityTarget.SRV().Get(), imageSize);
+
+					ImGui::Text("Accumulated Lighting");
 					ImGui::Image((void*)m_lightTarget.SRV().Get(), imageSize);
 				}
 			}

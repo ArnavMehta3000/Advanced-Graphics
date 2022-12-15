@@ -59,6 +59,7 @@ private:
 	RenderTarget             m_lightTarget;
 	RenderTarget             m_colorTarget;
 	RenderTarget             m_normalTarget;
+	RenderTarget             m_velocityTarget;
 	RenderTarget             m_depthRenderTarget;
 
 	Shader                   m_fsqShader;
@@ -67,6 +68,7 @@ private:
 	Shader                   m_lightingShader;
 
 	ComPtr<ID3D11Buffer>     m_wvpCBuffer;
+	ComPtr<ID3D11Buffer>     m_matricesCBuffer;
 	ComPtr<ID3D11Buffer>     m_cameraBuffer;
 	ComPtr<ID3D11Buffer>     m_lightPropsCB;
 	ComPtr<ID3D11Buffer>     m_postProcessCB;
@@ -77,6 +79,7 @@ private:
 	float                    m_lightRadius;
 	float                    m_lightIntensity;
 	float                    m_specularPower;
+	int                      m_motionBlurSamples;
 	UINT                     m_stride;
 	UINT                     m_offset;
 	UINT                     m_quadIndicesCount;
@@ -84,6 +87,7 @@ private:
 	bool                     m_showPreview;
 	bool                     m_enableVignette;
 	bool                     m_enableGrayscale;
+	bool                     m_enableMotionBlur;
 	sm::Vector2              m_vigRadSoft;
 
 	sm::Matrix               m_currentViewProj;

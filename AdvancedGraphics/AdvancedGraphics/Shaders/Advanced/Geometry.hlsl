@@ -6,10 +6,10 @@ cbuffer WVPBuffer : register(b0)
 }
 
 // For PS only
-cbuffer SurfaceProperties : register(b1)
+cbuffer Matrices : register(b1)
 {
-    float3 SpecularColor;
-    float SpecularPower;
+    matrix CurrentViewProjection;
+    matrix PrevViewProjection;
 }
 
 Texture2D<float4> DiffuseMap : register(t0);
@@ -45,8 +45,26 @@ struct PSOutput
     float4 DiffuseAlbedo : SV_TARGET0;
     float4 Normal        : SV_TARGET1;
     float4 Depth         : SV_Target2;
+    float3 Velocity      : SV_Target3;
 };
 // ~For PS only~
+
+
+
+
+float4 GetProjectionPos(float3 position, matrix proj)
+{
+    float4 pos = float4(position, 1.0f);
+    return mul(pos, mul(View, proj));
+}
+
+float2 GetPixelVelocity(float3 position)
+{
+    float4 currentPos = GetProjectionPos(position, CurrentViewProjection);
+    float4 prevPos = GetProjectionPos(position, PrevViewProjection);
+
+    return ((currentPos - prevPos) / 2.0f).xy;
+}
 
 
 
@@ -87,6 +105,7 @@ PSOutput PS(PSInput input)
     output.Normal        = normalWS;
     float depth          = input.Position.z / input.Position.w;
     output.Depth         = float4(input.PositionWS, depth);
-
+    output.Velocity.xy   = GetPixelVelocity(input.PositionWS).xy;
+    output.Velocity.z    = 0.0f;
     return output;
 }

@@ -23,7 +23,6 @@ GameObject::GameObject()
 	m_material.Material.SpecularPower = 32.0f;
 
 	D3D->CreateConstantBuffer(m_materialPropsCB, sizeof(MaterialProperties));
-	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
 
 GameObject::GameObject(const GODesc& desc)
@@ -78,7 +77,6 @@ GameObject::GameObject(const GODesc& desc)
 	m_material.Material.SpecularPower = 32.0f;
 
 	D3D->CreateConstantBuffer(m_materialPropsCB, sizeof(MaterialProperties));
-	D3D->CreateConstantBuffer(m_surfacePropsCB, sizeof(SurfaceProperties));
 }
 
 GameObject::~GameObject()
