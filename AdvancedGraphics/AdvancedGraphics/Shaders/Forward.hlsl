@@ -29,10 +29,8 @@ struct PS_IN
     float3 PositionT       : POSITIONT;
     float2 UV              : TEXCOORD0;
     float3 NormalT         : NORMALT;
-    float3 NormalW         : NORMALW;
     float3 LightDirT       : TLIGHTDIR;
     float3 EyeDirT         : TEYEDIR;
-    float3 EyePosT         : EYEPOSITIONT;
 };
 // ---------------------------------------------------------------------
 
@@ -226,7 +224,6 @@ PS_IN VS(VS_IN input)
     float3 lightDir   = normalize(Light.Position.xyz - output.PositionW.xyz);  // To light
     float3 viewDir    = normalize(EyePosition.xyz - output.PositionW.xyz);     // To Eye
     float3 normal     = normalize(mul(float4(input.Normal, 0), World).xyz);
-    output.NormalW    = normal;
     
     
     // Get tangent space vectors
@@ -234,7 +231,6 @@ PS_IN VS(VS_IN input)
     output.EyeDirT    = ToTangentSpace(viewDir, invTBN);    
     output.PositionT  = ToTangentSpace(output.PositionW.xyz, invTBN);
     output.NormalT    = ToTangentSpace(normal, invTBN);
-    output.EyePosT    = ToTangentSpace(EyePosition.xyz, invTBN);
 
     return output;
 }
@@ -274,7 +270,7 @@ float4 PS(PS_IN input) : SV_Target0
     [branch]
     if (Material.UseNormals)
     {
-        // Uncompress the normals from the normal map (in tangent space)
+        // Decompress the normals from the normal map (in tangent space)
         float4 texNormal = txNormal.Sample(samLinear, texCoords);
         float4 bumpNormalT = float4(normalize(2.0f * texNormal.xyz - 1.0f).xyz, 1.0f);
     
