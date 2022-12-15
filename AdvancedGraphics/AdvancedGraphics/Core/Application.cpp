@@ -175,7 +175,7 @@ void Application::InitGBuffer()
 void Application::InitConstantBuffers()
 {
 	D3D->CreateConstantBuffer(m_wvpCBuffer, sizeof(WVPBuffer));
-	D3D->CreateConstantBuffer(m_cameraBuffer, sizeof(LightCameraBuffer));
+	D3D->CreateConstantBuffer(m_cameraBuffer, sizeof(LightBuffer));
 	D3D->CreateConstantBuffer(m_lightPropsCB, sizeof(LightProperties));
 	D3D->CreateConstantBuffer(m_postProcessCB, sizeof(PostProcessing));
 }
@@ -249,13 +249,12 @@ void Application::DoLightingPass()
 
 	// Set constant buffers
 	D3D_CONTEXT->VSSetConstantBuffers(0, 1, m_wvpCBuffer.GetAddressOf());
-	ID3D11Buffer* psCB[] = { m_wvpCBuffer.Get(), m_cameraBuffer.Get(), m_postProcessCB.Get() };
+	ID3D11Buffer* psCB[] = { m_wvpCBuffer.Get(), m_cameraBuffer.Get()};
 	D3D_CONTEXT->PSSetConstantBuffers(0, _countof(psCB), psCB);
 	
-	DoPostProcess();
 	
 	// Update light and camera constant buffer
-	CREATE_ZERO(LightCameraBuffer, camCBuffer);
+	CREATE_ZERO(LightBuffer, camCBuffer);
 	camCBuffer.GlobalAmbient            = m_globalAmbient;
 	camCBuffer.EyePosition              = TO_VEC4(m_camera.Position(), 1.0f);
 	camCBuffer.PointLight.Diffuse       = m_lightDiffuse;
@@ -266,8 +265,6 @@ void Application::DoLightingPass()
 	camCBuffer.PointLight.Parallax      = m_parallaxData;
 	camCBuffer.PointLight.Bias          = m_biasData;
 	camCBuffer.PointLight.Radius        = m_lightRadius;
-	camCBuffer.CurrentViewProjection    = m_currentViewProj.Transpose();
-	camCBuffer.PrevViewProjection       = m_prevViewProj.Transpose();
 
 	D3D_CONTEXT->UpdateSubresource(m_cameraBuffer.Get(), 0, nullptr, &camCBuffer, 0, 0);
 	
@@ -328,22 +325,28 @@ void Application::DoDeferredRendering()
 	D3D->UnbindAllTargetsAndResources();
 	DoLightingPass();
 	D3D->BindBackBuffer();
-
-	m_fsqShader.BindShader();
-	D3D_CONTEXT->PSSetShaderResources(0, 1, m_lightTarget.SRV().GetAddressOf());
-	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
-
-	DrawQuad();
+	DoPostProcess();	
 }
 
 void Application::DoPostProcess()
 {
+	m_fsqShader.BindShader();
+	D3D_CONTEXT->PSSetConstantBuffers(0, 1, m_postProcessCB.GetAddressOf());
+
 	// Update post processing
 	PostProcessing pp{};
+	pp.CurrentViewProjection  = m_currentViewProj.Transpose();
+	pp.PrevViewProjection     = m_prevViewProj.Transpose();
 	pp.VignetteRadiusSoftness = m_vigRadSoft;
 	pp.EnableGrayscale        = m_enableGrayscale;
 	pp.EnableVignette         = m_enableVignette;
 	D3D_CONTEXT->UpdateSubresource(m_postProcessCB.Get(), 0, nullptr, &pp, 0, 0);
+
+	// Set render texture
+	D3D_CONTEXT->PSSetShaderResources(0, 1, m_lightTarget.SRV().GetAddressOf());
+	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
+
+	DrawQuad();
 }
 
 void Application::DoForwardRendering()

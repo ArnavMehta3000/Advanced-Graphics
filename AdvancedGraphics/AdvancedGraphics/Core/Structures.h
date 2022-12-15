@@ -52,6 +52,8 @@ struct MaterialProperties
 
 struct PostProcessing
 {
+	sm::Matrix CurrentViewProjection;
+	sm::Matrix PrevViewProjection;
 	int EnableVignette;
 	int EnableGrayscale;
 	sm::Vector2 VignetteRadiusSoftness;
@@ -73,10 +75,8 @@ struct Light
 	sm::Vector3 _padding0;
 };
 
-struct LightCameraBuffer
+struct LightBuffer
 {
-	sm::Matrix CurrentViewProjection;
-	sm::Matrix PrevViewProjection;
 	sm::Vector4 EyePosition;
 	sm::Vector4 GlobalAmbient;
 	Light PointLight;

@@ -7,20 +7,12 @@ cbuffer WVPBuffer : register(b0)
     matrix Projection;
 }
 
-cbuffer LightCameraBuffer : register(b1)
+cbuffer LightBuffer : register(b1)
 {
-    matrix CurrentViewProjection;
-    matrix PrevViewProjection;
+    
     float4 EyePosition;
     float4 GlobalAmbient;
     Light PointLight;
-}
-
-cbuffer PostProcessing : register(b2)
-{
-    bool EnableVignette;
-    bool EnableGrayscale;
-    float2 VignetteRadiusSoftness;
 }
 
 Texture2D<float4> GDiffuse  : register(t0);
@@ -81,19 +73,6 @@ float4 GetGDiffuse(float2 uv)
     return GDiffuse.Sample(samLinear, uv);
 }
 
-float4 GetProjectionPos(float2 uv, matrix proj)
-{
-    float4 pos = float4(GDepth.Sample(samLinear, uv).xyz, 1.0f);
-    return mul(pos, mul(View, proj));
-}
-
-float2 GetPixelVelocity(float2 uv)
-{
-    float4 currentPos = GetProjectionPos(uv, CurrentViewProjection);
-    float4 prevPos    = GetProjectionPos(uv, PrevViewProjection);
-
-    return ((currentPos - prevPos) / 2.0f).xy;
-}
 
 
 
@@ -116,31 +95,6 @@ LightingResult ComputeLighting(float3 position, float3 normal)
     return result;
 }
 
-float4 DoVignette(float2 uv)
-{
-    float len = distance(uv, float2(0.5, 0.5)) * 0.7f;
-    float vignette = smoothstep(VignetteRadiusSoftness.x, VignetteRadiusSoftness.x - VignetteRadiusSoftness.y, len);
-    return vignette;
-}
-
-float4 Grayscale(float4 color)
-{
-    float avg = (color.x + color.y + color.z) / 3.0f;
-    return float4(avg, avg, avg, 1.0f);
-}
-
-float4 DoPostProcess(float4 color, float2 uv)
-{
-    if (EnableGrayscale)        
-        color = Grayscale(color);
-    
-    if (EnableVignette)
-        color.xyz *= DoVignette(uv).xyz;
-    
-    
-    return color;
-}
-
 float4 PS(VSOutput input) : SV_Target0
 {
     float3 lightDir = normalize(PointLight.Position.xyz - input.Position.xyz);
@@ -157,9 +111,7 @@ float4 PS(VSOutput input) : SV_Target0
     LightingResult lighting = ComputeLighting(GetGPosDepth(texCoord).xyz, GetGNormals(texCoord).xyz);
     
     float4 finalColor = (GlobalAmbient + lighting.Diffuse + lighting.Specular) * GetGDiffuse(texCoord);
-     
-    float2 velocity = GetPixelVelocity(texCoord);
+    finalColor.a = 1.0f;
     
-    //return float4(velocity, 0,0);
-    return DoPostProcess(finalColor, texCoord);
+    return finalColor;
 }
