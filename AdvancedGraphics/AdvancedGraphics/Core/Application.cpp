@@ -48,7 +48,7 @@ Application::Application(HINSTANCE hInst, UINT width, UINT height)
 	m_quadIndicesCount(6),
 	m_specularPower(10.0f),
 	m_vigRadSoft(0.4f, 0.2f),
-	m_enableVignette(true),
+	m_enableVignette(false),
 	m_enableGrayscale(false),
 	m_enableMotionBlur(false),
 	m_motionBlurSamples(5),
@@ -91,7 +91,7 @@ bool Application::Init()
 	SetTechnique(RenderTechnique::Forward);
 
 	m_fsqShader      = Shader(L"Shaders\\FSQuad.hlsl", L"Shaders\\FSQuad.hlsl");
-	m_forwardShader  = Shader(L"Shaders\\Shader.hlsl", L"Shaders\\Shader.hlsl");
+	m_forwardShader  = Shader(L"Shaders\\Forward.hlsl", L"Shaders\\Forward.hlsl");
 	m_geometryShader = Shader(L"Shaders\\Advanced\\Geometry.hlsl", L"Shaders\\Advanced\\Geometry.hlsl");
 	m_lightingShader = Shader(L"Shaders\\Advanced\\Lighting.hlsl", L"Shaders\\Advanced\\Lighting.hlsl");
 	
@@ -170,7 +170,7 @@ void Application::InitGBuffer()
 	m_colorTarget       = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_normalTarget      = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT,    width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_velocityTarget    = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT,    width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
-	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM,     width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
+	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R16G16B16A16_UNORM, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 
 	LOG("Created G-Buffer");
 }
@@ -314,6 +314,7 @@ void Application::Run()
 void Application::UpdateWorld(double dt)
 {
 	m_camera.Update(dt, KEYBOARD, MOUSE);
+
 	m_prevViewProj    = m_currentViewProj;
 	m_currentViewProj = m_camera.GetViewProjection();
 
