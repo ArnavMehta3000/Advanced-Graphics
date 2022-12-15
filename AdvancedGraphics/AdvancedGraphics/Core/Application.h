@@ -43,6 +43,7 @@ private:
 	void DoLightingPass();
 
 	void OnGui(double dt);
+	void DrawQuad();
 
 	// Uses ImGui::Spacing() based on input count
 	void AddSpace(UINT n = 1);
@@ -55,10 +56,12 @@ private:
 
 	std::vector<GameObject*> m_gameObjects;
 
+	RenderTarget             m_lightTarget;
 	RenderTarget             m_colorTarget;
 	RenderTarget             m_normalTarget;
 	RenderTarget             m_depthRenderTarget;
 
+	Shader                   m_fsqShader;
 	Shader                   m_forwardShader;
 	Shader                   m_geometryShader;
 	Shader                   m_lightingShader;

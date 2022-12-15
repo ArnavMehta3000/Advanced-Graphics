@@ -87,6 +87,8 @@ bool Application::Init()
 
 	InitGBuffer();
 	SetTechnique(RenderTechnique::Forward);
+
+	m_fsqShader      = Shader(L"Shaders\\FSQuad.hlsl", L"Shaders\\FSQuad.hlsl");
 	m_forwardShader  = Shader(L"Shaders\\Shader.hlsl", L"Shaders\\Shader.hlsl");
 	m_geometryShader = Shader(L"Shaders\\Advanced\\Geometry.hlsl", L"Shaders\\Advanced\\Geometry.hlsl");
 	m_lightingShader = Shader(L"Shaders\\Advanced\\Lighting.hlsl", L"Shaders\\Advanced\\Lighting.hlsl");
@@ -162,6 +164,7 @@ void Application::InitGBuffer()
 	UINT width = r.right - r.left;
 	UINT height = r.bottom - r.top;
 
+	m_lightTarget          = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_colorTarget       = RenderTarget(DXGI_FORMAT_R32G32B32A32_FLOAT, width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_normalTarget      = RenderTarget(DXGI_FORMAT_R11G11B10_FLOAT,    width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
 	m_depthRenderTarget = RenderTarget(DXGI_FORMAT_R8G8B8A8_UNORM,     width, height, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE);
@@ -235,7 +238,8 @@ void Application::DoLightingPass()
 {
 	D3D_CONTEXT->OMSetDepthStencilState(D3D->m_depthReadState.Get(), 1u);
 
-
+	// Set light accumulation target
+	D3D_CONTEXT->OMSetRenderTargets(1, m_lightTarget.RTV().GetAddressOf(), nullptr);
 	// Only one light in the scene hence no for-loop here
 
 	// bind lighting pass shader
@@ -270,11 +274,8 @@ void Application::DoLightingPass()
 	// bind render targets as srv
 	ID3D11ShaderResourceView* srv[]{ m_colorTarget.SRV().Get(), m_normalTarget.SRV().Get(), m_depthRenderTarget.SRV().Get() };
 	D3D_CONTEXT->PSSetShaderResources(0, _countof(srv), srv);
-	
-	// Draw full screen quad
-	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_quadVB.GetAddressOf(), &m_stride, &m_offset);
-	D3D_CONTEXT->IASetIndexBuffer(m_quadIB.Get(), DXGI_FORMAT_R16_UINT, 0);
-	D3D_CONTEXT->DrawIndexed(m_quadIndicesCount, 0, 0);
+
+	DrawQuad();
 }
 
 
@@ -325,8 +326,14 @@ void Application::DoDeferredRendering()
 	SetGBuffer();
 	DoGeometryPass();
 	D3D->UnbindAllTargetsAndResources();
-	D3D->BindBackBuffer();
 	DoLightingPass();
+	D3D->BindBackBuffer();
+
+	m_fsqShader.BindShader();
+	D3D_CONTEXT->PSSetShaderResources(0, 1, m_lightTarget.SRV().GetAddressOf());
+	D3D_CONTEXT->PSSetSamplers(0, 1, D3D->m_samplerAnisotropicWrap.GetAddressOf());
+
+	DrawQuad();
 }
 
 void Application::DoPostProcess()
@@ -516,6 +523,9 @@ void Application::OnGui(double dt)
 
 					ImGui::Text("Scene Pos-Depth (RGB-A)");
 					ImGui::Image((void*)m_depthRenderTarget.SRV().Get(), imageSize);
+
+					ImGui::Text("PP");
+					ImGui::Image((void*)m_lightTarget.SRV().Get(), imageSize);
 				}
 			}
 		}
@@ -525,6 +535,14 @@ void Application::OnGui(double dt)
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 #endif // ENABLE_IMGUI
+}
+
+void Application::DrawQuad()
+{
+	// Draw full screen quad
+	D3D_CONTEXT->IASetVertexBuffers(0, 1, m_quadVB.GetAddressOf(), &m_stride, &m_offset);
+	D3D_CONTEXT->IASetIndexBuffer(m_quadIB.Get(), DXGI_FORMAT_R16_UINT, 0);
+	D3D_CONTEXT->DrawIndexed(m_quadIndicesCount, 0, 0);
 }
 
 void Application::AddSpace(UINT n)

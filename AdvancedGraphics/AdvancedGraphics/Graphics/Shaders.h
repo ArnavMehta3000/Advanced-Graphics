@@ -32,9 +32,9 @@ struct Shader
 	Shader(LPCWSTR vsFile, LPCWSTR psFile, LPCSTR vsEntry = "VS", LPCSTR psEntry = "PS");
 	~Shader();
 
-	void BindVS();
+	void BindVS(bool applyInputLayout);
 	void BindPS();
-	void BindShader();
+	void BindShader(bool applyInputLayout = true);
 
 	VertexShader* m_VertexShader;
 	PixelShader* m_PixelShader;

@@ -33,10 +33,11 @@ Shader::Shader(LPCWSTR vsFile, LPCWSTR psFile, LPCSTR vsEntry, LPCSTR psEntry)
 
 Shader::~Shader() {}
 
-void Shader::BindVS()
+void Shader::BindVS(bool applyInputLayout)
 {
 	D3D_CONTEXT->VSSetShader(m_VertexShader->Shader.Get(), nullptr, 0);
-	D3D_CONTEXT->IASetInputLayout(m_VertexShader->InputLayout.Get());
+	if (applyInputLayout)
+		D3D_CONTEXT->IASetInputLayout(m_VertexShader->InputLayout.Get());
 }
 
 void Shader::BindPS()
@@ -44,8 +45,8 @@ void Shader::BindPS()
 	D3D_CONTEXT->PSSetShader(m_PixelShader->Shader.Get(), nullptr, 0);
 }
 
-void Shader::BindShader()
+void Shader::BindShader(bool applyInputLayout)
 {
-	BindVS();
+	BindVS(applyInputLayout);
 	BindPS();
 }

@@ -75,4 +75,3 @@ private:
 #define D3D	Direct3D::GetInstance()
 #define D3D_CONTEXT Direct3D::GetInstance()->GetContext()
 #define D3D_DEVICE Direct3D::GetInstance()->GetDevice()
-#define D3D_SAMPLER_LINEAR Direct3D::GetInstance()->GetSamplerStateLinear()

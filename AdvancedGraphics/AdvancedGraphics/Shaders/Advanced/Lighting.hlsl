@@ -160,5 +160,6 @@ float4 PS(VSOutput input) : SV_Target0
      
     float2 velocity = GetPixelVelocity(texCoord);
     
+    //return float4(velocity, 0,0);
     return DoPostProcess(finalColor, texCoord);
 }
