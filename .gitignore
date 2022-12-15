@@ -353,3 +353,4 @@ Framework/FrameworkDX11/imgui.ini
 AdvancedGraphics/Build
 AdvancedGraphics/AdvancedGraphics/imgui.ini
 !AdvancedGraphics/AdvancedGraphics/Assets/*.obj
+AdvancedGraphics/AdvancedGraphics/.vscode
