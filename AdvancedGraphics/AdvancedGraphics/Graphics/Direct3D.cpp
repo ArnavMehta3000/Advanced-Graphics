@@ -309,7 +309,7 @@ void Direct3D::EndFrame()
 void Direct3D::BindBackBuffer(bool bindDSV)
 {
 	// Clear the back buffer before binding
-	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::DarkKhaki);
+	m_context->ClearRenderTargetView(m_backBufferRTV.Get(), Colors::Black);
 	m_context->OMSetRenderTargets(1, m_backBufferRTV.GetAddressOf(), (bindDSV) ? m_depthTarget.DSV().Get() : nullptr);
 }
 

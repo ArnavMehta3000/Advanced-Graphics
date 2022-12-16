@@ -191,7 +191,7 @@ void Application::SetGBuffer()
 
 	// Clear the render targets
 	for (auto& rt : rtv)
-		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::DarkKhaki);
+		D3D_CONTEXT->ClearRenderTargetView(rt, Colors::Black);
 
 	// Clear depth before geometry pass
 	D3D_CONTEXT->ClearDepthStencilView(D3D->m_depthTarget.DSV().Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1u, 0u);
@@ -522,7 +522,7 @@ void Application::OnGui(double dt)
 					ImGui::Checkbox("Enable Motion Blur", &m_enableMotionBlur);
 					if (m_enableMotionBlur)
 					{
-						ImGui::DragInt("Sample Count", &m_motionBlurSamples, 1, 1, 100);
+						ImGui::DragInt("Sample Count", &m_motionBlurSamples, 1, 2, 10);
 					}
 					ImGui::TreePop();
 				}

@@ -12,7 +12,7 @@ cbuffer PostProcessing : register(b0)
     bool EnableMotionBlur;
     int _padding0;
     
-    int MotionBlurSampleCount;
+    int MotionBlurSampleCount   ;
     float2 VignetteRadiusSoftness;
     
     float _padding1;
@@ -59,20 +59,27 @@ float4 DoVignette(float2 uv)
 
 float4 DoMotionBlur(float4 color, float2 uv)
 {
-    float4 result = color;
-    float2 vel = velocity.Sample(samLinear, uv).xy;
+    float4 result = float4(color);
+    float2 vel = velocity.Sample(samLinear, uv).xy *2-1;
+    if (all(vel == float2(0, 0)))
+        return result;
     
- 
-    [unroll(50)]
+    [unroll(10)]
     for (int i = 0; i < MotionBlurSampleCount; i++)
     {
         uv -= abs(vel);
     
-        if (!IsUVInBounds(uv))
-            return float4(0, 0, 0, 0);
-    
-        float4 currentColor = render.Sample(samLinear, uv);
-        result += currentColor;
+        //[branch]
+        //if (!IsUVInBounds(uv)) // Add nothing
+        //{
+        //    result = color;
+        //    break;
+        //}
+        //else // Sample offset
+        {        
+            float4 currentColor = render.Sample(samLinear, uv);
+            result += currentColor;
+        }
     }
     return result / MotionBlurSampleCount;
 }
