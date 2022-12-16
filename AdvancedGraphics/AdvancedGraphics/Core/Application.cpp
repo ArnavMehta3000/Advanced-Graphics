@@ -447,6 +447,8 @@ void Application::OnGui(double dt)
 		AddSpace(2);
 
 		// ----- Info -----
+		ImGui::TextColored({ 1, 0, 0,1 }, "Press RMB and WASD keys to move camera\nScroll wheel to change move speed");
+
 		ImGui::Text("Current Rendering Technique: %s", (m_technique == RenderTechnique::Forward) ? "Forward" : "Deferred");
 		ImGui::Text("FPS: %f", 1.0f / dt);
 		ImGui::Text("Frame time: %f ms", dt * 1000.0f);
